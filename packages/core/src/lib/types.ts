@@ -1,0 +1,48 @@
+
+type ExtractParams<T> = T extends `${string}<${infer TName}>${infer TRemainder}`
+    ? [TName, ...ExtractParams<TRemainder>]
+    : []
+
+type ExtractData<T extends keyof U, U> = {
+    [key in ExtractParams<T>[number]]?: Args<U[T]>[GetIndex<ExtractParams<T>, key>]
+}
+
+type GetIndex<T extends string[], R extends string> = {
+    [key in keyof T]: T[key] extends R ? key : never
+}[number]
+
+type ExtractAllData<T> = {
+    [key in keyof T]: key extends `${string}<${string}>` ? ExtractData<key, T> : never
+}[keyof T]
+
+type Args<T> = T extends (...args: infer R) => void ? R : []
+
+type ExpandArgs<T> = T extends `${infer TStart}<${string}>${infer TRemainder}` ? `${TStart}'${string}'${ExpandArgs<TRemainder>}` |  `${TStart}"${string}"${ExpandArgs<TRemainder>}` | `${TStart}[${string}]${ExpandArgs<TRemainder>}` : T
+type ExpandKey<T> = T extends `${string}<${string}>${string}` ? T | ExpandArgs<T> : T
+
+export interface TestSuite<T> {
+    given<U extends keyof T>(step: ExpandKey<U>): void
+    given<U extends keyof T>(step: U, ...params: Args<T[U]>): void
+    when<U extends keyof T>(step: ExpandKey<U>): void
+    when<U extends keyof T>(step: U, ...params: Args<T[U]>): void
+    then<U extends keyof T>(step: ExpandKey<U>): void
+    then<U extends keyof T>(step: U, ...params: Args<T[U]>): void
+    and<U extends keyof T>(step: ExpandKey<U>): void
+    and<U extends keyof T>(step: U, ...params: Args<T[U]>): void
+    but<U extends keyof T>(step: ExpandKey<U>): void
+    but<U extends keyof T>(step: U, ...params: Args<T[U]>): void
+    examples(tags: string, data: unknown extends T ? any[] : ExtractAllData<T>[]): void
+    examples(data: unknown extends T ? any[] : ExtractAllData<T>[]): void
+    feature(tags: string, name: string, fn: () => void): void
+    feature(name: string, fn: () => void): void
+    describe(tags: string, name: string, fn: () => void): void
+    describe(name: string, fn: () => void): void
+    background(fn: () => void): void
+    scenario(tags: string, name: string, fn: () => void): void
+    scenario(name: string, fn: () => void): void
+}
+
+export type UnionToIntersection<U> =
+    (U extends any ? (k: U)=>void : never) extends ((k: infer I)=>void) ? I : never
+
+export type ExtractReturn<T> = T extends () => infer R ? R extends [...infer S] ? S[number] | ExtractReturn<S[number]> : {} : {}
