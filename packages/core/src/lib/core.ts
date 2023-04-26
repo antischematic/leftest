@@ -44,7 +44,7 @@ class Scenario {
     steps: any[] = []
     examples: any[] = []
 
-    addStep(factory: Function): void {
+    addStep(factory: (name: string, fn: (...args: any[]) => void) => void): void {
         this.steps.push(factory)
     }
 
@@ -97,7 +97,7 @@ function runSteps(combinedSteps: any[], scenario: Scenario, examples: readonly a
     }
 }
 
-function scenario(name: string, fn: Function) {
+function scenario(name: string, fn: () => void) {
     const backgroundSteps = context.scenario.steps
     describe(name, () => {
         const scenario = new Scenario(name)
@@ -222,7 +222,7 @@ class Steps {
             this.normalNames[normalize(name)] = {
                 name,
                 vars: splitVars(name),
-                impl: impl as (...args: any[]) => {}
+                impl: impl as (...args: any[]) => void
             }
         }
     }
