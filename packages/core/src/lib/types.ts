@@ -12,7 +12,7 @@ type GetIndex<T extends string[], R extends string> = {
 }[number]
 
 type ExtractAllData<T> = {
-    [key in keyof T]: key extends `${string}<${string}>` ? ExtractData<key, T> : never
+    [key in keyof T]: key extends `${string}<${string}>${string}` ? ExtractData<key, T> : never
 }[keyof T]
 
 type Args<T> = T extends (...args: infer R) => void ? R : []

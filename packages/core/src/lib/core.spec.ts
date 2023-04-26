@@ -8,7 +8,7 @@ const steps = {
         log('test running')
     },
 
-    'I run a test with <args> and <hello>'(args: string | number, hello: unknown) {
+    ['I run a test with <args> and <hello>'](args: string | number, hello: unknown) {
         log(args)
         log(hello)
     }
