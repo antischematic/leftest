@@ -1,35 +1,35 @@
 import { createTestSuite } from './core';
 import {afterAll, expect, vi} from "vitest";
 
-const steps = () => []
-
 const log = vi.fn()
 
-steps['run a test'] = () => {
-    log('test running')
-}
+const steps = {
+    'I run a test'() {
+        log('test running')
+    },
 
-steps['run a test with <args> and <hello>'] = (args: string | number, hello: unknown) => {
-    log(args)
-    log(hello)
+    'I run a test with <args> and <hello>'(args: string | number, hello: unknown) {
+        log(args)
+        log(hello)
+    }
 }
 
 const { describe, scenario, given, when, then, examples, background } = createTestSuite(steps)
 
-describe('test', () => {
+describe('Test feature', () => {
     background(() => {
-        given('run a test')
+        given('I run a test')
     })
 
-    scenario('run test', () => {
-        when('run a test with <args> and <hello>', 'hello', 13)
+    scenario('Can run test', () => {
+        when('I run a test with <args> and <hello>', 'hello', 13)
     })
 
-    scenario('run a test with examples', () => {
-        given('run a test with "inline" and [null]')
-        when('run a test with <args> and <hello>')
-        then('run a test with [123] and [456]')
-        then('run a test with <args> and <hello>', 987, 879)
+    scenario('Can run a test with examples', () => {
+        given('I run a test with "inline" and [null]')
+        when('I run a test with <args> and <hello>')
+        then('I run a test with [123] and [456]')
+        then('I run a test with <args> and <hello>', 987, 879)
 
         examples([
             { args: 'example args 1', hello: 234 },

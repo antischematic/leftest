@@ -44,7 +44,7 @@ class Scenario {
     steps: any[] = []
     examples: any[] = []
 
-    addStep(factory: (name: string, fn: (...args: any[]) => void) => void): void {
+    addStep(factory: () => void): void {
         this.steps.push(factory)
     }
 
@@ -150,7 +150,7 @@ function examples(data: any[]) {
 }
 
 function createStep(steps: Steps) {
-    return function step(step: string, ...args: readonly any[]) {
+    return function step(name: string, step: string, ...args: readonly any[]) {
         const { scenario } = context
         scenario.addStep(() => {
             let parsedArgs = args as any[]
@@ -167,7 +167,7 @@ function createStep(steps: Steps) {
             const testName = steps.getTestName(step, parsedArgs)
             const impl = steps.getImplementation(step)
             if (testName) {
-                it(testName, async () => {
+                it(`${name} ${testName}`, async () => {
                     if (scenario.failed) {
                         throw new Error('Previous step failed')
                     }
@@ -229,17 +229,17 @@ class Steps {
 }
 
 export function createTestSuite(): TestSuite<unknown>
-export function createTestSuite<T extends () => any>(steps: T): TestSuite<T & UnionToIntersection<ExtractReturn<T>>>
-export function createTestSuite<T extends () => any>(stepDefinitions?: T): TestSuite<any> {
+export function createTestSuite<T extends object>(steps: T): TestSuite<T & UnionToIntersection<ExtractReturn<T>>>
+export function createTestSuite<T extends object>(stepDefinitions?: T): TestSuite<any> {
     const steps = new Steps(stepDefinitions)
     const step = createStep(steps)
 
     return {
-        given: step,
-        when: step,
-        then: step,
-        and: step,
-        but: step,
+        given: step.bind(null, 'Given'),
+        when: step.bind(null, 'When'),
+        then: step.bind(null, 'Then'),
+        and: step.bind(null, 'And'),
+        but: step.bind(null, 'But'),
         examples,
         feature,
         scenario,
