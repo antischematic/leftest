@@ -28,17 +28,22 @@ type ExpandArgs<T, TArgs extends unknown[]> = T extends `${infer TStart}<${strin
         ? `${TStart}${GetPlaceholder<TType>}${ExpandArgs<TRemainder, TArgsRemainder>}`
         : never
     : T
-type ExpandKey<T, TArgs extends unknown[]> = T extends `${string}<${string}>${string}` ? T | ExpandArgs<T, TArgs> : T
+type ExpandKey<T, TArgs extends unknown[]> = T extends `${string}<${string}>${string}` ? ExpandArgs<T, TArgs> : T
 
 export interface TestSuite<T> {
+    given<U extends keyof T>(step: U): void
     given<U extends keyof T>(step: ExpandKey<U, Args<T[U]>>): void
     given<U extends keyof T>(step: U, ...params: Args<T[U]>): void
+    when<U extends keyof T>(step: U): void
     when<U extends keyof T>(step: ExpandKey<U, Args<T[U]>>): void
     when<U extends keyof T>(step: U, ...params: Args<T[U]>): void
+    then<U extends keyof T>(step: U): void
     then<U extends keyof T>(step: ExpandKey<U, Args<T[U]>>): void
     then<U extends keyof T>(step: U, ...params: Args<T[U]>): void
+    and<U extends keyof T>(step: U): void
     and<U extends keyof T>(step: ExpandKey<U, Args<T[U]>>): void
     and<U extends keyof T>(step: U, ...params: Args<T[U]>): void
+    but<U extends keyof T>(step: U): void
     but<U extends keyof T>(step: ExpandKey<U, Args<T[U]>>): void
     but<U extends keyof T>(step: U, ...params: Args<T[U]>): void
     examples(tags: string, data: unknown extends T ? any[] : ExtractAllData<T>[]): void

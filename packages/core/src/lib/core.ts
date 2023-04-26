@@ -197,7 +197,16 @@ class Steps {
     getTestName(step: string, args: readonly any[]) {
         const copy = args.slice(0)
         return this.normalNames[normalize(step)]?.vars.map((s) => {
-            return typeof s === "string" ? s : copy.shift()
+            if (typeof s === "string") {
+                return s
+            } else {
+                const val = copy.shift()
+                switch (val) {
+                    case null: return "null"
+                    case undefined: return "undefined"
+                    default: return JSON.stringify(val)
+                }
+            }
         }).join('') ?? ''
     }
 

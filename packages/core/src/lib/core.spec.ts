@@ -4,11 +4,11 @@ import {afterAll, expect, vi} from "vitest";
 const log = vi.fn()
 
 const steps = {
-    'I run a test'() {
+    'I run a test': () => {
         log('test running')
     },
 
-    ['I run a test with <args> and <hello>'](args: string | number, hello: unknown) {
+    'I run a test with <args> and <hello>': (args: string | number, hello: unknown) => {
         log(args)
         log(hello)
     }
