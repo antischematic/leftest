@@ -1,1 +1,1 @@
-export * from "./lib/cypress"
+export { createTestSuite } from "./lib/cypress"
