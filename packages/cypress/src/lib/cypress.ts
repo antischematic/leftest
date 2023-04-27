@@ -1,3 +1,3 @@
 export function cypress(): string {
-  return 'cypress';
+   return "cypress"
 }

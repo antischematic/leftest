@@ -1,36 +1,36 @@
 {
-  "name": "leftest-cypress",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/cypress/src",
-  "projectType": "library",
-  "targets": {
-    "build": {
-      "executor": "@nrwl/rollup:rollup",
-      "outputs": ["{options.outputPath}"],
-      "options": {
-        "outputPath": "dist/packages/cypress",
-        "main": "packages/cypress/src/index.ts",
-        "tsConfig": "packages/cypress/tsconfig.lib.json",
-        "assets": [],
-        "project": "packages/cypress/package.json",
-        "compiler": "swc"
+   "name": "leftest-cypress",
+   "$schema": "../../node_modules/nx/schemas/project-schema.json",
+   "sourceRoot": "packages/cypress/src",
+   "projectType": "library",
+   "targets": {
+      "build": {
+         "executor": "@nrwl/rollup:rollup",
+         "outputs": ["{options.outputPath}"],
+         "options": {
+            "outputPath": "dist/packages/cypress",
+            "main": "packages/cypress/src/index.ts",
+            "tsConfig": "packages/cypress/tsconfig.lib.json",
+            "assets": [],
+            "project": "packages/cypress/package.json",
+            "compiler": "swc"
+         }
+      },
+      "lint": {
+         "executor": "@nrwl/linter:eslint",
+         "outputs": ["{options.outputFile}"],
+         "options": {
+            "lintFilePatterns": ["packages/cypress/**/*.ts"]
+         }
+      },
+      "test": {
+         "executor": "@nrwl/vite:test",
+         "outputs": ["coverage/packages/cypress"],
+         "options": {
+            "passWithNoTests": true,
+            "reportsDirectory": "../../coverage/packages/cypress"
+         }
       }
-    },
-    "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "outputs": ["{options.outputFile}"],
-      "options": {
-        "lintFilePatterns": ["packages/cypress/**/*.ts"]
-      }
-    },
-    "test": {
-      "executor": "@nrwl/vite:test",
-      "outputs": ["coverage/packages/cypress"],
-      "options": {
-        "passWithNoTests": true,
-        "reportsDirectory": "../../coverage/packages/cypress"
-      }
-    }
-  },
-  "tags": []
+   },
+   "tags": []
 }
