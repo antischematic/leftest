@@ -72,3 +72,11 @@ export interface TestSuite<T> {
    scenario(tags: string, name: string, fn: () => void): void
    scenario(name: string, fn: () => void): void
 }
+
+export interface TestSuiteOptions {}
+
+export interface TestSuiteAdapter {
+   createSuite(name: string, impl: () => void): void
+   createTest(name: string, impl: () => void): void
+   skipTest?(context: any): void
+}

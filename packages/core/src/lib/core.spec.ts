@@ -1,5 +1,5 @@
-import { createTestSuite } from "./core"
 import { afterAll, expect, beforeAll, vi } from "vitest"
+import { createTestSuite } from "./adapter.example"
 import steps from "./steps.example"
 
 const { feature, scenario, given, when, then, examples, background } =

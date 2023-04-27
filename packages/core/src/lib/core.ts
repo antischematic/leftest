@@ -1,6 +1,4 @@
-import { TestSuite } from "./types"
-
-import { describe, it } from "vitest"
+import { TestSuite, TestSuiteAdapter, TestSuiteOptions } from "./types"
 
 function stripDelimiters(string: string) {
    return string.slice(1, string.length - 1)
@@ -109,48 +107,55 @@ function runSteps(
    }
 }
 
-function scenario(name: string, fn: () => void) {
-   const backgroundSteps = context.scenario.steps
-   describe(name, () => {
-      const scenario = new Scenario(name)
-      const previous = setContext({
-         scenario,
-         examples: [],
-      })
-      try {
-         fn()
-         const combinedSteps = [...backgroundSteps, ...scenario.steps]
-         if (!scenario.examples.length) {
-            runSteps(combinedSteps, context.scenario, context.examples)
-         } else {
-            for (const examples of scenario.examples) {
-               const len = examples.length
-               for (const [index, data] of examples.entries()) {
-                  describe(`Example ${index + 1} of ${len}`, () => {
-                     runSteps(combinedSteps, scenario, [], data)
-                  })
+function createScenario(adapter: TestSuiteAdapter) {
+   return function scenario(name: string, fn: () => void) {
+      const backgroundSteps = context.scenario.steps
+      adapter.createSuite(name, function () {
+         const scenario = new Scenario(name)
+         const previous = setContext({
+            scenario,
+            examples: [],
+         })
+         try {
+            fn()
+            const combinedSteps = [...backgroundSteps, ...scenario.steps]
+            if (!scenario.examples.length) {
+               runSteps(combinedSteps, context.scenario, context.examples)
+            } else {
+               for (const examples of scenario.examples) {
+                  const len = examples.length
+                  for (const [index, data] of examples.entries()) {
+                     adapter.createSuite(
+                        `Example ${index + 1} of ${len}`,
+                        () => {
+                           runSteps(combinedSteps, scenario, [], data)
+                        },
+                     )
+                  }
                }
             }
+         } finally {
+            setContext(previous)
          }
-      } finally {
-         setContext(previous)
-      }
-   })
+      })
+   }
 }
 
-function feature(name: string, fn: () => void) {
-   describe(name, () => {
-      const scenario = new Scenario(name)
-      const previous = setContext({
-         scenario,
-         examples: [],
+function createFeature(adapter: TestSuiteAdapter) {
+   return function feature(name: string, fn: () => void) {
+      adapter.createSuite(name, () => {
+         const scenario = new Scenario(name)
+         const previous = setContext({
+            scenario,
+            examples: [],
+         })
+         try {
+            fn()
+         } finally {
+            setContext(previous)
+         }
       })
-      try {
-         fn()
-      } finally {
-         setContext(previous)
-      }
-   })
+   }
 }
 
 function background(fn: () => void) {
@@ -161,7 +166,7 @@ function examples(data: any[]) {
    context.scenario.addExamples(data)
 }
 
-function createStep(steps: Steps) {
+function createStep(steps: Steps, adapter: TestSuiteAdapter) {
    return function step(name: string, step: string, ...args: readonly any[]) {
       const { scenario } = context
       scenario.addStep(() => {
@@ -179,17 +184,24 @@ function createStep(steps: Steps) {
          const testName = steps.getTestName(step, parsedArgs)
          const impl = steps.getImplementation(step)
          if (testName) {
-            it(`${name} ${testName}`, async () => {
-               if (scenario.failed) {
-                  throw new Error("Previous step failed")
-               }
-               try {
-                  await impl(...parsedArgs)
-               } catch (e) {
-                  scenario.markAsFailed()
-                  throw e
-               }
-            })
+            adapter.createTest(
+               `${name} ${testName}`,
+               async function (this: any) {
+                  if (scenario.failed) {
+                     if (adapter.skipTest) {
+                        adapter.skipTest(this)
+                     } else {
+                        throw new Error("Previous step failed")
+                     }
+                  }
+                  try {
+                     await impl(...parsedArgs)
+                  } catch (e) {
+                     scenario.markAsFailed()
+                     throw e
+                  }
+               },
+            )
          }
       })
    }
@@ -263,41 +275,45 @@ class Steps {
    }
 }
 
-interface Options {}
+export function createTestSuiteFactory(adapter: TestSuiteAdapter) {
+   function createTestSuite(): TestSuite<any>
+   function createTestSuite<T extends object>(
+      options: { default: T } & TestSuiteOptions,
+   ): TestSuite<T>
+   function createTestSuite<T extends object>(
+      steps: T,
+      options?: TestSuiteOptions,
+   ): TestSuite<T>
+   function createTestSuite<T extends object>(
+      stepsOrOptions?: {
+         default?: T
+         steps?: T
+      },
+      options = stepsOrOptions,
+   ): TestSuite<any> {
+      const steps = new Steps(
+         arguments.length > 1
+            ? stepsOrOptions
+            : stepsOrOptions?.default ?? stepsOrOptions,
+      )
+      const step = createStep(steps, adapter)
+      const feature = createFeature(adapter)
+      const scenario = createScenario(adapter)
 
-export function createTestSuite(): TestSuite<any>
-export function createTestSuite<T extends object>(
-   options: { default: T } & Options,
-): TestSuite<T>
-export function createTestSuite<T extends object>(
-   steps: T,
-   options?: Options,
-): TestSuite<T>
-export function createTestSuite<T extends object>(
-   stepsOrOptions?: {
-      default?: T
-      steps?: T
-   },
-   options = stepsOrOptions,
-): TestSuite<any> {
-   const steps = new Steps(
-      arguments.length > 1
-         ? stepsOrOptions
-         : stepsOrOptions?.default ?? stepsOrOptions,
-   )
-   const step = createStep(steps)
+      return {
+         given: step.bind(null, "Given"),
+         when: step.bind(null, "When"),
+         then: step.bind(null, "Then"),
+         and: step.bind(null, "And"),
+         but: step.bind(null, "But"),
+         examples,
+         feature,
+         scenario,
+         background,
+         describe: feature,
+         suite: scenario,
+      } as any
+   }
 
-   return {
-      given: step.bind(null, "Given"),
-      when: step.bind(null, "When"),
-      then: step.bind(null, "Then"),
-      and: step.bind(null, "And"),
-      but: step.bind(null, "But"),
-      examples,
-      feature,
-      scenario,
-      background,
-      describe: feature,
-      suite: scenario
-   } as any
+   return createTestSuite
 }
