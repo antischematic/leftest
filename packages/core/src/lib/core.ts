@@ -263,16 +263,28 @@ class Steps {
    }
 }
 
+interface Options {}
+
 export function createTestSuite(): TestSuite<any>
-export function createTestSuite<T extends object>(options: {
-   default?: T
-   steps?: T
-}): TestSuite<T>
-export function createTestSuite<T extends object>(options?: {
-   default?: T
-   steps?: T
-}): TestSuite<any> {
-   const steps = new Steps(options?.steps ?? options?.default)
+export function createTestSuite<T extends object>(
+   options: { default: T } & Options,
+): TestSuite<T>
+export function createTestSuite<T extends object>(
+   steps: T,
+   options?: Options,
+): TestSuite<T>
+export function createTestSuite<T extends object>(
+   stepsOrOptions?: {
+      default?: T
+      steps?: T
+   },
+   options = stepsOrOptions,
+): TestSuite<any> {
+   const steps = new Steps(
+      arguments.length > 1
+         ? stepsOrOptions
+         : stepsOrOptions?.default ?? stepsOrOptions,
+   )
    const step = createStep(steps)
 
    return {
@@ -286,5 +298,6 @@ export function createTestSuite<T extends object>(options?: {
       scenario,
       background,
       describe: feature,
+      suite: scenario
    } as any
 }

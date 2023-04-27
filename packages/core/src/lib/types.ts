@@ -66,8 +66,8 @@ export interface TestSuite<T> {
    examples(data: unknown extends T ? any[] : ExtractAllData<T>[]): void
    feature(tags: string, name: string, fn: () => void): void
    feature(name: string, fn: () => void): void
-   describe(tags: string, name: string, fn: () => void): void
    describe(name: string, fn: () => void): void
+   suite(name: string, fn: () => void): void
    background(fn: () => void): void
    scenario(tags: string, name: string, fn: () => void): void
    scenario(name: string, fn: () => void): void

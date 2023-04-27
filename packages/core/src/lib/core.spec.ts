@@ -1,11 +1,15 @@
 import { createTestSuite } from "./core"
-import { afterAll, expect } from "vitest"
-import { default as steps, log } from "./steps.example"
+import { afterAll, expect, beforeAll, vi } from "vitest"
+import steps from "./steps.example"
 
-const { describe, scenario, given, when, then, examples, background } =
-   createTestSuite({ steps })
+const { feature, scenario, given, when, then, examples, background } =
+   createTestSuite(steps)
 
-describe("Test feature", () => {
+feature("Test feature", () => {
+   beforeAll(() => {
+      vi.spyOn(console, "log").mockImplementation(() => {})
+   })
+
    background(() => {
       given("I run a test")
    })
@@ -28,15 +32,19 @@ describe("Test feature", () => {
 })
 
 afterAll(() => {
-   expect(log).toHaveBeenCalledWith("test running")
-   expect(log).toHaveBeenCalledWith("hello")
-   expect(log).toHaveBeenCalledWith("inline")
-   expect(log).toHaveBeenCalledWith("example args 1")
-   expect(log).toHaveBeenCalledWith("example args 2")
-   expect(log).toHaveBeenCalledWith(123)
-   expect(log).toHaveBeenCalledWith(987)
-   expect(log).toHaveBeenCalledWith(879)
-   expect(log).toHaveBeenCalledWith(789)
-   expect(log).toHaveBeenCalledWith(234)
-   expect(log).toHaveBeenCalledWith(null)
+   ;[
+      "test running",
+      "hello",
+      "inline",
+      "example args 1",
+      "example args 2",
+      123,
+      987,
+      879,
+      789,
+      234,
+      null,
+   ].forEach((match) => {
+      expect(console.log).toHaveBeenCalledWith(match)
+   })
 })
