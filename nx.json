@@ -23,5 +23,8 @@
       "test": {
          "inputs": ["default", "^default"]
       }
+   },
+   "targetDependencies": {
+      "build": ["^build"]
    }
 }

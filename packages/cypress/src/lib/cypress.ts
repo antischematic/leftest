@@ -1,14 +1,14 @@
-import { createTestSuiteFactory, TestSuiteAdapter } from "leftest-core"
+import { createTestSuiteFactory, TestSuiteAdapter } from "@antischematic/leftest-core"
 
-import { suite, test, Context } from "mocha"
+import { describe, it, Context } from "mocha"
 
 class CypressTestSuiteAdapter implements TestSuiteAdapter {
    createSuite(name: string, impl: () => void): void {
-      suite(name, impl)
+      describe(name, impl)
    }
 
    createTest(name: string, impl: () => void): void {
-      test(name, impl)
+      it(name, impl)
    }
 
    skipTest(context: Context): void {

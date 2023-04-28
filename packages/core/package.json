@@ -1,5 +1,5 @@
 {
-   "name": "leftest-core",
+   "name": "@antischematic/leftest-core",
    "version": "0.0.1",
    "type": "commonjs"
 }

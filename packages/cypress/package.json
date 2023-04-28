@@ -1,5 +1,12 @@
 {
-   "name": "leftest-cypress",
+   "name": "@antischematic/leftest-cypress",
    "version": "0.0.1",
-   "type": "commonjs"
+   "type": "commonjs",
+   "dependencies": {
+      "@antischematic/leftest-core": "^0.0.1"
+   },
+   "peerDependencies": {
+      "cypress": "^12.0.0",
+      "mocha": "^10.0.0"
+   }
 }

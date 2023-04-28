@@ -1,4 +1,4 @@
-import { createTestSuiteFactory } from "leftest-core"
+import { createTestSuiteFactory } from "./core"
 import { suite, test } from "vitest"
 import { TestSuiteAdapter } from "./types"
 

@@ -1,4 +1,4 @@
-import { TestSuite, TestSuiteAdapter, TestSuiteOptions } from "./types"
+import type { TestSuite, TestSuiteAdapter, TestSuiteOptions } from "./types"
 
 function stripDelimiters(string: string) {
    return string.slice(1, string.length - 1)
@@ -125,10 +125,11 @@ function createScenario(adapter: TestSuiteAdapter) {
                for (const examples of scenario.examples) {
                   const len = examples.length
                   for (const [index, data] of examples.entries()) {
+                     const exampleScenario = new Scenario(index)
                      adapter.createSuite(
                         `Example ${index + 1} of ${len}`,
                         () => {
-                           runSteps(combinedSteps, scenario, [], data)
+                           runSteps(combinedSteps, exampleScenario, [], data)
                         },
                      )
                   }
@@ -168,8 +169,7 @@ function examples(data: any[]) {
 
 function createStep(steps: Steps, adapter: TestSuiteAdapter) {
    return function step(name: string, step: string, ...args: readonly any[]) {
-      const { scenario } = context
-      scenario.addStep(() => {
+      context.scenario.addStep(() => {
          let parsedArgs = args as any[]
          if (!parsedArgs.length) {
             parsedArgs = parseArguments(step, args, steps)
@@ -183,6 +183,7 @@ function createStep(steps: Steps, adapter: TestSuiteAdapter) {
          }
          const testName = steps.getTestName(step, parsedArgs)
          const impl = steps.getImplementation(step)
+         const { scenario } = context
          if (testName) {
             adapter.createTest(
                `${name} ${testName}`,

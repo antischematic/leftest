@@ -8,15 +8,15 @@
       "emitDecoratorMetadata": true,
       "experimentalDecorators": true,
       "importHelpers": true,
-      "target": "es2022",
+      "target": "es2015",
       "module": "esnext",
       "lib": ["es2021", "dom"],
       "skipLibCheck": true,
       "skipDefaultLibCheck": true,
       "baseUrl": ".",
       "paths": {
-         "leftest-core": ["packages/core/src/index.ts"],
-         "leftest-cypress": ["packages/cypress/src/index.ts"]
+         "@antischematic/leftest-core": ["packages/core/src/index.ts"],
+         "@antischematic/leftest-cypress": ["packages/cypress/src/index.ts"]
       }
    },
    "exclude": ["node_modules", "tmp"]
