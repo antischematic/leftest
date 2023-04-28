@@ -73,7 +73,9 @@ export interface TestSuite<T> {
    scenario(name: string, fn: () => void): void
 }
 
-export interface TestSuiteOptions {}
+export interface TestSuiteOptions {
+   stringifyPlaceholderArguments?: boolean
+}
 
 export interface TestSuiteAdapter {
    createSuite(name: string, impl: () => void): void

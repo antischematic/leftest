@@ -175,7 +175,6 @@ function createStep(steps: Steps, adapter: TestSuiteAdapter) {
             parsedArgs = parseArguments(step, args, steps)
          }
          if (!parsedArgs.length) {
-            console.log(JSON.stringify(context.data))
             parsedArgs = steps.getArgsFromObject(step, context.data)
          }
          if (!parsedArgs.length && steps.hasArgs(step)) {
@@ -187,7 +186,7 @@ function createStep(steps: Steps, adapter: TestSuiteAdapter) {
          if (testName) {
             adapter.createTest(
                `${name} ${testName}`,
-               async function (this: any) {
+               function (this: any) {
                   if (scenario.failed) {
                      if (adapter.skipTest) {
                         adapter.skipTest(this)
@@ -196,7 +195,7 @@ function createStep(steps: Steps, adapter: TestSuiteAdapter) {
                      }
                   }
                   try {
-                     await impl(...parsedArgs)
+                     impl(...parsedArgs)
                   } catch (e) {
                      scenario.markAsFailed()
                      throw e
@@ -233,13 +232,10 @@ class Steps {
                   return s
                } else {
                   const val = copy.shift()
-                  switch (val) {
-                     case null:
-                        return "null"
-                     case undefined:
-                        return "undefined"
-                     default:
-                        return JSON.stringify(val)
+                  if (this.options.stringifyPlaceholderArguments) {
+                     return JSON.stringify(val)
+                  } else {
+                     return typeof val === "string" ? val : Array.isArray(val) ? val.join() : val
                   }
                }
             })
@@ -263,7 +259,7 @@ class Steps {
       return this.normalNames[normalize(step)]?.vars.length > 1
    }
 
-   constructor(private steps: any) {
+   constructor(private steps: any, private options: TestSuiteOptions) {
       this.normalNames = {}
 
       for (const [name, impl] of Object.entries(steps)) {
@@ -289,13 +285,15 @@ export function createTestSuiteFactory(adapter: TestSuiteAdapter) {
       stepsOrOptions?: {
          default?: T
          steps?: T
-      },
-      options = stepsOrOptions,
+      } & TestSuiteOptions,
+      options: TestSuiteOptions = stepsOrOptions ?? {},
    ): TestSuite<any> {
+      options.stringifyPlaceholderArguments ??= true
       const steps = new Steps(
          arguments.length > 1
             ? stepsOrOptions
             : stepsOrOptions?.default ?? stepsOrOptions,
+         options
       )
       const step = createStep(steps, adapter)
       const feature = createFeature(adapter)
