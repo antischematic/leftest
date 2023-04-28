@@ -29,14 +29,14 @@ feature("My awesome new feature", () => {
       given("I visit '/my-awesome-page'")
       when("I press the button [5] times")
       then("Something <awesome> happens")
-   })
 
-   examples([
-      { awesome: "hello world" },
-      { awesome: 1337 },
-      { awesome: true },
-      { awesome: ["foo", "bar"] },
-   ])
+      examples([
+         { awesome: "hello world" },
+         { awesome: 1337 },
+         { awesome: true },
+         { awesome: ["foo", "bar"] },
+      ])
+   })
 })
 ```
 
@@ -84,13 +84,13 @@ feature("My awesome new feature", () => {
       given("I visit <page>", "/my-awesome-page")
       when("I press the button <several> times", 5)
       then("Something <awesome> happens")
-   })
 
-   examples([
-      { awesome: "hello world" },
-      { awesome: 1337 },
-      { awesome: true },
-      { awesome: ["foo", "bar"] },
-   ])
+      examples([
+         { awesome: "hello world" },
+         { awesome: 1337 },
+         { awesome: true },
+         { awesome: ["foo", "bar"] },
+      ])
+   })
 })
 ```
