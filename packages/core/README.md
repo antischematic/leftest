@@ -1,11 +1,51 @@
-# core
+# @antischematic/leftest-core
 
-This library was generated with [Nx](https://nx.dev).
+Shift-Left testing for JavaScript.
 
-## Building
+## Installation
 
-Run `nx build core` to build the library.
+```bash
+npm add @antischematic/leftest-core
+```
 
-## Running unit tests
+## Usage
 
-Run `nx test core` to execute the unit tests via [Jest](https://jestjs.io).
+Create a `TestSuiteAdapter` for your favourite testing library.
+
+```ts
+import {
+   createTestSuiteFactory,
+   TestSuiteAdapter,
+} from "@antischematic/leftest-core"
+import { suite, test } from "vitest"
+
+class VitestAdapter implements TestSuiteAdapter {
+   createSuite(name: string, impl: () => void): void {
+      suite(name, impl)
+   }
+
+   createTest(name: string, impl: () => void): void {
+      test(name, impl)
+   }
+
+   skipTest(): void {
+      // add library specific hook for skipping tests after an error
+      // optional, throws error by default
+   }
+}
+
+export const createTestSuite = createTestSuiteFactory(new VitestAdapter())
+```
+
+Then import your `createTestSuite` implementation into your feature files. That's it!
+
+```ts
+import { createTestSuite } from "leftest-custom"
+
+const { feature, scenario, given, when, then, and, but, examples, background } =
+   createTestSuite()
+```
+
+---
+
+Made a new test suite adapter? Pull requests welcome!
