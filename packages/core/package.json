@@ -1,5 +1,5 @@
 {
    "name": "@antischematic/leftest-core",
-   "version": "0.0.1",
-   "type": "commonjs"
+   "version": "0.0.2",
+   "type": "module"
 }

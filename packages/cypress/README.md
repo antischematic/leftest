@@ -12,19 +12,21 @@ npm add @antischematic/leftest-cypress
 
 > This library **requires** Cypress to be configured with `testIsolation: false`. [Read more](https://docs.cypress.io/guides/core-concepts/test-isolation)
 
-Define your feature specs
+Define your feature specs. Tag new features and/or scenarios with `~todo` to prevent them running.
 
 ```ts
-import { createTestSuite } from "@antischematic/leftest-cypress"
+import { createTestSuite, todo } from "@antischematic/leftest-cypress"
 
 const { feature, scenario, given, when, then, examples, background } =
    createTestSuite()
 
+~todo
 feature("My awesome new feature", () => {
    background(() => {
       given("I am logged in as 'Bob'")
    })
 
+   ~todo
    scenario("User can do awesome things", () => {
       given("I visit '/my-awesome-page'")
       when("I press the button [5] times")

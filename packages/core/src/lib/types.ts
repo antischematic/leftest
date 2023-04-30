@@ -78,7 +78,13 @@ export interface TestSuiteOptions {
 }
 
 export interface TestSuiteAdapter {
-   createSuite(name: string, impl: () => void): void
+   createSuite(name: string, impl: () => void, flag: Flag): void
    createTest(name: string, impl: () => void): void
    skipTest?(context: any): void
+}
+
+export enum Flag {
+   DEFAULT,
+   SKIP,
+   ONLY
 }

@@ -1,3 +1,4 @@
+import { Flag } from "./types"
 import type { TestSuite, TestSuiteAdapter, TestSuiteOptions } from "./types"
 
 function stripDelimiters(string: string) {
@@ -107,8 +108,19 @@ function runSteps(
    }
 }
 
+function getFlag(tags: Set<any>): Flag {
+   if (tags.has(`${skip}`)) {
+      return Flag.SKIP
+   }
+   if (tags.has(`${only}`)) {
+      return Flag.ONLY
+   }
+   return Flag.DEFAULT
+}
+
 function createScenario(adapter: TestSuiteAdapter) {
    return function scenario(name: string, fn: () => void) {
+      const flag = getFlag(flushTags())
       const backgroundSteps = context.scenario.steps
       adapter.createSuite(name, function () {
          const scenario = new Scenario(name)
@@ -131,6 +143,7 @@ function createScenario(adapter: TestSuiteAdapter) {
                         () => {
                            runSteps(combinedSteps, exampleScenario, [], data)
                         },
+                        Flag.DEFAULT
                      )
                   }
                }
@@ -138,12 +151,14 @@ function createScenario(adapter: TestSuiteAdapter) {
          } finally {
             setContext(previous)
          }
-      })
+      }, flag)
    }
 }
 
 function createFeature(adapter: TestSuiteAdapter) {
    return function feature(name: string, fn: () => void) {
+      const flag = getFlag(flushTags())
+
       adapter.createSuite(name, () => {
          const scenario = new Scenario(name)
          const previous = setContext({
@@ -155,20 +170,23 @@ function createFeature(adapter: TestSuiteAdapter) {
          } finally {
             setContext(previous)
          }
-      })
+      }, flag)
    }
 }
 
 function background(fn: () => void) {
+   flushTags()
    fn()
 }
 
 function examples(data: any[]) {
+   flushTags()
    context.scenario.addExamples(data)
 }
 
 function createStep(steps: Steps, adapter: TestSuiteAdapter) {
    return function step(name: string, step: string, ...args: readonly any[]) {
+      flushTags()
       context.scenario.addStep(() => {
          let parsedArgs = args as any[]
          if (!parsedArgs.length) {
@@ -271,6 +289,38 @@ class Steps {
       }
    }
 }
+
+const tags = [] as any[]
+
+function flushTags(): Set<string> {
+   const flushed = new Set(tags)
+   tags.length = 0
+   return flushed
+}
+
+export function createTags(): { [key: string]: any } {
+   return new Proxy({}, {
+      get(t, p) {
+         return {
+            [Symbol.toPrimitive](hint: string) {
+               tags.push(p)
+               if (hint === "string" || hint === "default") {
+                  return p
+               }
+               return 0
+            }
+         }
+      }
+   })
+}
+
+let registeredTags = [] as any
+
+export function registerTags(tags: string[]) {
+   registeredTags = tags
+}
+
+export const { only, skip } = createTags()
 
 export function createTestSuiteFactory(adapter: TestSuiteAdapter) {
    function createTestSuite(): TestSuite<any>

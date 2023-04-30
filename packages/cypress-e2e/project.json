@@ -1,0 +1,27 @@
+{
+   "name": "cypress-e2e",
+   "$schema": "../../node_modules/nx/schemas/project-schema.json",
+   "sourceRoot": "packages/cypress-e2e/src",
+   "projectType": "application",
+   "targets": {
+      "e2e": {
+         "executor": "@nx/cypress:cypress",
+         "options": {
+            "cypressConfig": "packages/cypress-e2e/cypress.config.ts",
+            "testingType": "e2e"
+         },
+         "configurations": {
+            "production": {}
+         }
+      },
+      "lint": {
+         "executor": "@nx/linter:eslint",
+         "outputs": ["{options.outputFile}"],
+         "options": {
+            "lintFilePatterns": ["packages/cypress-e2e/**/*.{js,ts}"]
+         }
+      }
+   },
+   "tags": [],
+   "implicitDependencies": ["leftest-cypress"]
+}

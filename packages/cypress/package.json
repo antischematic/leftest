@@ -1,9 +1,9 @@
 {
    "name": "@antischematic/leftest-cypress",
-   "version": "0.0.1",
-   "type": "commonjs",
+   "version": "0.0.2",
+   "type": "module",
    "dependencies": {
-      "@antischematic/leftest-core": "^0.0.1"
+      "@antischematic/leftest-core": "^0.0.2"
    },
    "peerDependencies": {
       "cypress": "^12.0.0",

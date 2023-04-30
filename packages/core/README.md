@@ -16,12 +16,22 @@ Create a `TestSuiteAdapter` for your favourite testing library.
 import {
    createTestSuiteFactory,
    TestSuiteAdapter,
+   Flag
 } from "@antischematic/leftest-core"
 import { suite, test } from "vitest"
 
 class VitestAdapter implements TestSuiteAdapter {
-   createSuite(name: string, impl: () => void): void {
-      suite(name, impl)
+   createSuite(name: string, impl: () => void, flag: Flag): void {
+      switch (flag) {
+         case Flag.SKIP:
+            suite.skip(name, impl)
+            break
+         case Flag.ONLY:
+            suite.only(name, impl)
+            break
+         case Flag.DEFAULT:
+            suite(name, impl)
+      }
    }
 
    createTest(name: string, impl: () => void): void {
