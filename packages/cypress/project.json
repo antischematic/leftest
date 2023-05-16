@@ -11,7 +11,11 @@
             "outputPath": "dist/packages/cypress",
             "main": "packages/cypress/src/index.ts",
             "tsConfig": "packages/cypress/tsconfig.lib.json",
-            "assets": [],
+            "assets": [{
+              "input": "packages/cypress",
+              "glob": "README.md",
+              "output": "."
+            }],
             "project": "packages/cypress/package.json",
             "compiler": "tsc"
          }

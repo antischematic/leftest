@@ -11,7 +11,11 @@
             "outputPath": "dist/packages/core",
             "main": "packages/core/src/index.ts",
             "tsConfig": "packages/core/tsconfig.lib.json",
-            "assets": [],
+           "assets": [{
+             "input": "packages/core",
+             "glob": "README.md",
+             "output": "."
+           }],
             "project": "packages/core/package.json",
             "compiler": "tsc"
          }

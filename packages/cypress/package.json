@@ -1,6 +1,16 @@
 {
    "name": "@antischematic/leftest-cypress",
+   "description": "Shift-Left Testing for Cypress",
    "version": "0.0.3",
+   "keywords": ["Leftest", "Cypress", "Test", "Testing", "BDD", "GWT", "TypeScript"],
+   "license": "MIT",
+   "repository": {
+      "type": "git",
+      "url": "https://github.com/antischematic/leftest.git"
+   },
+   "author": {
+      "name": "Michael Muscat"
+   },
    "type": "module",
    "peerDependencies": {
       "mocha": "^10.0.0",
