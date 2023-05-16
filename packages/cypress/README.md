@@ -218,7 +218,7 @@ The `beforeScenario`, `beforeStep`, `afterScenario` and `afterStep` hooks can be
 import { beforeScenario } from "@antischematic/leftest"
 
 beforeScenario(() => {
-   cy.spy(console, "log")
+   cy.viewport("iphone-6")
 })
 ```
 
@@ -227,7 +227,7 @@ beforeScenario(() => {
 Hooks can be configured to run on specific features, scenarios or examples. Combine `and`, `or`, `eq` and `not` matchers to match different tag combinations.
 
 ```ts
-import { beforeScenario, getTags, eq } from "@antischematic/leftest"
+import { beforeScenario, getTags, and, eq, not } from "@antischematic/leftest"
 
 const { mobile, tablet } = getTags()
 
