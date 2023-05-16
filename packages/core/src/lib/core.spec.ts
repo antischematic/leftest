@@ -1,19 +1,24 @@
-import { afterAll, expect, beforeAll, vi } from "vitest"
-import { createTestSuite } from "./adapter.example"
+// noinspection BadExpressionStatementJS
+
+import { createTestSuite, background, feature, scenario } from "./core"
+import { custom, include, notThis } from "./tags.example"
 import steps from "./steps.example"
 
-const { feature, scenario, given, when, then, examples, background } =
-   createTestSuite(steps)
+const { given, when, then, examples } = createTestSuite(steps)
 
 feature("Test feature", () => {
-   beforeAll(() => {
-      vi.spyOn(console, "log").mockImplementation(() => {})
-   })
-
    background(() => {
       given("I run a test")
    })
 
+   ~include
+   ~notThis
+   scenario("Explodes", () => {
+      given("I explode")
+   })
+
+   ~custom
+   ~include
    scenario("Can run test", () => {
       when("I run a test with <args> and <hello>", "hello", 13)
    })
@@ -21,30 +26,21 @@ feature("Test feature", () => {
    scenario("Can run a test with examples", () => {
       given('I run a test with "inline" and [null]')
       when("I run a test with <args> and <hello>")
+      when("I run a test with <args> and <renamed>")
       then("I run a test with [123] and [456]")
       then("I run a test with <args> and <hello>", 987, 879)
+      then("I run a test with <args> and <hello>", 987, 879)
 
+      ~notThis
       examples([
          { args: "example args 1", hello: 234 },
          { args: "example args 2", hello: 789 },
       ])
-   })
-})
 
-afterAll(() => {
-   ;[
-      "test running",
-      "hello",
-      "inline",
-      "example args 1",
-      "example args 2",
-      123,
-      987,
-      879,
-      789,
-      234,
-      null,
-   ].forEach((match) => {
-      expect(console.log).toHaveBeenCalledWith(match)
+      ~include
+      examples([
+         { args: "example args 1", renamed: 234, hello: 0 },
+         { args: "example args 2", hello: 789, renamed: 0 },
+      ])
    })
 })

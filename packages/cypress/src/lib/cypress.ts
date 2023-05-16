@@ -1,9 +1,14 @@
-import { createTestSuiteFactory, Flag, TestSuiteAdapter } from "@antischematic/leftest-core"
+import {
+   Flag,
+   setAdapter,
+   setTags,
+   TestSuiteAdapter,
+} from "@antischematic/leftest"
 
 import { Context } from "mocha"
 
-class CypressTestSuiteAdapter implements TestSuiteAdapter {
-   createSuite(name: string, impl: () => void, flag: Flag): void {
+export class CypressTestSuiteAdapter implements TestSuiteAdapter {
+   suite(name: string, impl: () => void, flag: Flag): void {
       switch (flag) {
          case Flag.SKIP:
             describe.skip(name, impl)
@@ -16,13 +21,30 @@ class CypressTestSuiteAdapter implements TestSuiteAdapter {
       }
    }
 
-   createTest(name: string, impl: () => void): void {
+   test(name: string, impl: () => void): void {
       it(name, impl)
    }
 
-   skipTest(context: Context): void {
+   skip(context: Context): void {
       context.skip()
+   }
+
+   beforeSuite(impl: () => void): void {
+      before(impl)
+   }
+
+   beforeTest(impl: () => void): void {
+      beforeEach(impl)
+   }
+
+   afterSuite(impl: () => void): void {
+      after(impl)
+   }
+
+   afterTest(impl: () => void): void {
+      afterEach(impl)
    }
 }
 
-export const createTestSuite = createTestSuiteFactory(new CypressTestSuiteAdapter())
+setAdapter(new CypressTestSuiteAdapter())
+setTags(Cypress.env("LEFTEST_TAGS") ?? "")

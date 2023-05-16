@@ -6,5 +6,5 @@ Shift-Left Testing for JavaScript.
 
 | Framework | Package Name                          |
 | --------- | ------------------------------------- |
-| Core      | [leftest-core](./packages/core)       |
+| Core      | [leftest](./packages/core)            |
 | Cypress   | [leftest-cypress](./packages/cypress) |

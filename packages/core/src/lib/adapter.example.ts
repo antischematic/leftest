@@ -1,9 +1,8 @@
-import { createTestSuiteFactory } from "./core"
-import { suite, test } from "vitest"
+import { suite, test, beforeAll, afterAll, beforeEach, afterEach } from "vitest"
 import { Flag, TestSuiteAdapter } from "./types"
 
-class VitestAdapter implements TestSuiteAdapter {
-   createSuite(name: string, impl: () => void, flag: Flag): void {
+export class VitestAdapter implements TestSuiteAdapter {
+   suite(name: string, impl: () => void, flag: Flag): void {
       switch (flag) {
          case Flag.SKIP:
             suite.skip(name, impl)
@@ -16,9 +15,23 @@ class VitestAdapter implements TestSuiteAdapter {
       }
    }
 
-   createTest(name: string, impl: () => void): void {
+   test(name: string, impl: () => void): void {
       test(name, impl)
    }
-}
 
-export const createTestSuite = createTestSuiteFactory(new VitestAdapter())
+   beforeSuite(impl: () => void): void {
+      beforeAll(impl)
+   }
+
+   afterSuite(impl: () => void): void {
+      afterAll(impl)
+   }
+
+   beforeTest(impl: () => void): void {
+      beforeEach(impl)
+   }
+
+   afterTest(impl: () => void): void {
+      afterEach(impl)
+   }
+}

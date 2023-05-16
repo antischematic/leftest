@@ -2,10 +2,16 @@
 
 Shift-Left Testing for Cypress
 
-## Installation
+## Setup
 
 ```bash
 npm add @antischematic/leftest-cypress
+```
+
+Import `@antischematic/leftest-cypress` in your support file.
+
+```ts
+import "@antischematic/leftest-cypress"
 ```
 
 ## Usage
@@ -15,10 +21,15 @@ npm add @antischematic/leftest-cypress
 Define your feature specs. Tag new features and/or scenarios with `~todo` to prevent them running.
 
 ```ts
-import { createTestSuite, todo } from "@antischematic/leftest-cypress"
+import {
+   createTestSuite,
+   feature,
+   scenario,
+   background,
+   todo,
+} from "@antischematic/leftest"
 
-const { feature, scenario, given, when, then, examples, background } =
-   createTestSuite()
+const { given, when, then, examples } = createTestSuite()
 
 ~todo
 feature("My awesome new feature", () => {
@@ -71,11 +82,15 @@ export default {
 Import steps into your feature and (optionally) extract placeholder arguments.
 
 ```ts
-import { createTestSuite } from "@antischematic/leftest-cypress"
+import {
+   createTestSuite,
+   feature,
+   scenario,
+   background,
+} from "@antischematic/leftest"
 import steps from "./steps"
 
-const { feature, scenario, given, when, then, examples, background } =
-   createTestSuite(steps) // that's it!
+const { given, when, then, examples } = createTestSuite(steps)
 
 feature("My awesome new feature", () => {
    background(() => {
@@ -94,5 +109,129 @@ feature("My awesome new feature", () => {
          { awesome: ["foo", "bar"] },
       ])
    })
+})
+```
+
+## Tags
+
+Features, scenarios and examples can be tagged to control how tests run.
+
+### Skip or isolate tests
+
+Use the `todo` and `skip` tags to skip specific features, scenarios or examples.
+
+```ts
+import {
+   feature,
+   scenario,
+   createTestSuite,
+   todo,
+} from "@antischematic/leftest"
+
+const { given } = createTestSuite()
+
+~todo
+feature("My new awesome feature", () => {
+   scenario("User can't do awesome things yet", () => {
+      given("I am logged in")
+   })
+})
+```
+
+Use the `only` tag to run specific features, scenarios or examples. All other tests will be marked as skipped.
+
+```ts
+import {
+   feature,
+   scenario,
+   createTestSuite,
+   todo,
+} from "@antischematic/leftest"
+
+const { given } = createTestSuite()
+
+feature("My new awesome feature", () => {
+   ~only
+   scenario("User can do awesome things", () => {
+      given("I am logged in")
+   })
+
+   scenario("This scenario won't run", () => {
+      given("I am logged in")
+   })
+})
+```
+
+### Include or exclude tests
+
+Features, scenarios or examples can be included or excluded for a test run.
+
+```bash
+TAGS=include,^butNotThisOne cypress run
+```
+
+To enable this feature, add the `LEFTEST_TAGS` entry to your cypress config:
+
+```ts
+import { defineConfig } from "cypress"
+
+export default defineConfig({
+   env: {
+      // Set this
+      LEFTEST_TAGS: process.env.TAGS,
+   },
+})
+```
+
+Only tests with matching tags will be executed.
+
+```ts
+import {
+   feature,
+   scenario,
+   createTestSuite,
+   getTags,
+} from "@antischematic/leftest"
+
+const { given } = createTestSuite()
+const { include, butNotThisOne } = getTags()
+
+feature("My new awesome feature", () => {
+   ~include
+   scenario("User can do awesome things", () => {
+      given("I am logged in")
+   })
+
+   ~include
+   ~butNotThisOne
+   scenario("This scenario won't run", () => {
+      given("I am logged in")
+   })
+})
+```
+
+## Hooks
+
+The `beforeScenario`, `beforeStep`, `afterScenario` and `afterStep` hooks can be used to customise test behaviour.
+
+```ts
+import { beforeScenario } from "@antischematic/leftest"
+
+beforeScenario(() => {
+   cy.spy(console, "log")
+})
+```
+
+### Tagged hooks
+
+Hooks can be configured to run on specific features, scenarios or examples. Combine `and`, `or`, `eq` and `not` matchers to match different tag combinations.
+
+```ts
+import { beforeScenario, getTags, eq } from "@antischematic/leftest"
+
+const { mobile, tablet } = getTags()
+
+beforeScenario(and(eq(mobile), not(tablet)), () => {
+   cy.viewport("iphone-6")
 })
 ```

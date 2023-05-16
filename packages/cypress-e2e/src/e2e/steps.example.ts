@@ -1,3 +1,6 @@
+import { beforeScenario, beforeStep, eq } from "@antischematic/leftest"
+import { custom } from "../fixtures/tags.example"
+
 export default {
    "I run a test": () => {
       console.log("test running")
@@ -10,4 +13,24 @@ export default {
       console.log(args)
       console.log(hello)
    },
+
+   // "I run a test with <args> and <hi>": () => {},
+   // "I run a test with <args> and <yea>": () => {},
+
+   "I explode": () => {
+      throw new Error("Boom")
+   },
 }
+
+beforeScenario(() => {
+   console.log("runs before")
+})
+
+beforeScenario(eq(custom), (scenario) => {
+   console.log("only if custom?")
+   console.log(scenario.name)
+})
+
+beforeStep(() => {
+   console.log("before step")
+})

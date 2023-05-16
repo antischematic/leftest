@@ -1,2 +1,27 @@
-export { createTestSuiteFactory, skip, only, skip as todo, createTags, registerTags } from "./lib/core"
-export { TestSuiteAdapter, TestSuiteOptions, TestSuite, Flag } from "./lib/types"
+export {
+   skip,
+   only,
+   todo,
+   getTags,
+   setTags,
+   setAdapter,
+   Scenario,
+   afterScenario,
+   beforeScenario,
+   beforeStep,
+   afterStep,
+   and,
+   eq,
+   not,
+   or,
+   background,
+   createTestSuite,
+   feature,
+   scenario,
+} from "./lib/core"
+export {
+   TestSuiteAdapter,
+   TestSuiteOptions,
+   TestSuite,
+   Flag,
+} from "./lib/types"

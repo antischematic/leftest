@@ -15,7 +15,7 @@
       "skipDefaultLibCheck": true,
       "baseUrl": ".",
       "paths": {
-         "@antischematic/leftest-core": ["packages/core/src/index.ts"],
+         "@antischematic/leftest": ["packages/core/src/index.ts"],
          "@antischematic/leftest-cypress": ["packages/cypress/src/index.ts"]
       }
    },

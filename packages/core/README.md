@@ -1,11 +1,11 @@
-# @antischematic/leftest-core
+# @antischematic/leftest
 
 Shift-Left testing for JavaScript.
 
-## Installation
+## Setup
 
 ```bash
-npm add @antischematic/leftest-core
+npm add @antischematic/leftest
 ```
 
 ## Usage
@@ -16,11 +16,11 @@ Create a `TestSuiteAdapter` for your favourite testing library.
 import {
    createTestSuiteFactory,
    TestSuiteAdapter,
-   Flag
-} from "@antischematic/leftest-core"
-import { suite, test } from "vitest"
+   Flag,
+} from "@antischematic/leftest"
+import { suite, test, beforeAll, beforeEach, afterAll, afterEach } from "vitest"
 
-class VitestAdapter implements TestSuiteAdapter {
+class CustomAdapter implements TestSuiteAdapter {
    createSuite(name: string, impl: () => void, flag: Flag): void {
       switch (flag) {
          case Flag.SKIP:
@@ -42,19 +42,28 @@ class VitestAdapter implements TestSuiteAdapter {
       // add library specific hook for skipping tests after an error
       // optional, throws error by default
    }
+
+   beforeSuite(impl: () => void): void {
+      beforeAll(impl)
+   }
+
+   afterSuite(impl: () => void): void {
+      afterAll(impl)
+   }
+
+   beforeTest(impl: () => void): void {
+      beforeEach(impl)
+   }
+
+   afterTest(impl: () => void): void {
+      afterEach(impl)
+   }
 }
 
-export const createTestSuite = createTestSuiteFactory(new VitestAdapter())
+export const configure = configureFactory(new CustomAdapter())
 ```
 
-Then import your `createTestSuite` implementation into your feature files. That's it!
-
-```ts
-import { createTestSuite } from "leftest-custom"
-
-const { feature, scenario, given, when, then, and, but, examples, background } =
-   createTestSuite()
-```
+Then call `configure` in your test suite. That's it!
 
 ---
 

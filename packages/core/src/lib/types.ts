@@ -17,7 +17,9 @@ type ExtractAllData<T> = {
    [key in keyof T]: key extends `${string}<${string}>${string}`
       ? ExtractData<key, T>
       : never
-}[keyof T]
+}[keyof T] & {
+   [key: string]: unknown
+}
 
 type Args<T> = T extends (...args: infer R) => void ? R : []
 
@@ -43,34 +45,53 @@ type ExpandKey<
    TArgs extends unknown[],
 > = T extends `${string}<${string}>${string}` ? ExpandArgs<T, TArgs> : T
 
+type ExpandPlaceholder<T> =
+   T extends `${infer TStart}<${string}>${infer TRemainder}`
+      ? `${TStart}<${string}>${ExpandPlaceholder<TRemainder>}`
+      : ""
+
 export interface TestSuite<T> {
    given<U extends keyof T>(step: U): void
    given<U extends keyof T>(step: ExpandKey<U, Args<T[U]>>): void
    given<U extends keyof T>(step: U, ...params: Args<T[U]>): void
+   given<U extends keyof T>(step: ExpandPlaceholder<U>): void
+   given<U extends keyof T>(
+      step: ExpandPlaceholder<U>,
+      ...params: Args<T[U]>
+   ): void
    when<U extends keyof T>(step: U): void
    when<U extends keyof T>(step: ExpandKey<U, Args<T[U]>>): void
    when<U extends keyof T>(step: U, ...params: Args<T[U]>): void
+   when<U extends keyof T>(step: ExpandPlaceholder<U>): void
+   when<U extends keyof T>(
+      step: ExpandPlaceholder<U>,
+      ...params: Args<T[U]>
+   ): void
    then<U extends keyof T>(step: U): void
    then<U extends keyof T>(step: ExpandKey<U, Args<T[U]>>): void
    then<U extends keyof T>(step: U, ...params: Args<T[U]>): void
+   then<U extends keyof T>(step: ExpandPlaceholder<U>): void
+   then<U extends keyof T>(
+      step: ExpandPlaceholder<U>,
+      ...params: Args<T[U]>
+   ): void
    and<U extends keyof T>(step: U): void
    and<U extends keyof T>(step: ExpandKey<U, Args<T[U]>>): void
    and<U extends keyof T>(step: U, ...params: Args<T[U]>): void
+   and<U extends keyof T>(step: ExpandPlaceholder<U>): void
+   and<U extends keyof T>(
+      step: ExpandPlaceholder<U>,
+      ...params: Args<T[U]>
+   ): void
    but<U extends keyof T>(step: U): void
    but<U extends keyof T>(step: ExpandKey<U, Args<T[U]>>): void
    but<U extends keyof T>(step: U, ...params: Args<T[U]>): void
-   examples(
-      tags: string,
-      data: unknown extends T ? any[] : ExtractAllData<T>[],
+   but<U extends keyof T>(step: ExpandPlaceholder<U>): void
+   but<U extends keyof T>(
+      step: ExpandPlaceholder<U>,
+      ...params: Args<T[U]>
    ): void
    examples(data: unknown extends T ? any[] : ExtractAllData<T>[]): void
-   feature(tags: string, name: string, fn: () => void): void
-   feature(name: string, fn: () => void): void
-   describe(name: string, fn: () => void): void
-   suite(name: string, fn: () => void): void
-   background(fn: () => void): void
-   scenario(tags: string, name: string, fn: () => void): void
-   scenario(name: string, fn: () => void): void
 }
 
 export interface TestSuiteOptions {
@@ -78,13 +99,18 @@ export interface TestSuiteOptions {
 }
 
 export interface TestSuiteAdapter {
-   createSuite(name: string, impl: () => void, flag: Flag): void
-   createTest(name: string, impl: () => void): void
-   skipTest?(context: any): void
+   suite(name: string, impl: () => void, flag: Flag): void
+   test(name: string, impl: () => void): void
+   beforeSuite(impl: () => void): void
+   afterSuite(impl: () => void): void
+   beforeTest(impl: () => void): void
+   afterTest(impl: () => void): void
+   skip?(context: any): void
 }
 
 export enum Flag {
    DEFAULT,
    SKIP,
-   ONLY
+   ONLY,
+   EXCLUDE,
 }
