@@ -2,7 +2,9 @@
    "name": "leftest",
    "version": "0.0.0",
    "license": "MIT",
-   "scripts": {},
+   "scripts": {
+      "pack": "nx run-many --target=build --projects=leftest,leftest-cypress && cd dist/packages/core && npm pack && cd ../cypress && npm pack"
+   },
    "private": true,
    "devDependencies": {
       "@nrwl/eslint-plugin-nx": "15.9.2",
