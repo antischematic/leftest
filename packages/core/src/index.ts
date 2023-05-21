@@ -18,10 +18,14 @@ export {
    createTestSuite,
    feature,
    scenario,
+   isExcluded,
+   isIncluded
 } from "./lib/core"
 export {
    TestSuiteAdapter,
    TestSuiteOptions,
    TestSuite,
    Flag,
+   Tag,
+   TagFilter
 } from "./lib/types"

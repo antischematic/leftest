@@ -95,6 +95,7 @@ export interface TestSuite<T> {
 }
 
 export interface TestSuiteOptions {
+   // @deprecated Alternative method for stringifying placeholder arguments. Don't use this for new tests.
    stringifyPlaceholderArguments?: boolean
 }
 
@@ -113,4 +114,17 @@ export enum Flag {
    SKIP,
    ONLY,
    EXCLUDE,
+}
+
+export interface Tag {
+   name: string
+}
+
+export type TagFilter = (matcher: Tag | TagFilter) => boolean
+
+export interface ReadonlyScenario {
+   readonly name: string
+   readonly failed: boolean
+   readonly steps: readonly unknown[]
+   hasTag(tag: Tag): boolean
 }

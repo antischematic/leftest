@@ -215,23 +215,34 @@ feature("My new awesome feature", () => {
 The `beforeScenario`, `beforeStep`, `afterScenario` and `afterStep` hooks can be used to customise test behaviour.
 
 ```ts
-import { beforeScenario } from "@antischematic/leftest"
+import { beforeStep, isIncluded } from "@antischematic/leftest"
 
-beforeScenario(() => {
-   cy.viewport("iphone-6")
+beforeStep((scenario) => {
+   if (scenario.hasTag(mobile) && !scenario.hasTag(tablet)) {
+      cy.viewport("iphone-6")
+   }
 })
 ```
+
+> Note: These hooks exhibit the same behaviour as `before`/`beforeEach` would with automatic resetting of mocks, viewports and
+> intercepts between each test. Each step creates a new test.
 
 ### Tagged hooks
 
 Hooks can be configured to run on specific features, scenarios or examples. Combine `and`, `or`, `eq` and `not` matchers to match different tag combinations.
 
 ```ts
-import { beforeScenario, getTags, and, eq, not } from "@antischematic/leftest"
+import { beforeStep, getTags, and, eq, not } from "@antischematic/leftest"
 
 const { mobile, tablet } = getTags()
 
-beforeScenario(and(eq(mobile), not(tablet)), () => {
+beforeStep(and(eq(mobile), not(tablet)), () => {
    cy.viewport("iphone-6")
 })
 ```
+
+## Utils
+
+`isIncluded` checks if a tag is included via the `LEFTEST_TAGS` environment variable
+
+`isExcluded` checks if a tag is excluded via the `LEFTEST_TAGS` environment variable

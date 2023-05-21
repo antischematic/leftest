@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, expect, vi } from "vitest"
 import { VitestAdapter } from "./adapter.example"
-import { beforeScenario, beforeStep, eq, setAdapter, setTags } from "./core"
+import { beforeScenario, beforeStep, eq, isIncluded, setAdapter, setTags } from "./core"
 import { custom } from "./tags.example"
 
 setAdapter(new VitestAdapter())
@@ -60,8 +60,13 @@ beforeScenario(() => {
 beforeScenario(eq(custom), (scenario) => {
    console.log("only if custom?")
    console.log(scenario.name)
+
+   scenario.hasTag(custom)
 })
 
 beforeStep(() => {
    console.log("before step")
+   if (isIncluded(custom)) {
+      console.log('custom tag enabled!')
+   }
 })

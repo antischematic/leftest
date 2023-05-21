@@ -1,5 +1,5 @@
-import type { TestSuite, TestSuiteAdapter, TestSuiteOptions } from "./types"
-import { Flag } from "./types"
+import type { Tag, TagFilter, TestSuite, TestSuiteAdapter, TestSuiteOptions } from "./types"
+import { Flag, ReadonlyScenario } from "./types"
 
 function stripDelimiters(string: string) {
    return string.slice(1, string.length - 1)
@@ -53,7 +53,9 @@ enum Type {
 }
 
 export class Scenario {
+   // `true` when one of a scenario's steps have failed
    failed = false
+   // `true` when one of a scenario's steps have failed
    steps: any[] = []
    examples: Map<any[], Set<string>> = new Map()
    scenarios: Map<Scenario, () => void> = new Map()
@@ -77,6 +79,10 @@ export class Scenario {
    getFullName() {
       const parentName: string = this.parent?.getFullName() ?? ""
       return parentName + this.name
+   }
+
+   hasTag(tag: Tag) {
+      return this.tags.has(tag.name)
    }
 
    constructor(
@@ -141,7 +147,7 @@ function runSteps(
    }
 }
 
-function getFlag(tags: Set<any>, noDefaultExclude = false): Flag {
+function getFlag(tags: Set<string>, noDefaultExclude = false): Flag {
    let flag =
       globalThis.LEFTEST_INCLUDED_TAGS.size && !noDefaultExclude
          ? Flag.EXCLUDE
@@ -152,41 +158,59 @@ function getFlag(tags: Set<any>, noDefaultExclude = false): Flag {
    if ([...tags].some((tag) => globalThis.LEFTEST_EXCLUDED_TAGS.has(tag))) {
       flag = Flag.EXCLUDE
    }
-   if (flag !== Flag.EXCLUDE && tags.has(only.tag)) {
+   if (flag !== Flag.EXCLUDE && tags.has(only.name)) {
       return Flag.ONLY
    }
-   if (flag !== Flag.EXCLUDE && (tags.has(skip.tag) || tags.has(todo))) {
+   if (flag !== Flag.EXCLUDE && (tags.has(skip.name) || tags.has(todo.name))) {
       return Flag.SKIP
    }
    return flag
 }
 
 function createTagFn(tags: Set<any>) {
-   return function tag(tagOrFn: any) {
+   return function tag(tagOrFn: Tag | TagFilter): boolean {
       return typeof tagOrFn === "function"
          ? tagOrFn(tag)
-         : tags.has(tagOrFn.tag)
+         : tags.has(tagOrFn.name)
    }
 }
 
+/**
+ * Creates a filter that returns true when both tags or tag expressions are matched
+ * @param a
+ * @param b
+ */
 export function and(a: any, b: any) {
    assertNoTags(and.name)
    return (tag: any) => tag(a) && tag(b)
 }
 
-export function or(a: any, b: any) {
+/**
+ * Creates a filter that returns true when either tag or tag expression are matched
+ * @param a
+ * @param b
+ */
+export function or(a: Tag | TagFilter, b: Tag | TagFilter) {
    assertNoTags(or.name)
-   return (tag: any) => tag(a) || tag(b)
+   return (filter: TagFilter) => filter(a) || filter(b)
 }
 
-export function eq(a: any) {
+/**
+ * Creates a filter that returns true when the given tag is matched.
+ * @param tag
+ */
+export function eq(tag: Tag): (filter: TagFilter) => boolean {
    assertNoTags(eq.name)
-   return (tag: any) => tag(a)
+   return (filter: TagFilter) => filter(tag)
 }
 
-export function not(a: any) {
+/**
+ * Creates a filter that returns true when the given tag or tag expression is not matched.
+ * @param tag
+ */
+export function not(tag: Tag | TagFilter) {
    assertNoTags(not.name)
-   return (tag: any) => !tag(a)
+   return (filter: TagFilter) => !filter(tag)
 }
 
 function runHook(hooks: any, tags: any, scenario: Scenario) {
@@ -524,7 +548,7 @@ Matches:
    }
 }
 
-const tags = [] as any[]
+const tags = [] as string[]
 
 function flushTags(): Set<string> {
    const flushed = new Set(tags)
@@ -551,13 +575,13 @@ function assertContextType(expected: Type, name: string) {
 
 const tagCache = new Map()
 
-export function getTags(): { [key: string]: any } {
+export function getTags(): { [key: string]: Tag } {
    assertContextType(Type.ROOT, getTags.name)
    assertNoTags(getTags.name)
    return new Proxy(
       {},
       {
-         get(_, p) {
+         get(_, p: string) {
             if (tagCache.has(p)) {
                return tagCache.get(p)
             }
@@ -569,7 +593,7 @@ export function getTags(): { [key: string]: any } {
                   }
                   return 0
                },
-               tag: p,
+               name: p,
             }
             tagCache.set(p, tag)
             return tag
@@ -613,70 +637,122 @@ const hooks = {
    afterStep: [] as any[],
 }
 
-type HasTag = (value: any) => boolean
-
+/**
+ * Run code before a scenario is executed only if the scenario has tags matching the filter.
+ * @param filter The tag expression to be matched against
+ * @param fn
+ */
 export function beforeScenario(
-   mask: (tag: HasTag) => boolean,
-   fn: (scenario: Scenario) => void,
+   filter: ((filter: TagFilter) => boolean),
+   fn: (scenario: ReadonlyScenario) => void,
 ): void
-export function beforeScenario(fn: (scenario: Scenario) => void): void
+/**
+ * Run code before every scenario is executed.
+ * @param fn
+ */
+export function beforeScenario(fn: (scenario: ReadonlyScenario) => void): void
 export function beforeScenario(
-   mask: ((tag: HasTag) => boolean) | ((scenario: Scenario) => void),
-   fn?: (scenario: Scenario) => void,
+   filter: ((filter: TagFilter) => boolean) | ((scenario: ReadonlyScenario) => void),
+   fn?: (scenario: ReadonlyScenario) => void,
 ) {
    assertContextType(Type.ROOT, beforeScenario.name)
    assertNoTags(beforeScenario.name)
-   hooks.beforeScenario.push([mask, fn])
+   hooks.beforeScenario.push([filter, fn])
 }
 
+/**
+ * Run code before a step is executed only if the scenario has tags matching the filter.
+ * @param filter The tag expression to be matched against
+ * @param fn
+ */
 export function beforeStep(
-   mask: (tag: HasTag) => boolean,
-   fn: (scenario: Scenario) => void,
+   filter: ((filter: TagFilter) => boolean),
+   fn: (scenario: ReadonlyScenario) => void,
 ): void
-export function beforeStep(fn: (scenario: Scenario) => void): void
+/**
+ * Run code before every step is executed.
+ * @param fn
+ */
+export function beforeStep(fn: (scenario: ReadonlyScenario) => void): void
 export function beforeStep(
-   mask: ((tag: HasTag) => boolean) | ((scenario: Scenario) => void),
-   fn?: (scenario: Scenario) => void,
+   filter: ((filter: TagFilter) => boolean) | ((scenario: ReadonlyScenario) => void),
+   fn?: (scenario: ReadonlyScenario) => void,
 ) {
    assertContextType(Type.ROOT, beforeStep.name)
    assertNoTags(beforeStep.name)
-   hooks.beforeStep.push([mask, fn])
+   hooks.beforeStep.push([filter, fn])
 }
 
+/**
+ * Run code after a scenario is executed only if the scenario has tags matching the filter.
+ * @param filter The tag expression to be matched against
+ * @param fn
+ */
 export function afterScenario(
-   mask: (tag: HasTag) => boolean,
-   fn: (scenario: Scenario) => void,
+   filter: ((filter: TagFilter) => boolean),
+   fn: (scenario: ReadonlyScenario) => void,
 ): void
-export function afterScenario(fn: (scenario: Scenario) => void): void
+/**
+ * Run code after every scenario is executed.
+ * @param fn
+ */
+export function afterScenario(fn: (scenario: ReadonlyScenario) => void): void
 export function afterScenario(
-   mask: ((tag: HasTag) => boolean) | ((scenario: Scenario) => void),
-   fn?: (scenario: Scenario) => void,
+   filter: ((filter: TagFilter) => boolean) | ((scenario: ReadonlyScenario) => void),
+   fn?: (scenario: ReadonlyScenario) => void,
 ) {
    assertContextType(Type.ROOT, afterScenario.name)
    assertNoTags(afterScenario.name)
-   hooks.afterScenario.push([mask, fn])
+   hooks.afterScenario.push([filter, fn])
 }
 
+/**
+ * Run code after a step is executed only if the scenario has tags matching the filter.
+ * @param filter The tag expression to be matched against
+ * @param fn
+ */
 export function afterStep(
-   mask: (tag: HasTag) => boolean,
-   fn: (scenario: Scenario) => void,
+   filter: ((filter: TagFilter) => boolean),
+   fn: (scenario: ReadonlyScenario) => void,
 ): void
-export function afterStep(fn: (scenario: Scenario) => void): void
+/**
+ * Run code after every step is executed.
+ * @param fn
+ */
+export function afterStep(fn: (scenario: ReadonlyScenario) => void): void
 export function afterStep(
-   mask: ((tag: HasTag) => boolean) | ((scenario: Scenario) => void),
-   fn?: (scenario: Scenario) => void,
+   filter: ((filter: TagFilter) => boolean) | ((scenario: ReadonlyScenario) => void),
+   fn?: (scenario: ReadonlyScenario) => void,
 ) {
    assertContextType(Type.ROOT, afterStep.name)
    assertNoTags(afterStep.name)
-   hooks.afterStep.push([mask, fn])
+   hooks.afterStep.push([filter, fn])
 }
 
-export const { only, skip, todo } = getTags()
+export const {
+   // @deprecated Remove before commit. For debugging use only.
+   only,
+   // @deprecated Remove before commit. For debugging use only. For test stubs use the "todo" tag instead.
+   skip,
+   todo
+} = getTags()
 
+/**
+ * Creates an untyped  {@link TestSuite} for writing test stubs. Mark test stubs as {@link todo} so exclude them from test runs until they are implemented.
+ */
 export function createTestSuite(): TestSuite<any>
+/**
+ * Creates a typed {@link TestSuite} from a module import.
+ * @param options
+ */
 export function createTestSuite<T extends object>(
    options: { default: T } & TestSuiteOptions,
 ): TestSuite<T>
+/**
+ * Creates a typed {@link TestSuite} from the given steps.
+ * @param steps
+ * @param options
+ */
 export function createTestSuite<T extends object>(
    steps: T,
    options?: TestSuiteOptions,
@@ -707,4 +783,20 @@ export function createTestSuite<T extends object>(
       but: step.bind(null, "But"),
       examples,
    } as any
+}
+
+/**
+ * Returns true if the tag is included in the current test run.
+ * @param tag
+ */
+export function isIncluded(tag: Tag) {
+   return globalThis.LEFTEST_INCLUDED_TAGS.has(tag.name)
+}
+
+/**
+ Returns true if the tag is excluded in the current test run.
+ @param tag
+ */
+export function isExcluded(tag: Tag) {
+   return globalThis.LEFTEST_EXCLUDED_TAGS.has(tag.name)
 }

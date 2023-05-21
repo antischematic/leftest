@@ -1,5 +1,5 @@
-import { beforeScenario, beforeStep, eq } from "@antischematic/leftest"
-import { custom } from "../fixtures/tags.example"
+import { beforeScenario, beforeStep, eq, isExcluded, isIncluded } from "@antischematic/leftest"
+import { custom, include, notThis } from "../fixtures/tags.example"
 
 export default {
    "I run a test": () => {
@@ -32,5 +32,5 @@ beforeScenario(eq(custom), (scenario) => {
 })
 
 beforeStep(() => {
-   console.log("before step")
+   console.log("before step", isIncluded(include), isExcluded(notThis))
 })
