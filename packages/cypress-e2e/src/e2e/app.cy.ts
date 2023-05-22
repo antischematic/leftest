@@ -8,13 +8,17 @@ import {
    skip,
 } from "@antischematic/leftest"
 import { custom, include, notThis } from "../fixtures/tags.example"
+import { record, replay } from "../support/record"
 import steps from "./steps.example"
 
-const { given, when, then, examples } = createTestSuite(steps)
+const { given, when, then, and, examples } = createTestSuite(steps)
 
+~replay
 feature("Test feature", () => {
    background(() => {
       given("I run a test")
+      and("I load data")
+      and("I load data")
    })
 
    ~include

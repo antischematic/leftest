@@ -122,9 +122,16 @@ export interface Tag {
 
 export type TagFilter = (matcher: Tag | TagFilter) => boolean
 
+export interface ReadonlyFeature {
+   name: string
+   hasTag(tag: Tag): boolean
+}
+
 export interface ReadonlyScenario {
    readonly name: string
    readonly failed: boolean
    readonly steps: readonly unknown[]
+   readonly feature: ReadonlyFeature
+   readonly parent?: ReadonlyScenario
    hasTag(tag: Tag): boolean
 }

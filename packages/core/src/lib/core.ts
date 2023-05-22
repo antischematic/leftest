@@ -77,7 +77,7 @@ export class Scenario {
    }
 
    getFullName() {
-      const parentName: string = this.parent?.getFullName() ?? ""
+      const parentName: string = this.feature?.getFullName() ?? ""
       return parentName + this.name
    }
 
@@ -85,11 +85,17 @@ export class Scenario {
       return this.tags.has(tag.name)
    }
 
+   getEffectiveTags() {
+      const tags = [this.feature.tags, this.tags, ...this.examples.values()].flatMap(tags => Array.from(tags))
+      return new Set(tags)
+   }
+
    constructor(
       readonly type: Type,
       readonly name: string,
       readonly tags: Set<string>,
-      readonly parent: Scenario | undefined,
+      readonly feature: Scenario,
+      readonly parent?: Scenario,
    ) {}
 }
 
@@ -104,7 +110,7 @@ const rootScenario: Scenario = new Scenario(
    Type.ROOT,
    "root",
    new Set(),
-   void 0,
+   void 0 as any,
 )
 
 rootScenario.addStep = function () {
@@ -213,7 +219,7 @@ export function not(tag: Tag | TagFilter) {
    return (filter: TagFilter) => !filter(tag)
 }
 
-function runHook(hooks: any, tags: any, scenario: Scenario) {
+function runHook(hooks: any, tags: Set<string>, scenario: Scenario) {
    for (const [mask, fn = mask] of hooks) {
       if (mask !== fn) {
          const tag = createTagFn(tags)
@@ -264,9 +270,7 @@ export function scenario(name: string, fn: () => void) {
       fn()
       const flag = getFlag(
          tags,
-         [feature.tags, ...scenario.examples.values()].some(
-            (tags) => getFlag(tags) !== Flag.EXCLUDE,
-         ),
+         getFlag(scenario.getEffectiveTags()) !== Flag.EXCLUDE
       )
       if (flag === Flag.EXCLUDE) return
 
@@ -276,7 +280,7 @@ export function scenario(name: string, fn: () => void) {
             function () {
                const combinedSteps = [...backgroundSteps, ...scenario.steps]
                if (!scenario.examples.size) {
-                  addHooks(adapter, scenario, tags)
+                  addHooks(adapter, scenario, new Set([...feature.tags, ...scenario.tags]))
                   runSteps(combinedSteps, feature, scenario, context.examples)
                } else {
                   const total = Array.from(scenario.examples.keys()).flat()
@@ -289,12 +293,13 @@ export function scenario(name: string, fn: () => void) {
                            Type.EXAMPLE,
                            `Example ${count} of ${total}`,
                            exampleTags,
-                           scenario,
+                           scenario.feature,
+                           scenario
                         )
                         adapter.suite(
                            exampleScenario.name,
                            () => {
-                              addHooks(adapter, scenario, tags)
+                              addHooks(adapter, exampleScenario, new Set([feature.tags, scenario.tags, ...scenario.examples.values()].flatMap(tags => Array.from(tags))))
                               runSteps(
                                  combinedSteps,
                                  feature,
@@ -348,8 +353,8 @@ export function feature(name: string, fn: () => void) {
       const flag = getFlag(
          tags,
          [...feature.scenarios.keys()].some(
-            (scenario) => getFlag(scenario.tags) !== Flag.EXCLUDE,
-         ),
+            (scenario) => getFlag(scenario.getEffectiveTags()) !== Flag.EXCLUDE,
+         )
       )
       if (flag === Flag.EXCLUDE) return
       adapter.suite(
@@ -575,7 +580,14 @@ function assertContextType(expected: Type, name: string) {
 
 const tagCache = new Map()
 
-export function getTags(): { [key: string]: Tag } {
+type TagProxy = { [key: string]: Tag }
+
+/**
+ * Returns a proxy that generates a {@link Tag} for each object key
+ * @return TagProxy
+ */
+// IntelliJ doesn't resolve references for index signatures, so leave this return type as `any` for now.
+export function getTags(): any {
    assertContextType(Type.ROOT, getTags.name)
    assertNoTags(getTags.name)
    return new Proxy(

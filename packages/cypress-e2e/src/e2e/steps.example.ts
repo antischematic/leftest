@@ -20,6 +20,12 @@ export default {
    "I explode": () => {
       throw new Error("Boom")
    },
+
+   "I load data": () => {
+      cy.window().then(window => {
+         return window.fetch('https://jsonplaceholder.typicode.com/todos/1')
+      })
+   }
 }
 
 beforeScenario(() => {

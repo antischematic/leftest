@@ -9,4 +9,9 @@ export default defineConfig({
    env: {
       LEFTEST_TAGS: process.env.TAGS,
    },
+   // @ts-ignore
+   cypressReplay: {
+      interceptPattern: ".*/todos/1$",
+      responseDelayOverride: 0,
+   }
 })

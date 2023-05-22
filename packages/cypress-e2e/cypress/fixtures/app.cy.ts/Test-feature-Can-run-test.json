@@ -1,0 +1,74 @@
+{
+    "GET:https://jsonplaceholder.typicode.com/todos/1": [
+        {
+            "body": {
+                "userId": 1,
+                "id": 1,
+                "title": "delectus aut autem",
+                "completed": false
+            },
+            "headers": {
+                "date": "Mon, 22 May 2023 23:27:46 GMT",
+                "content-type": "application/json; charset=utf-8",
+                "transfer-encoding": "chunked",
+                "connection": "keep-alive",
+                "x-powered-by": "Express",
+                "x-ratelimit-limit": "1000",
+                "x-ratelimit-remaining": "999",
+                "x-ratelimit-reset": "1684798072",
+                "access-control-allow-origin": "http://localhost:44329",
+                "vary": "Origin, Accept-Encoding",
+                "access-control-allow-credentials": "true",
+                "cache-control": "max-age=43200",
+                "pragma": "no-cache",
+                "expires": "-1",
+                "x-content-type-options": "nosniff",
+                "etag": "W/\"53-hfEnumeNh6YirfjyjaujcOPPT+s\"",
+                "via": "1.1 vegur",
+                "cf-cache-status": "HIT",
+                "age": "36",
+                "report-to": "{\"endpoints\":[{\"url\":\"https:\\/\\/a.nel.cloudflare.com\\/report\\/v3?s=su3%2B8%2B%2FiP%2BdtTobERZZHK3K8MaYrHX0rAnwOXlGtEOgmGXwz%2FP%2FXGnqBNC3tn5Pul4ix80ey93W9RJV2sk%2BEzDUD9PDm6YlExmJqpcg13Y2HVz3nliKLJ9doVXS%2B%2FmKNzWi1vVJiUid%2F96e1dwc%3D\"}],\"group\":\"cf-nel\",\"max_age\":604800}",
+                "nel": "{\"success_fraction\":0,\"report_to\":\"cf-nel\",\"max_age\":604800}",
+                "server": "cloudflare",
+                "cf-ray": "7cb8d4ea58761f5f-MEL"
+            },
+            "statusCode": 200,
+            "delay": 97
+        },
+        {
+            "body": {
+                "userId": 1,
+                "id": 1,
+                "title": "delectus aut autem",
+                "completed": false
+            },
+            "headers": {
+                "date": "Mon, 22 May 2023 23:27:46 GMT",
+                "content-type": "application/json; charset=utf-8",
+                "transfer-encoding": "chunked",
+                "connection": "keep-alive",
+                "x-powered-by": "Express",
+                "x-ratelimit-limit": "1000",
+                "x-ratelimit-remaining": "999",
+                "x-ratelimit-reset": "1684798072",
+                "access-control-allow-origin": "http://localhost:44329",
+                "vary": "Origin, Accept-Encoding",
+                "access-control-allow-credentials": "true",
+                "cache-control": "max-age=43200",
+                "pragma": "no-cache",
+                "expires": "-1",
+                "x-content-type-options": "nosniff",
+                "etag": "W/\"53-hfEnumeNh6YirfjyjaujcOPPT+s\"",
+                "via": "1.1 vegur",
+                "cf-cache-status": "HIT",
+                "age": "36",
+                "report-to": "{\"endpoints\":[{\"url\":\"https:\\/\\/a.nel.cloudflare.com\\/report\\/v3?s=A2mFNyUb9oc1StDmnt8F5ywOetVRF235UmxqUDnV%2BScIGcfU0kVTuTI5MDGLm0BVXiWAicNDJooK98oyEUC80yRcHlsxYk7C4fg0jgpY8aVgItri5xckfmEdnUktq%2F45hPEf%2FiptrthE2RAcBbc%3D\"}],\"group\":\"cf-nel\",\"max_age\":604800}",
+                "nel": "{\"success_fraction\":0,\"report_to\":\"cf-nel\",\"max_age\":604800}",
+                "server": "cloudflare",
+                "cf-ray": "7cb8d4ead9011f5f-MEL"
+            },
+            "statusCode": 200,
+            "delay": 47
+        }
+    ]
+}
