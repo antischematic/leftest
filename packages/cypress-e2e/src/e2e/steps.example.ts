@@ -1,8 +1,15 @@
-import { beforeScenario, beforeStep, eq, isExcluded, isIncluded } from "@antischematic/leftest"
+import {
+   afterScenario,
+   beforeScenario,
+   beforeStep,
+   eq,
+   isExcluded,
+   isIncluded,
+} from "@antischematic/leftest"
 import { custom, include, notThis } from "../fixtures/tags.example"
 
 export default {
-   "I run a test": () => {
+   "I run a test": (scenario) => {
       console.log("test running")
    },
 
@@ -23,7 +30,7 @@ export default {
 
    "I load data": () => {
       cy.window().then(window => {
-         return window.fetch('https://jsonplaceholder.typicode.com/todos/1')
+         return window.fetch('https://jsonplaceholder.cypress.io/todos/1')
       })
    }
 }
@@ -33,10 +40,15 @@ beforeScenario(() => {
 })
 
 beforeScenario(eq(custom), (scenario) => {
-   console.log("only if custom?")
-   console.log(scenario.name)
+   scenario.data.value = "test"
+   console.log("only if custom?", scenario.name)
+   console.log("scenario data before", scenario.data.value)
 })
 
-beforeStep(() => {
+beforeStep((scenario) => {
    console.log("before step", isIncluded(include), isExcluded(notThis))
+})
+
+afterScenario(eq(custom),(scenario) => {
+   console.log("scenario data after", scenario.data.value)
 })

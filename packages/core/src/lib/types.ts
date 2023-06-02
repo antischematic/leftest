@@ -48,7 +48,7 @@ type ExpandKey<
 type ExpandPlaceholder<T> =
    T extends `${infer TStart}<${string}>${infer TRemainder}`
       ? `${TStart}<${string}>${ExpandPlaceholder<TRemainder>}`
-      : ""
+      : T
 
 export interface TestSuite<T> {
    given<U extends keyof T>(step: U): void
@@ -125,6 +125,7 @@ export type TagFilter = (matcher: Tag | TagFilter) => boolean
 export interface ReadonlyFeature {
    name: string
    hasTag(tag: Tag): boolean
+   hasOwnTag(tag: Tag): boolean
 }
 
 export interface ReadonlyScenario {
@@ -133,5 +134,7 @@ export interface ReadonlyScenario {
    readonly steps: readonly unknown[]
    readonly feature: ReadonlyFeature
    readonly parent?: ReadonlyScenario
+   readonly data: { [key: string]: unknown }
    hasTag(tag: Tag): boolean
+   hasOwnTag(tag: Tag): boolean
 }

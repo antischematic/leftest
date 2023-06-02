@@ -53,6 +53,7 @@ enum Type {
 }
 
 export class Scenario {
+   data: { [key: string]: unknown } = {}
    // `true` when one of a scenario's steps have failed
    failed = false
    // `true` when one of a scenario's steps have failed
@@ -81,8 +82,12 @@ export class Scenario {
       return parentName + this.name
    }
 
-   hasTag(tag: Tag) {
+   hasOwnTag(tag: Tag) {
       return this.tags.has(tag.name)
+   }
+
+   hasTag(tag: Tag) {
+      return this.getEffectiveTags().has(tag.name)
    }
 
    getEffectiveTags() {
@@ -780,9 +785,9 @@ export function createTestSuite<T extends object>(
    assertNoTags(createTestSuite.name)
    options.stringifyPlaceholderArguments ??= true
    const steps = new Steps(
-      arguments.length > 1
+      (arguments.length > 1
          ? stepsOrOptions
-         : stepsOrOptions?.default ?? stepsOrOptions,
+         : stepsOrOptions?.default ?? stepsOrOptions) ?? {},
       options,
    )
    const step = createStep(steps)
