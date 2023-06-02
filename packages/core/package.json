@@ -1,7 +1,7 @@
 {
    "name": "@antischematic/leftest",
    "description": "Shift-Left Testing for JavaScript",
-   "version": "0.0.5",
+   "version": "0.0.6",
    "keywords": ["Leftest", "Test", "Testing", "BDD", "GWT", "TypeScript"],
    "license": "MIT",
    "repository": {
