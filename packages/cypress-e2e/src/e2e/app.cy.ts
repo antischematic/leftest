@@ -1,8 +1,9 @@
 // noinspection BadExpressionStatementJS
 
 import {
-   createTestSuite,
    background,
+   beforeScenario,
+   createTestSuite,
    feature,
    scenario,
    skip,
@@ -12,6 +13,10 @@ import { record, replay } from "../support/record"
 import steps from "./steps.example"
 
 const { given, when, then, and, examples } = createTestSuite(steps)
+
+beforeScenario(() => {
+   cy.visit("http://example.com")
+})
 
 ~replay
 feature("Test feature", () => {

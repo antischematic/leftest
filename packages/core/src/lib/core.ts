@@ -61,6 +61,10 @@ export class Scenario {
    examples: Map<any[], Set<string>> = new Map()
    scenarios: Map<Scenario, () => void> = new Map()
 
+   get path(): string[] {
+      return [...(this.parent?.path ?? []), this.name]
+   }
+
    addStep(factory: () => void): void {
       this.steps.push(factory)
    }
@@ -78,7 +82,7 @@ export class Scenario {
    }
 
    getFullName() {
-      const parentName: string = this.feature?.getFullName() ?? ""
+      const parentName: string = this.parent?.getFullName() ?? ""
       return parentName + this.name
    }
 
@@ -91,7 +95,7 @@ export class Scenario {
    }
 
    getEffectiveTags() {
-      const tags = [this.feature.tags, this.tags, ...this.examples.values()].flatMap(tags => Array.from(tags))
+      const tags = [this.feature?.tags ?? [], this.parent?.tags ?? [], this.tags, ...this.examples.values()].flatMap(tags => Array.from(tags))
       return new Set(tags)
    }
 
@@ -101,7 +105,15 @@ export class Scenario {
       readonly tags: Set<string>,
       readonly feature: Scenario,
       readonly parent?: Scenario,
-   ) {}
+   ) {
+      scenarios.add(this)
+   }
+}
+
+const scenarios = new Set<ReadonlyScenario>()
+
+export function getAllScenarios() {
+   return Array.from(scenarios)
 }
 
 interface Context {
@@ -264,7 +276,7 @@ export function scenario(name: string, fn: () => void) {
    const adapter = getAdapter()
    const tags = flushTags()
    const backgroundSteps = context.scenario.steps
-   const scenario = new Scenario(Type.SCENARIO, name, tags, context.feature)
+   const scenario = new Scenario(Type.SCENARIO, name, tags, context.feature, context.feature)
    const feature = context.feature
    const previous = setContext({
       feature,
@@ -285,7 +297,7 @@ export function scenario(name: string, fn: () => void) {
             function () {
                const combinedSteps = [...backgroundSteps, ...scenario.steps]
                if (!scenario.examples.size) {
-                  addHooks(adapter, scenario, new Set([...feature.tags, ...scenario.tags]))
+                  addHooks(adapter, scenario, scenario.getEffectiveTags())
                   runSteps(combinedSteps, feature, scenario, context.examples)
                } else {
                   const total = Array.from(scenario.examples.keys()).flat()
@@ -304,7 +316,7 @@ export function scenario(name: string, fn: () => void) {
                         adapter.suite(
                            exampleScenario.name,
                            () => {
-                              addHooks(adapter, exampleScenario, new Set([feature.tags, scenario.tags, ...scenario.examples.values()].flatMap(tags => Array.from(tags))))
+                              addHooks(adapter, exampleScenario, exampleScenario.getEffectiveTags())
                               runSteps(
                                  combinedSteps,
                                  feature,
@@ -559,6 +571,7 @@ Matches:
 }
 
 const tags = [] as string[]
+const usedTags = new Set()
 
 function flushTags(): Set<string> {
    const flushed = new Set(tags)
@@ -604,6 +617,7 @@ export function getTags(): any {
             }
             const tag = {
                [Symbol.toPrimitive](hint: string) {
+                  usedTags.add(p)
                   tags.push(p)
                   if (hint === "string" || hint === "default") {
                      return p
@@ -645,6 +659,10 @@ export function setTags(tags: string | string[]) {
          globalThis.LEFTEST_INCLUDED_TAGS.add(tag)
       }
    }
+}
+
+export function isTagUsed(tag: Tag) {
+   return usedTags.has(tag.name)
 }
 
 const hooks = {

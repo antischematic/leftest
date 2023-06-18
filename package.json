@@ -12,6 +12,12 @@
       "@nrwl/linter": "15.9.2",
       "@nrwl/rollup": "15.9.2",
       "@nrwl/vite": "15.9.2",
+      "@pollyjs/adapter-fetch": "^6.0.5",
+      "@pollyjs/adapter-xhr": "^6.0.5",
+      "@pollyjs/core": "^6.0.5",
+      "@pollyjs/persister": "^6.0.5",
+      "@pollyjs/persister-fs": "^6.0.5",
+      "@pollyjs/persister-local-storage": "^6.0.5",
       "@swc/cli": "~0.1.55",
       "@swc/core": "^1.2.173",
       "@types/node": "18.7.1",
@@ -31,8 +37,7 @@
       "vite": "^4.0.1",
       "vite-plugin-eslint": "^1.8.1",
       "vite-tsconfig-paths": "^4.0.2",
-      "vitest": "^0.25.8",
-      "cypress-replay": "file:../cypress-replay/cypress-replay-1.0.16.tgz"
+      "vitest": "^0.25.8"
    },
    "workspaces": [
       "packages/*"

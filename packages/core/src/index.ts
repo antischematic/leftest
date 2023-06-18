@@ -5,7 +5,6 @@ export {
    getTags,
    setTags,
    setAdapter,
-   Scenario,
    afterScenario,
    beforeScenario,
    beforeStep,
@@ -19,7 +18,8 @@ export {
    feature,
    scenario,
    isExcluded,
-   isIncluded
+   isIncluded,
+   getAllScenarios
 } from "./lib/core"
 export {
    TestSuiteAdapter,
@@ -27,5 +27,7 @@ export {
    TestSuite,
    Flag,
    Tag,
-   TagFilter
+   TagFilter,
+   ReadonlyScenario,
+   ReadonlyFeature
 } from "./lib/types"

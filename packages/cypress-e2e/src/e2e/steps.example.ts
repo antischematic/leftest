@@ -31,6 +31,9 @@ export default {
    "I load data": () => {
       cy.window().then(window => {
          return window.fetch('https://jsonplaceholder.cypress.io/todos/1')
+            .then(async result => {
+               console.log('Successfully fetched https://jsonplaceholder.cypress.io/todos/1', await result.json())
+            })
       })
    }
 }

@@ -130,6 +130,7 @@ export interface ReadonlyFeature {
 
 export interface ReadonlyScenario {
    readonly name: string
+   readonly path: string[]
    readonly failed: boolean
    readonly steps: readonly unknown[]
    readonly feature: ReadonlyFeature
