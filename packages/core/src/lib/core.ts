@@ -163,18 +163,8 @@ function runSteps(
       data,
    })
    try {
-      if (adapter.inlineHooks) {
-         adapter.beforeStep(() => {
-            runHook(hooks.beforeStep, scenario.getEffectiveTags(), scenario)
-         })
-      }
       for (const step of combinedSteps) {
          step()
-      }
-      if (adapter.inlineHooks) {
-         adapter.afterStep(() => {
-            runHook(hooks.beforeStep, scenario.getEffectiveTags(), scenario)
-         })
       }
    } finally {
       setContext(previousExample)
@@ -311,7 +301,17 @@ export function scenario(name: string, fn: () => void) {
                const combinedSteps = [...backgroundSteps, ...scenario.steps]
                if (!scenario.examples.size) {
                   addHooks(adapter, scenario, scenario.getEffectiveTags())
+                  if (adapter.inlineHooks && hooks.beforeScenario.length) {
+                     adapter.beforeScenario(() => {
+                        runHook(hooks.beforeScenario, scenario.getEffectiveTags(), scenario)
+                     })
+                  }
                   runSteps(adapter, combinedSteps, feature, scenario, context.examples)
+                  if (adapter.inlineHooks && hooks.afterScenario.length) {
+                     adapter.afterScenario(() => {
+                        runHook(hooks.afterScenario, scenario.getEffectiveTags(), scenario)
+                     })
+                  }
                } else {
                   const total = Array.from(scenario.examples.keys()).flat()
                      .length
@@ -330,6 +330,11 @@ export function scenario(name: string, fn: () => void) {
                            exampleScenario.name,
                            () => {
                               addHooks(adapter, exampleScenario, exampleScenario.getEffectiveTags())
+                              if (adapter.inlineHooks && hooks.beforeScenario.length) {
+                                 adapter.beforeScenario(() => {
+                                    runHook(hooks.beforeScenario, exampleScenario.getEffectiveTags(), exampleScenario)
+                                 })
+                              }
                               runSteps(
                                  adapter,
                                  combinedSteps,
@@ -338,6 +343,11 @@ export function scenario(name: string, fn: () => void) {
                                  [],
                                  data,
                               )
+                              if (adapter.inlineHooks && hooks.afterScenario.length) {
+                                 adapter.afterScenario(() => {
+                                    runHook(hooks.afterScenario, exampleScenario.getEffectiveTags(), exampleScenario)
+                                 })
+                              }
                            },
                            Flag.DEFAULT,
                         )
@@ -388,7 +398,7 @@ export function feature(name: string, fn: () => void) {
          )
       )
       if (flag === Flag.EXCLUDE) return
-      adapter.scenario(
+      adapter.feature(
          name,
          () => {
             for (const factory of feature.scenarios.values()) {
@@ -448,7 +458,7 @@ function createStep(steps: Steps) {
          }
 
          if (testName) {
-            adapter.step(name, `${name} ${testName}`, function (this: any) {
+            adapter.step(name, testName, function (this: any) {
                if (scenario.failed) {
                   if (adapter.skip) {
                      adapter.skip(this)
@@ -457,7 +467,7 @@ function createStep(steps: Steps) {
                   }
                }
                try {
-                  if (adapter.inlineHooks) {
+                  if (adapter.inlineHooks && hooks.beforeStep.length) {
                      adapter.beforeStep(() => {
                         runHook(hooks.beforeStep, scenario.getEffectiveTags(), scenario)
                      })
@@ -465,7 +475,7 @@ function createStep(steps: Steps) {
 
                   impl(...parsedArgs)
 
-                  if (adapter.inlineHooks) {
+                  if (adapter.inlineHooks && hooks.afterStep.length) {
                      adapter.afterStep(() => {
                         runHook(hooks.afterStep, scenario.getEffectiveTags(), scenario)
                      })

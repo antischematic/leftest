@@ -101,8 +101,8 @@ export interface TestSuiteOptions {
 
 export interface TestSuiteAdapter {
    inlineHooks: boolean
+   feature(name: string, impl: () => void, flag: Flag): void
    scenario(name: string, impl: () => void, flag: Flag): void
-
    example(name: string, impl: () => void, flag: Flag): void
    step(name: string, description: string, impl: () => void): void
    beforeScenario(impl: () => void): void
