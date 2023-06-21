@@ -16,8 +16,6 @@ import "@antischematic/leftest-cypress"
 
 ## Usage
 
-> This library **requires** Cypress to be configured with `testIsolation: false`. [Read more](https://docs.cypress.io/guides/core-concepts/test-isolation)
-
 Define your feature specs. Tag new features and/or scenarios with `~todo` to prevent them running.
 
 ```ts
@@ -246,3 +244,5 @@ beforeStep(and(eq(mobile), not(tablet)), () => {
 `isIncluded` checks if a tag is included via the `LEFTEST_TAGS` environment variable
 
 `isExcluded` checks if a tag is excluded via the `LEFTEST_TAGS` environment variable
+
+`isUsed` checks if a tag is used in the current test run
