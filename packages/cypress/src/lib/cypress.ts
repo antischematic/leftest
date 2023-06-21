@@ -19,13 +19,13 @@ export class CypressTestSuiteAdapter implements TestSuiteAdapter {
    scenario(name: string, impl: () => void, flag: Flag): void {
       switch (flag) {
          case Flag.SKIP:
-            test.skip(name, impl)
+            it.skip(name, impl)
             break
          case Flag.ONLY:
-            test.only(name, impl)
+            it.only(name, impl)
             break
          case Flag.DEFAULT:
-            test(name, impl)
+            it(name, impl)
       }
    }
 
@@ -99,6 +99,7 @@ Cypress.Commands.add('example', (description, impl, flag) => {
    if (flag === Flag.EXCLUDE) return
    Cypress.log({
       name: description,
+      message: '',
       type: 'parent',
       groupStart: true
    } as any)
@@ -116,12 +117,13 @@ Cypress.Commands.add('example', (description, impl, flag) => {
    })
 })
 
-const hooks = ['beforeScenario', 'beforeStep', 'afterScenario', 'afterStep']
+const hooks = [['beforeScenario', 'Before Scenario'], ['beforeStep', 'Before Step'], ['afterScenario', 'After Scenario'], ['afterStep', 'After Step']] as const
 
-for (const hook of hooks) {
-   Cypress.Commands.add('beforeStep', (impl) => {
+for (const [hook, name] of hooks) {
+   Cypress.Commands.add(hook, (impl) => {
       Cypress.log({
-         name: hook,
+         name,
+         message: '',
          type: 'parent',
          groupStart: true
       } as any)

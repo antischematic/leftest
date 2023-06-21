@@ -6,7 +6,7 @@
         {
           "_id": "2d4f9b8740fc871985ae9c41334bcadf",
           "_order": 0,
-          "startedDateTime": "2023-06-18T03:40:57.853Z",
+          "startedDateTime": "2023-06-21T08:19:13.358Z",
           "request": {
             "httpVersion": "HTTP/1.1",
             "url": "https://jsonplaceholder.cypress.io/todos/1",
@@ -55,16 +55,16 @@
             "dns": -1,
             "connect": -1,
             "send": 0,
-            "wait": 585,
+            "wait": 668,
             "receive": 0,
             "ssl": -1
           },
-          "time": 585
+          "time": 668
         },
         {
           "_id": "2d4f9b8740fc871985ae9c41334bcadf",
           "_order": 1,
-          "startedDateTime": "2023-06-18T03:40:58.448Z",
+          "startedDateTime": "2023-06-21T08:19:14.046Z",
           "request": {
             "httpVersion": "HTTP/1.1",
             "url": "https://jsonplaceholder.cypress.io/todos/1",
@@ -113,11 +113,11 @@
             "dns": -1,
             "connect": -1,
             "send": 0,
-            "wait": 608,
+            "wait": 594,
             "receive": 0,
             "ssl": -1
           },
-          "time": 608
+          "time": 594
         }
       ],
       "pages": [],
@@ -140,7 +140,7 @@
         {
           "_id": "2d4f9b8740fc871985ae9c41334bcadf",
           "_order": 0,
-          "startedDateTime": "2023-06-18T03:41:11.772Z",
+          "startedDateTime": "2023-06-21T08:19:14.979Z",
           "request": {
             "httpVersion": "HTTP/1.1",
             "url": "https://jsonplaceholder.cypress.io/todos/1",
@@ -189,16 +189,16 @@
             "dns": -1,
             "connect": -1,
             "send": 0,
-            "wait": 695,
+            "wait": 583,
             "receive": 0,
             "ssl": -1
           },
-          "time": 695
+          "time": 583
         },
         {
           "_id": "2d4f9b8740fc871985ae9c41334bcadf",
           "_order": 1,
-          "startedDateTime": "2023-06-18T03:41:12.476Z",
+          "startedDateTime": "2023-06-21T08:19:15.569Z",
           "request": {
             "httpVersion": "HTTP/1.1",
             "url": "https://jsonplaceholder.cypress.io/todos/1",
@@ -247,11 +247,11 @@
             "dns": -1,
             "connect": -1,
             "send": 0,
-            "wait": 609,
+            "wait": 604,
             "receive": 0,
             "ssl": -1
           },
-          "time": 609
+          "time": 604
         }
       ],
       "pages": [],
@@ -274,7 +274,7 @@
         {
           "_id": "2d4f9b8740fc871985ae9c41334bcadf",
           "_order": 0,
-          "startedDateTime": "2023-06-18T03:41:13.425Z",
+          "startedDateTime": "2023-06-21T08:19:16.519Z",
           "request": {
             "httpVersion": "HTTP/1.1",
             "url": "https://jsonplaceholder.cypress.io/todos/1",
@@ -323,16 +323,16 @@
             "dns": -1,
             "connect": -1,
             "send": 0,
-            "wait": 685,
+            "wait": 674,
             "receive": 0,
             "ssl": -1
           },
-          "time": 685
+          "time": 674
         },
         {
           "_id": "2d4f9b8740fc871985ae9c41334bcadf",
           "_order": 1,
-          "startedDateTime": "2023-06-18T03:41:14.133Z",
+          "startedDateTime": "2023-06-21T08:19:17.215Z",
           "request": {
             "httpVersion": "HTTP/1.1",
             "url": "https://jsonplaceholder.cypress.io/todos/1",
@@ -381,11 +381,11 @@
             "dns": -1,
             "connect": -1,
             "send": 0,
-            "wait": 693,
+            "wait": 588,
             "receive": 0,
             "ssl": -1
           },
-          "time": 693
+          "time": 588
         }
       ],
       "pages": [],

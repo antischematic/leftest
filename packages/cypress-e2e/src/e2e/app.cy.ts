@@ -19,6 +19,7 @@ beforeScenario(() => {
 })
 
 ~replay
+// ~record
 feature("Test feature", () => {
    background(() => {
       given("I run a test")
