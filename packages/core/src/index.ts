@@ -19,7 +19,8 @@ export {
    scenario,
    isExcluded,
    isIncluded,
-   getAllScenarios
+   getAllScenarios,
+   isTagUsed
 } from "./lib/core"
 export {
    TestSuiteAdapter,
