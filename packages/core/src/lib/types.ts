@@ -100,12 +100,15 @@ export interface TestSuiteOptions {
 }
 
 export interface TestSuiteAdapter {
-   suite(name: string, impl: () => void, flag: Flag): void
-   test(name: string, impl: () => void): void
-   beforeSuite(impl: () => void): void
-   afterSuite(impl: () => void): void
-   beforeTest(impl: () => void): void
-   afterTest(impl: () => void): void
+   inlineHooks: boolean
+   scenario(name: string, impl: () => void, flag: Flag): void
+
+   example(name: string, impl: () => void, flag: Flag): void
+   step(name: string, description: string, impl: () => void): void
+   beforeScenario(impl: () => void): void
+   afterScenario(impl: () => void): void
+   beforeStep(impl: () => void): void
+   afterStep(impl: () => void): void
    skip?(context: any): void
 }
 
