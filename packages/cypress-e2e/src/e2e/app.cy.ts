@@ -4,12 +4,11 @@ import {
    background,
    beforeScenario,
    createTestSuite,
-   feature,
+   feature, only,
    scenario,
    skip,
 } from "@antischematic/leftest"
 import { custom, include, notThis } from "../fixtures/tags.example"
-import { record, replay } from "../support/record"
 import steps from "./steps.example"
 
 const { given, when, then, and, examples } = createTestSuite(steps)
@@ -18,8 +17,6 @@ beforeScenario(() => {
    cy.visit("http://example.com")
 })
 
-~replay
-// ~record
 feature("Test feature", () => {
    background(() => {
       given("I run a test")
@@ -39,7 +36,7 @@ feature("Test feature", () => {
       given("I explode")
    })
 
-   scenario("Skips after error", () => {
+   scenario("Stops after error", () => {
       given("I explode")
       when("I run a test with <args> and <hello>", "hello", 1)
       when("I run a test with <args> and <hello>", "hello", 2)
@@ -60,14 +57,14 @@ feature("Test feature", () => {
       then("I run a test with <args> and <hello>", 987, 879)
       then("I run a test with <args> and <hello>", 987, 879)
 
-      ~notThis
-      examples([
-         { args: "example args 1", hello: 234 },
-         { args: "example args 2", hello: 789 },
-      ])
+      // ~notThis
+      // examples('First group',[
+      //    { args: "example args 1", hello: 234 },
+      //    { args: "example args 2", hello: 789 },
+      // ])
 
       ~include
-      examples([
+      examples('Second group', [
          { args: "example args 1", renamed: 234, hello: 0 },
          { args: "example args 2", hello: 789, renamed: 0 },
       ])

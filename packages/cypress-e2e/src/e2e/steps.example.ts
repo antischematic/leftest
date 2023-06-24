@@ -40,18 +40,22 @@ export default {
 
 beforeScenario(() => {
    console.log("runs before")
+   cy.log("runs before")
 })
 
 beforeScenario(eq(custom), (scenario) => {
    scenario.data.value = "test"
    console.log("only if custom?", scenario.name)
    console.log("scenario data before", scenario.data.value)
+   cy.log("scenario data before", scenario.data.value)
 })
 
 beforeStep((scenario) => {
    console.log("before step", isIncluded(include), isExcluded(notThis))
+   cy.log("before step", isIncluded(include), isExcluded(notThis))
 })
 
 afterScenario(eq(custom),(scenario) => {
    console.log("scenario data after", scenario.data.value)
+   cy.log("scenario data after", scenario.data.value)
 })

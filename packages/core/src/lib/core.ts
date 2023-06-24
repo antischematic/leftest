@@ -54,12 +54,10 @@ enum Type {
 
 export class Scenario {
    data: { [key: string]: unknown } = {}
-   // `true` when one of a scenario's steps have failed
    failed = false
-   // `true` when one of a scenario's steps have failed
    steps: any[] = []
-   examples: Map<any[], Set<string>> = new Map()
-   scenarios: Map<Scenario, () => void> = new Map()
+   examples: Map<string, { data: any[], tags: Set<string>, flag: Flag }> = new Map()
+   scenarios: Map<string, { scenario: Scenario, factory: () => void }> = new Map()
 
    get path(): string[] {
       return [...(this.parent?.path ?? []), this.name]
@@ -69,12 +67,21 @@ export class Scenario {
       this.steps.push(factory)
    }
 
-   addExamples(data: any[], tags: Set<any>) {
-      this.examples.set(data, tags)
+   addExamples(name: string, data: any[], tags: Set<any>, flag: Flag) {
+      if (this.examples.has('') || this.examples.size && name === '') {
+         throw new Error(`Example description cannot be blank when a scenario has multiple "examples()"`)
+      }
+      if (this.examples.has(name)) {
+         throw new Error(`Multiple examples detected: "${name}". Each "examples()" in a scenario must have a unique description`)
+      }
+      this.examples.set(name, { data, tags, flag })
    }
 
-   addScenario(scenario: Scenario, factory: () => void) {
-      this.scenarios.set(scenario, factory)
+   addScenario(scenario: Scenario, factory: () => void, flag: Flag) {
+      if (this.examples.has(scenario.name)) {
+         throw new Error(`Multiple scenarios detected: "${scenario.name}". Each "scenario()" in a feature must have a unique description`)
+      }
+      this.scenarios.set(scenario.name, { scenario, factory })
    }
 
    markAsFailed() {
@@ -95,7 +102,7 @@ export class Scenario {
    }
 
    getEffectiveTags() {
-      const tags = [this.feature?.tags ?? [], this.parent?.tags ?? [], this.tags, ...this.examples.values()].flatMap(tags => Array.from(tags))
+      const tags = [this.feature?.tags ?? [], this.parent?.tags ?? [], this.tags, [...this.examples.values()].flatMap(e => Array.from(e.tags))].flatMap(tags => Array.from(tags))
       return new Set(tags)
    }
 
@@ -148,7 +155,7 @@ function setContext(nextContext: Context) {
    return previousContext
 }
 
-function runSteps(
+function runScenario(
    adapter: TestSuiteAdapter,
    combinedSteps: any[],
    feature: Scenario,
@@ -163,9 +170,11 @@ function runSteps(
       data,
    })
    try {
+      runHooks(hooks.beforeScenario, scenario.getEffectiveTags(), scenario, (impl) => adapter.beforeScenario(impl))
       for (const step of combinedSteps) {
          step()
       }
+      runHooks(hooks.afterScenario, scenario.getEffectiveTags(), scenario, (impl) => adapter.afterScenario(impl))
    } finally {
       setContext(previousExample)
    }
@@ -237,40 +246,54 @@ export function not(tag: Tag | TagFilter) {
    return (filter: TagFilter) => !filter(tag)
 }
 
-function runHook(hooks: any, tags: Set<string>, scenario: Scenario) {
+function runHooks(hooks: any, tags: Set<string>, scenario: Scenario, cb: (impl: () => void) => void) {
+   let effectiveHooks = [] as ((scenario: Scenario) => void)[]
    for (const [mask, fn = mask] of hooks) {
       if (mask !== fn) {
          const tag = createTagFn(tags)
          if (mask(tag)) {
-            fn(scenario)
+            effectiveHooks.push(fn)
          }
       } else {
-         fn(scenario)
+         effectiveHooks.push(fn)
       }
+   }
+   if (effectiveHooks.length) {
+      cb(() => {
+         for (const hook of effectiveHooks) {
+            hook(scenario)
+         }
+      })
    }
 }
 
-function addHooks(
-   adapter: TestSuiteAdapter,
-   scenario: Scenario,
-   tags: Set<any>,
-) {
-   if (!adapter.inlineHooks) {
-      adapter.beforeScenario(() => {
-         runHook(hooks.beforeScenario, tags, scenario)
-      })
-
-      adapter.afterScenario(() => {
-         runHook(hooks.afterScenario, tags, scenario)
-      })
-
-      adapter.beforeStep(() => {
-         runHook(hooks.beforeStep, tags, scenario)
-      })
-
-      adapter.afterStep(() => {
-         runHook(hooks.afterStep, tags, scenario)
-      })
+function runExamples(examples: any[], exampleTags: Set<any>, scenario: Scenario, adapter: TestSuiteAdapter, steps: any[], flag: Flag) {
+   let count = 0
+   const total = examples.length
+   const feature = scenario.feature
+   for (const data of examples) {
+      count++
+      const exampleScenario = new Scenario(
+         Type.EXAMPLE,
+         `Example ${count} of ${total}`,
+         exampleTags,
+         scenario.feature,
+         scenario
+      )
+      adapter.test(
+         exampleScenario.name,
+         () => {
+            runScenario(
+               adapter,
+               steps,
+               feature,
+               exampleScenario,
+               [],
+               data,
+            )
+         },
+         flag,
+      )
    }
 }
 
@@ -288,76 +311,38 @@ export function scenario(name: string, fn: () => void) {
    })
    try {
       fn()
+      const isExcluded = getFlag(scenario.feature.tags) === Flag.EXCLUDE && Array.from(scenario.examples.values()).map(e => getFlag(e.tags)).every(flag => flag === Flag.EXCLUDE)
+
       const flag = getFlag(
          tags,
-         getFlag(scenario.getEffectiveTags()) !== Flag.EXCLUDE
+         !isExcluded
       )
-      if (flag === Flag.EXCLUDE) return
+
+      const combinedSteps = [...backgroundSteps, ...scenario.steps]
 
       feature.addScenario(scenario, () => {
-         adapter.scenario(
-            name,
-            function () {
-               const combinedSteps = [...backgroundSteps, ...scenario.steps]
-               if (!scenario.examples.size) {
-                  addHooks(adapter, scenario, scenario.getEffectiveTags())
-                  if (adapter.inlineHooks && hooks.beforeScenario.length) {
-                     adapter.beforeScenario(() => {
-                        runHook(hooks.beforeScenario, scenario.getEffectiveTags(), scenario)
-                     })
-                  }
-                  runSteps(adapter, combinedSteps, feature, scenario, context.examples)
-                  if (adapter.inlineHooks && hooks.afterScenario.length) {
-                     adapter.afterScenario(() => {
-                        runHook(hooks.afterScenario, scenario.getEffectiveTags(), scenario)
-                     })
-                  }
-               } else {
-                  const total = Array.from(scenario.examples.keys()).flat()
-                     .length
-                  let count = 0
-                  for (const [examples, exampleTags] of scenario.examples) {
-                     for (const data of examples) {
-                        count++
-                        const exampleScenario = new Scenario(
-                           Type.EXAMPLE,
-                           `Example ${count} of ${total}`,
-                           exampleTags,
-                           scenario.feature,
-                           scenario
-                        )
-                        adapter.example(
-                           exampleScenario.name,
-                           () => {
-                              addHooks(adapter, exampleScenario, exampleScenario.getEffectiveTags())
-                              if (adapter.inlineHooks && hooks.beforeScenario.length) {
-                                 adapter.beforeScenario(() => {
-                                    runHook(hooks.beforeScenario, exampleScenario.getEffectiveTags(), exampleScenario)
-                                 })
-                              }
-                              runSteps(
-                                 adapter,
-                                 combinedSteps,
-                                 feature,
-                                 exampleScenario,
-                                 [],
-                                 data,
-                              )
-                              if (adapter.inlineHooks && hooks.afterScenario.length) {
-                                 adapter.afterScenario(() => {
-                                    runHook(hooks.afterScenario, exampleScenario.getEffectiveTags(), exampleScenario)
-                                 })
-                              }
-                           },
-                           Flag.DEFAULT,
-                        )
-                     }
+         if (scenario.examples.size) {
+            adapter.suite(name, () => {
+               for (const [exampleName, { data: examples, tags: exampleTags, flag }] of scenario.examples) {
+                  if (exampleName) {
+                     adapter.suite(exampleName, () => {
+                        runExamples(examples, exampleTags, scenario, adapter, combinedSteps, flag)
+                     }, flag)
+                  } else {
+                     runExamples(examples, exampleTags, scenario, adapter, combinedSteps, flag)
                   }
                }
-            },
-            flag,
-         )
-      })
+            }, flag)
+         } else {
+            adapter.test(
+               name,
+               function () {
+                  runScenario(adapter, combinedSteps, feature, scenario, context.examples)
+               },
+               flag,
+            )
+         }
+      }, flag)
    } finally {
       setContext(previous)
    }
@@ -393,15 +378,14 @@ export function feature(name: string, fn: () => void) {
       fn()
       const flag = getFlag(
          tags,
-         [...feature.scenarios.keys()].some(
-            (scenario) => getFlag(scenario.getEffectiveTags()) !== Flag.EXCLUDE,
+         [...feature.scenarios.values()].some(
+            ({ scenario }) => getFlag(scenario.getEffectiveTags()) !== Flag.EXCLUDE,
          )
       )
-      if (flag === Flag.EXCLUDE) return
-      adapter.feature(
+      adapter.suite(
          name,
          () => {
-            for (const factory of feature.scenarios.values()) {
+            for (const { factory } of feature.scenarios.values()) {
                factory()
             }
          },
@@ -422,23 +406,22 @@ export function background(fn: () => void) {
       context.scenario.addStep = rootScenario.addStep
    }
 }
-
-function examples(data: any[]) {
+function examples(name: string, data: any[]): void
+function examples(data: any[]): void
+function examples(...args: any[]): void {
+   const name = args.length > 1 ? args[0] : ''
+   const data = args[args.length - 1]
    assertContextType(Type.SCENARIO, Type.EXAMPLE)
    const tags = flushTags()
    const flag = getFlag(tags, tags.size === 0)
-   if (flag === Flag.EXCLUDE) return
-   context.scenario.addExamples(data, tags)
+   context.scenario.addExamples(name, data, tags, flag)
 }
-
-const names = new Map<string, number>()
 
 function createStep(steps: Steps) {
    return function step(name: string, step: string, ...args: readonly any[]) {
       assertNoTags(name.toLowerCase())
       const adapter = getAdapter()
       context.scenario.addStep(() => {
-         const parentName = context.scenario.getFullName()
          let parsedArgs = args as any[]
          if (!parsedArgs.length) {
             parsedArgs = parseArguments(step)
@@ -447,15 +430,8 @@ function createStep(steps: Steps) {
             parsedArgs = steps.getArgsFromObject(step, context.data)
          }
          let testName = steps.getTestName(step, parsedArgs)
-         const count = names.get(parentName + testName) ?? 1
          const impl = steps.getImplementation(step)
          const { scenario } = context
-
-         names.set(parentName + testName, count + 1)
-
-         if (count > 1) {
-            testName = `${testName} [${count}]`
-         }
 
          if (testName) {
             adapter.step(name, testName, function (this: any) {
@@ -467,19 +443,9 @@ function createStep(steps: Steps) {
                   }
                }
                try {
-                  if (adapter.inlineHooks && hooks.beforeStep.length) {
-                     adapter.beforeStep(() => {
-                        runHook(hooks.beforeStep, scenario.getEffectiveTags(), scenario)
-                     })
-                  }
-
+                  runHooks(hooks.beforeStep, scenario.getEffectiveTags(), scenario, (impl) => adapter.beforeStep(impl))
                   impl(...parsedArgs)
-
-                  if (adapter.inlineHooks && hooks.afterStep.length) {
-                     adapter.afterStep(() => {
-                        runHook(hooks.afterStep, scenario.getEffectiveTags(), scenario)
-                     })
-                  }
+                  runHooks(hooks.afterStep, scenario.getEffectiveTags(), scenario, (impl) => adapter.afterStep(impl))
                } catch (e) {
                   scenario.markAsFailed()
                   throw e

@@ -18,10 +18,10 @@ import {
    TestSuiteAdapter,
    Flag,
 } from "@antischematic/leftest"
-import { suite, test, beforeAll, beforeEach, afterAll, afterEach } from "vitest"
+import { suite, test } from "vitest"
 
-class CustomAdapter implements TestSuiteAdapter {
-   createSuite(name: string, impl: () => void, flag: Flag): void {
+export class VitestAdapter implements TestSuiteAdapter {
+   suite(name: string, impl: () => void, flag: Flag) {
       switch (flag) {
          case Flag.SKIP:
             suite.skip(name, impl)
@@ -34,29 +34,38 @@ class CustomAdapter implements TestSuiteAdapter {
       }
    }
 
-   createTest(name: string, impl: () => void): void {
-      test(name, impl)
+   test(name: string, impl: () => void, flag: Flag): void {
+      switch (flag) {
+         case Flag.SKIP:
+            test.skip(name, impl)
+            break
+         case Flag.ONLY:
+            test.only(name, impl)
+            break
+         case Flag.DEFAULT:
+            test(name, impl)
+      }
    }
 
-   skipTest(): void {
-      // add library specific hook for skipping tests after an error
-      // optional, throws error by default
+   step(name: string, description: string, impl: () => void): void {
+      console.log(name, description)
+      impl()
    }
 
-   beforeSuite(impl: () => void): void {
-      beforeAll(impl)
+   beforeScenario(impl: () => void): void {
+      console.log('before scenario')
    }
 
-   afterSuite(impl: () => void): void {
-      afterAll(impl)
+   afterScenario(impl: () => void): void {
+      console.log('after scenario')
    }
 
-   beforeTest(impl: () => void): void {
-      beforeEach(impl)
+   beforeStep(impl: () => void): void {
+      console.log('before step')
    }
 
-   afterTest(impl: () => void): void {
-      afterEach(impl)
+   afterStep(impl: () => void): void {
+      console.log('after step')
    }
 }
 
