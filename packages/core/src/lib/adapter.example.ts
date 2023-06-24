@@ -1,42 +1,8 @@
-import { suite, test, beforeAll, afterAll, beforeEach, afterEach } from "vitest"
+import { suite, test } from "vitest"
 import { Flag, TestSuiteAdapter } from "./types"
 
 export class VitestAdapter implements TestSuiteAdapter {
-   inlineHooks = true
-
-   feature(name: string, impl: () => void, flag: Flag) {
-      this.useSuite(name, impl, flag)
-   }
-
-   scenario(name: string, impl: () => void, flag: Flag): void {
-      this.useSuite(name, impl, flag)
-   }
-
-   example(name: string, impl: () => void, flag: Flag) {
-      this.useSuite(name, impl, flag)
-   }
-
-   step(name: string, description: string, impl: () => void): void {
-      test(description, impl)
-   }
-
-   beforeScenario(impl: () => void): void {
-      beforeAll(impl)
-   }
-
-   afterScenario(impl: () => void): void {
-      afterAll(impl)
-   }
-
-   beforeStep(impl: () => void): void {
-      beforeEach(impl)
-   }
-
-   afterStep(impl: () => void): void {
-      afterEach(impl)
-   }
-
-   private useSuite(name: string, impl: () => void, flag: Flag) {
+   suite(name: string, impl: () => void, flag: Flag) {
       switch (flag) {
          case Flag.SKIP:
             suite.skip(name, impl)
@@ -47,5 +13,39 @@ export class VitestAdapter implements TestSuiteAdapter {
          case Flag.DEFAULT:
             suite(name, impl)
       }
+   }
+
+   test(name: string, impl: () => void, flag: Flag): void {
+      switch (flag) {
+         case Flag.SKIP:
+            test.skip(name, impl)
+            break
+         case Flag.ONLY:
+            test.only(name, impl)
+            break
+         case Flag.DEFAULT:
+            test(name, impl)
+      }
+   }
+
+   step(name: string, description: string, impl: () => void): void {
+      console.log(name, description)
+      impl()
+   }
+
+   beforeScenario(impl: () => void): void {
+      console.log('before scenario')
+   }
+
+   afterScenario(impl: () => void): void {
+      console.log('after scenario')
+   }
+
+   beforeStep(impl: () => void): void {
+      console.log('before step')
+   }
+
+   afterStep(impl: () => void): void {
+      console.log('after step')
    }
 }

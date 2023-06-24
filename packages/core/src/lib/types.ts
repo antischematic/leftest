@@ -91,6 +91,7 @@ export interface TestSuite<T> {
       step: ExpandPlaceholder<U>,
       ...params: Args<T[U]>
    ): void
+   examples(description: string, data: unknown extends T ? any[] : ExtractAllData<T>[]): void
    examples(data: unknown extends T ? any[] : ExtractAllData<T>[]): void
 }
 
@@ -100,10 +101,8 @@ export interface TestSuiteOptions {
 }
 
 export interface TestSuiteAdapter {
-   inlineHooks: boolean
-   feature(name: string, impl: () => void, flag: Flag): void
-   scenario(name: string, impl: () => void, flag: Flag): void
-   example(name: string, impl: () => void, flag: Flag): void
+   suite(name: string, impl: () => void, flag: Flag): void
+   test(name: string, impl: () => void, flag: Flag): void
    step(name: string, description: string, impl: () => void): void
    beforeScenario(impl: () => void): void
    afterScenario(impl: () => void): void

@@ -1,9 +1,7 @@
 import { Flag, setAdapter, setTags, TestSuiteAdapter } from "@antischematic/leftest"
 
 export class CypressTestSuiteAdapter implements TestSuiteAdapter {
-   inlineHooks = true
-
-   feature(name: string, impl: () => void, flag: Flag): void {
+   suite(name: string, impl: () => void, flag: Flag): void {
       switch (flag) {
          case Flag.SKIP:
             describe.skip(name, impl)
@@ -16,7 +14,7 @@ export class CypressTestSuiteAdapter implements TestSuiteAdapter {
       }
    }
 
-   scenario(name: string, impl: () => void, flag: Flag): void {
+   test(name: string, impl: () => void, flag: Flag): void {
       switch (flag) {
          case Flag.SKIP:
             it.skip(name, impl)
@@ -27,10 +25,6 @@ export class CypressTestSuiteAdapter implements TestSuiteAdapter {
          case Flag.DEFAULT:
             it(name, impl)
       }
-   }
-
-   example(name: string, impl: () => void, flag: Flag) {
-      cy.example(name, impl, flag)
    }
 
    step(name: string, description: string, impl: () => void): void {
@@ -59,7 +53,6 @@ declare global {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       interface Chainable<Subject> {
          step(name: string, description: string, impl: () => void): void
-         example(description: string, impl: () => void, flag: Flag): void
          beforeScenario(impl: () => void): void
          afterScenario(impl: () => void): void
          beforeStep(impl: () => void): void
@@ -86,28 +79,6 @@ Cypress.Commands.add('step', (name: string, description, impl) => {
       groupStart: true
    } as any)
    cy.then(impl)
-   cy.then(() => {
-      collapseLastGroup()
-      Cypress.log({
-         groupEnd: true,
-         emitOnly: true
-      } as any)
-   })
-})
-
-Cypress.Commands.add('example', (description, impl, flag) => {
-   if (flag === Flag.EXCLUDE) return
-   Cypress.log({
-      name: description,
-      message: '',
-      type: 'parent',
-      groupStart: true
-   } as any)
-   if (flag === Flag.SKIP) {
-      cy.log('skipped')
-   } else {
-      cy.then(impl)
-   }
    cy.then(() => {
       collapseLastGroup()
       Cypress.log({
