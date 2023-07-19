@@ -1,24 +1,5 @@
-import { createSteps, beforeScenario, afterScenario } from "@antischematic/leftest-playwright"
-import { expect } from '@playwright/test';
 import { createTestSuite, feature, scenario } from "@antischematic/leftest"
-
-afterScenario(async ({ page }) => {
-   await expect(page).toHaveURL(/.*intro/)
-})
-
-const steps = createSteps({
-   async 'I visit <url>'({ page}, url: string) {
-      await page.goto(url);
-   },
-
-   async 'I click the get started link'({ page}) {
-      await page.getByRole('link', { name: 'Get started' }).click();
-   },
-
-   async 'The url should be <url>'({ page}, url: RegExp) {
-      await expect(page).toHaveURL(url);
-   }
-})
+import steps from "./steps"
 
 const { given, when, then } = createTestSuite(steps)
 

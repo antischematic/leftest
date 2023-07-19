@@ -17,7 +17,10 @@
       "paths": {
          "@antischematic/leftest": ["packages/core/src/index.ts"],
          "@antischematic/leftest-cypress": ["packages/cypress/src/index.ts"],
-         "@antischematic/leftest-playwright": ["packages/playwright/src/index.ts"]
+         "@antischematic/leftest-playwright": ["packages/playwright/src/index.ts"],
+         "@antischematic/leftest-harness": ["packages/harness/src/index.ts"],
+         "@antischematic/leftest-harness/playwright": ["packages/harness/src/playwright/index.ts"],
+         "@antischematic/leftest-harness/jest": ["packages/harness/src/jest/index.ts"]
       }
    },
    "exclude": ["node_modules", "tmp"]
