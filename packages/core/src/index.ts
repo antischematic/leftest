@@ -20,7 +20,8 @@ export {
    isExcluded,
    isIncluded,
    getAllScenarios,
-   isTagUsed
+   isTagUsed,
+   overrideScenario
 } from "./lib/core"
 export {
    TestSuiteAdapter,
@@ -30,5 +31,6 @@ export {
    Tag,
    TagFilter,
    ReadonlyScenario,
-   ReadonlyFeature
+   ReadonlyFeature,
+   TestSuiteAdapterMetadata
 } from "./lib/types"

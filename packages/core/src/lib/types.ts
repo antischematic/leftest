@@ -100,15 +100,24 @@ export interface TestSuiteOptions {
    stringifyPlaceholderArguments?: boolean
 }
 
+export interface TestSuiteAdapterMetadata {
+   flag?: Flag,
+   steps: readonly Function[]
+   beforeScenario: readonly Function[]
+   afterScenario: readonly Function[]
+   beforeStep: readonly Function[]
+   afterStep: readonly Function[]
+}
+
 export interface TestSuiteAdapter {
+   isAsync: boolean
    suite(name: string, impl: () => void, flag: Flag): void
-   test(name: string, impl: () => void, flag: Flag): void
-   step(name: string, description: string, impl: () => void): void
-   beforeScenario(impl: () => void): void
-   afterScenario(impl: () => void): void
-   beforeStep(impl: () => void): void
-   afterStep(impl: () => void): void
-   skip?(context: any): void
+   test(name: string, impl: (context?: any) => void, metadata: TestSuiteAdapterMetadata): void
+   step(name: string, description: string, impl: (context?: any) => void, metadata: TestSuiteAdapterMetadata): void
+   beforeScenario(impl: (context?: any) => void, metadata: TestSuiteAdapterMetadata): void
+   afterScenario(impl: (context?: any) => void, metadata: TestSuiteAdapterMetadata): void
+   beforeStep(impl: (context?: any) => void, metadata: TestSuiteAdapterMetadata): void
+   afterStep(impl: (context?: any) => void, metadata: TestSuiteAdapterMetadata): void
 }
 
 export enum Flag {

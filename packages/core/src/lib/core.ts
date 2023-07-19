@@ -63,7 +63,7 @@ export class Scenario {
       return [...(this.parent?.path ?? []), this.name]
    }
 
-   addStep(factory: () => void): void {
+   addStep(factory: (context: any) => void): void {
       this.steps.push(factory)
    }
 
@@ -162,7 +162,9 @@ function runScenario(
    scenario: Scenario,
    examples: readonly any[],
    data?: any,
+   context?: any
 ) {
+   const metadata = { steps: combinedSteps.map((step) => step(GET_IMPL)), ...getAllEffectiveHooks(scenario.getEffectiveTags()) }
    const previousExample = setContext({
       feature,
       scenario,
@@ -170,11 +172,38 @@ function runScenario(
       data,
    })
    try {
-      runHooks(hooks.beforeScenario, scenario.getEffectiveTags(), scenario, (impl) => adapter.beforeScenario(impl))
+      runHooks(metadata.beforeScenario, scenario, context, (impl) => adapter.beforeScenario(impl, metadata))
       for (const step of combinedSteps) {
-         step()
+         step(context)
       }
-      runHooks(hooks.afterScenario, scenario.getEffectiveTags(), scenario, (impl) => adapter.afterScenario(impl))
+      runHooks(metadata.afterScenario, scenario, context, (impl) => adapter.afterScenario(impl, metadata))
+   } finally {
+      setContext(previousExample)
+   }
+}
+
+async function runScenarioAsync(
+   adapter: TestSuiteAdapter,
+   combinedSteps: any[],
+   feature: Scenario,
+   scenario: Scenario,
+   examples: readonly any[],
+   data?: any,
+   context?: any
+) {
+   const previousExample = setContext({
+      feature,
+      scenario,
+      examples,
+      data,
+   })
+   const metadata = { steps: combinedSteps.map((step) => step(GET_IMPL)), ...getAllEffectiveHooks(scenario.getEffectiveTags()) }
+   try {
+      await runHooks(metadata.beforeScenario, scenario, context,(impl) => adapter.beforeScenario(impl, metadata))
+      for (const step of combinedSteps) {
+         await step(context)
+      }
+      await runHooks(metadata.afterScenario, scenario, context,(impl) => adapter.afterScenario(impl, metadata))
    } finally {
       setContext(previousExample)
    }
@@ -246,7 +275,7 @@ export function not(tag: Tag | TagFilter) {
    return (filter: TagFilter) => !filter(tag)
 }
 
-function runHooks(hooks: any, tags: Set<string>, scenario: Scenario, cb: (impl: () => void) => void) {
+function getEffectiveHooks(hooks: any, tags: Set<string>) {
    let effectiveHooks = [] as ((scenario: Scenario) => void)[]
    for (const [mask, fn = mask] of hooks) {
       if (mask !== fn) {
@@ -258,13 +287,31 @@ function runHooks(hooks: any, tags: Set<string>, scenario: Scenario, cb: (impl: 
          effectiveHooks.push(fn)
       }
    }
-   if (effectiveHooks.length) {
-      cb(() => {
-         for (const hook of effectiveHooks) {
-            hook(scenario)
-         }
-      })
-   }
+   return effectiveHooks
+}
+
+function runHooks(hooks: any, scenario: Scenario, context: any, cb: (impl: () => void) => void) {
+   cb(() => {
+      for (const hook of hooks) {
+         hook.call(context, scenario)
+      }
+   })
+}
+
+async function runHooksAsync(hooks: any, scenario: Scenario, context: any, cb: (impl: () => void) => void) {
+   return cb(async () => {
+      for (const hook of hooks) {
+         await hook.call(context, scenario)
+      }
+   })
+}
+
+function getAllEffectiveHooks(tags: Set<string>) {
+   const beforeScenario = getEffectiveHooks(hooks.beforeScenario, tags)
+   const afterScenario = getEffectiveHooks(hooks.beforeScenario, tags)
+   const beforeStep = getEffectiveHooks(hooks.beforeScenario, tags)
+   const afterStep = getEffectiveHooks(hooks.beforeScenario, tags)
+   return { beforeScenario, afterScenario, beforeStep, afterStep }
 }
 
 function runExamples(examples: any[], exampleTags: Set<any>, scenario: Scenario, adapter: TestSuiteAdapter, steps: any[], flag: Flag) {
@@ -280,19 +327,21 @@ function runExamples(examples: any[], exampleTags: Set<any>, scenario: Scenario,
          scenario.feature,
          scenario
       )
+      const metadata = { flag, steps: steps.map((step) => step(GET_IMPL)), ...getAllEffectiveHooks(exampleScenario.getEffectiveTags()) }
       adapter.test(
          exampleScenario.name,
-         () => {
-            runScenario(
+         (context) => {
+            return (adapter.isAsync ? runScenarioAsync : runScenario)(
                adapter,
                steps,
                feature,
                exampleScenario,
                [],
                data,
+               context
             )
          },
-         flag,
+         metadata,
       )
    }
 }
@@ -334,12 +383,13 @@ export function scenario(name: string, fn: () => void) {
                }
             }, flag)
          } else {
+            const metadata = { flag, steps: combinedSteps.map((step) => step(GET_IMPL)), ...getAllEffectiveHooks(scenario.getEffectiveTags()) }
             adapter.test(
                name,
-               function () {
-                  runScenario(adapter, combinedSteps, feature, scenario, context.examples)
+               function (context) {
+                  return (adapter.isAsync ? runScenarioAsync : runScenario)(adapter, combinedSteps, feature, scenario, context.examples, undefined, context)
                },
-               flag,
+               metadata,
             )
          }
       }, flag)
@@ -417,11 +467,13 @@ function examples(...args: any[]): void {
    context.scenario.addExamples(name, data, tags, flag)
 }
 
+const GET_IMPL = Symbol()
+
 function createStep(steps: Steps) {
    return function step(name: string, step: string, ...args: readonly any[]) {
       assertNoTags(name.toLowerCase())
       const adapter = getAdapter()
-      context.scenario.addStep(() => {
+      context.scenario.addStep((ctx: any) => {
          let parsedArgs = args as any[]
          if (!parsedArgs.length) {
             parsedArgs = parseArguments(step)
@@ -431,26 +483,46 @@ function createStep(steps: Steps) {
          }
          let testName = steps.getTestName(step, parsedArgs)
          const impl = steps.getImplementation(step)
+         if (ctx === GET_IMPL) {
+            return impl as any
+         }
          const { scenario } = context
+         const metadata = { steps: scenario.steps.map((step) => step(GET_IMPL)), ...getAllEffectiveHooks(scenario.getEffectiveTags()) }
 
          if (testName) {
-            adapter.step(name, testName, function (this: any) {
-               if (scenario.failed) {
-                  if (adapter.skip) {
-                     adapter.skip(this)
-                  } else {
+            let step: (context?: any) => void
+            if (adapter.isAsync) {
+               step = async function (stepCtx: any) {
+                  ctx = stepCtx || ctx
+                  if (scenario.failed) {
                      throw new Error("Previous step failed")
                   }
+                  try {
+                     await runHooksAsync(metadata.beforeStep, scenario, ctx, (impl) => adapter.beforeStep(impl, metadata))
+                     await impl.apply(ctx, parsedArgs)
+                     await runHooksAsync(metadata.afterStep, scenario, ctx, (impl) => adapter.afterStep(impl, metadata))
+                  } catch (e) {
+                     scenario.markAsFailed()
+                     throw e
+                  }
                }
-               try {
-                  runHooks(hooks.beforeStep, scenario.getEffectiveTags(), scenario, (impl) => adapter.beforeStep(impl))
-                  impl(...parsedArgs)
-                  runHooks(hooks.afterStep, scenario.getEffectiveTags(), scenario, (impl) => adapter.afterStep(impl))
-               } catch (e) {
-                  scenario.markAsFailed()
-                  throw e
+            } else {
+               step = function (stepCtx: any) {
+                  ctx = stepCtx || ctx
+                  if (scenario.failed) {
+                     throw new Error("Previous step failed")
+                  }
+                  try {
+                     runHooks(metadata.beforeStep, scenario, ctx,(impl) => adapter.beforeStep(impl, metadata))
+                     impl.apply(ctx, parsedArgs)
+                     runHooks(metadata.afterStep, scenario, ctx,(impl) => adapter.afterStep(impl, metadata))
+                  } catch (e) {
+                     scenario.markAsFailed()
+                     throw e
+                  }
                }
-            })
+            }
+            return adapter.step(name, testName, step, metadata)
          }
       })
    }
@@ -679,15 +751,15 @@ const hooks = {
  * @param filter The tag expression to be matched against
  * @param fn
  */
-export function beforeScenario(
+export function beforeScenario<T extends ReadonlyScenario>(
    filter: ((filter: TagFilter) => boolean),
-   fn: (scenario: ReadonlyScenario) => void,
+   fn: (scenario: T) => void,
 ): void
 /**
  * Run code before every scenario is executed.
  * @param fn
  */
-export function beforeScenario(fn: (scenario: ReadonlyScenario) => void): void
+export function beforeScenario<T extends ReadonlyScenario>(fn: (scenario: T) => void): void
 export function beforeScenario(
    filter: ((filter: TagFilter) => boolean) | ((scenario: ReadonlyScenario) => void),
    fn?: (scenario: ReadonlyScenario) => void,
@@ -702,15 +774,15 @@ export function beforeScenario(
  * @param filter The tag expression to be matched against
  * @param fn
  */
-export function beforeStep(
+export function beforeStep<T extends ReadonlyScenario>(
    filter: ((filter: TagFilter) => boolean),
-   fn: (scenario: ReadonlyScenario) => void,
+   fn: (scenario: T) => void,
 ): void
 /**
  * Run code before every step is executed.
  * @param fn
  */
-export function beforeStep(fn: (scenario: ReadonlyScenario) => void): void
+export function beforeStep<T extends ReadonlyScenario>(fn: (scenario: T) => void): void
 export function beforeStep(
    filter: ((filter: TagFilter) => boolean) | ((scenario: ReadonlyScenario) => void),
    fn?: (scenario: ReadonlyScenario) => void,
@@ -725,15 +797,15 @@ export function beforeStep(
  * @param filter The tag expression to be matched against
  * @param fn
  */
-export function afterScenario(
+export function afterScenario<T extends ReadonlyScenario>(
    filter: ((filter: TagFilter) => boolean),
-   fn: (scenario: ReadonlyScenario) => void,
+   fn: (scenario: T) => void,
 ): void
 /**
  * Run code after every scenario is executed.
  * @param fn
  */
-export function afterScenario(fn: (scenario: ReadonlyScenario) => void): void
+export function afterScenario<T extends ReadonlyScenario>(fn: (scenario: T) => void): void
 export function afterScenario(
    filter: ((filter: TagFilter) => boolean) | ((scenario: ReadonlyScenario) => void),
    fn?: (scenario: ReadonlyScenario) => void,
@@ -748,15 +820,15 @@ export function afterScenario(
  * @param filter The tag expression to be matched against
  * @param fn
  */
-export function afterStep(
+export function afterStep<T extends ReadonlyScenario>(
    filter: ((filter: TagFilter) => boolean),
-   fn: (scenario: ReadonlyScenario) => void,
+   fn: (scenario: T) => void,
 ): void
 /**
  * Run code after every step is executed.
  * @param fn
  */
-export function afterStep(fn: (scenario: ReadonlyScenario) => void): void
+export function afterStep<T extends ReadonlyScenario>(fn: (scenario: ReadonlyScenario) => void): void
 export function afterStep(
    filter: ((filter: TagFilter) => boolean) | ((scenario: ReadonlyScenario) => void),
    fn?: (scenario: ReadonlyScenario) => void,

@@ -1,49 +1,50 @@
 {
-   "name": "leftest",
-   "version": "0.0.0",
-   "license": "MIT",
-   "scripts": {
-      "pack": "nx run-many --target=build --projects=leftest,leftest-cypress && cd dist/packages/core && npm pack && cd ../cypress && npm pack"
-   },
-   "private": true,
-   "devDependencies": {
-      "@nrwl/eslint-plugin-nx": "15.9.2",
-      "@nrwl/js": "^15.9.2",
-      "@nrwl/linter": "15.9.2",
-      "@nrwl/rollup": "15.9.2",
-      "@nrwl/vite": "15.9.2",
-      "@pollyjs/adapter-fetch": "^6.0.5",
-      "@pollyjs/adapter-xhr": "^6.0.5",
-      "@pollyjs/core": "^6.0.5",
-      "@pollyjs/persister": "^6.0.5",
-      "@pollyjs/persister-fs": "^6.0.5",
-      "@pollyjs/persister-local-storage": "^6.0.5",
-      "@swc/cli": "~0.1.55",
-      "@swc/core": "^1.2.173",
-      "@types/node": "18.7.1",
-      "@typescript-eslint/eslint-plugin": "^5.36.1",
-      "@typescript-eslint/parser": "^5.36.1",
-      "@vitest/coverage-c8": "~0.25.8",
-      "@vitest/ui": "^0.25.8",
-      "cypress": "^12.10.0",
-      "eslint": "~8.15.0",
-      "eslint-config-prettier": "8.1.0",
-      "eslint-plugin-cypress": "^2.10.3",
-      "jsdom": "~20.0.3",
-      "nx": "15.9.2",
-      "prettier": "^2.6.2",
-      "typescript": "~4.9.5",
-      "typescript-transform-paths": "^3.4.6",
-      "vite": "^4.0.1",
-      "vite-plugin-eslint": "^1.8.1",
-      "vite-tsconfig-paths": "^4.0.2",
-      "vitest": "^0.25.8"
-   },
-   "workspaces": [
-      "packages/*"
-   ],
-   "dependencies": {
-      "@nx/cypress": "^16.0.1",
-      "@swc/helpers": "~0.5.0"
-   }
+  "name": "leftest",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {
+    "pack": "nx run-many --target=build --projects=leftest,leftest-cypress && cd dist/packages/core && npm pack && cd ../cypress && npm pack"
+  },
+  "private": true,
+  "devDependencies": {
+    "@nrwl/eslint-plugin-nx": "15.9.2",
+    "@nrwl/js": "^15.9.2",
+    "@nrwl/linter": "15.9.2",
+    "@nrwl/rollup": "15.9.2",
+    "@nrwl/vite": "15.9.2",
+    "@playwright/test": "^1.36.1",
+    "@pollyjs/adapter-fetch": "^6.0.5",
+    "@pollyjs/adapter-xhr": "^6.0.5",
+    "@pollyjs/core": "^6.0.5",
+    "@pollyjs/persister": "^6.0.5",
+    "@pollyjs/persister-fs": "^6.0.5",
+    "@pollyjs/persister-local-storage": "^6.0.5",
+    "@swc/cli": "~0.1.55",
+    "@swc/core": "^1.2.173",
+    "@types/node": "18.7.1",
+    "@typescript-eslint/eslint-plugin": "^5.36.1",
+    "@typescript-eslint/parser": "^5.36.1",
+    "@vitest/coverage-c8": "~0.25.8",
+    "@vitest/ui": "^0.25.8",
+    "cypress": "^12.10.0",
+    "eslint": "~8.15.0",
+    "eslint-config-prettier": "8.1.0",
+    "eslint-plugin-cypress": "^2.10.3",
+    "jsdom": "~20.0.3",
+    "nx": "15.9.2",
+    "prettier": "^2.6.2",
+    "typescript": "~4.9.5",
+    "typescript-transform-paths": "^3.4.6",
+    "vite": "^4.0.1",
+    "vite-plugin-eslint": "^1.8.1",
+    "vite-tsconfig-paths": "^4.0.2",
+    "vitest": "^0.25.8"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "dependencies": {
+    "@nx/cypress": "^16.0.1",
+    "@swc/helpers": "~0.5.0"
+  }
 }
