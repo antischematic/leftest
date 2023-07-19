@@ -1,0 +1,40 @@
+{
+   "name": "leftest-playwright",
+   "$schema": "../../node_modules/nx/schemas/project-schema.json",
+   "sourceRoot": "packages/playwright/src",
+   "projectType": "library",
+   "targets": {
+      "build": {
+         "executor": "@nrwl/rollup:rollup",
+         "outputs": ["{options.outputPath}"],
+         "options": {
+            "outputPath": "dist/packages/playwright",
+            "main": "packages/playwright/src/index.ts",
+            "tsConfig": "packages/playwright/tsconfig.lib.json",
+            "assets": [{
+              "input": "packages/playwright",
+              "glob": "README.md",
+              "output": "."
+            }],
+            "project": "packages/playwright/package.json",
+            "compiler": "tsc"
+         }
+      },
+      "lint": {
+         "executor": "@nrwl/linter:eslint",
+         "outputs": ["{options.outputFile}"],
+         "options": {
+            "lintFilePatterns": ["packages/playwright/**/*.ts"]
+         }
+      },
+      "test": {
+         "executor": "@nrwl/vite:test",
+         "outputs": ["coverage/packages/playwright"],
+         "options": {
+            "passWithNoTests": true,
+            "reportsDirectory": "../../coverage/packages/playwright"
+         }
+      }
+   },
+   "tags": []
+}
