@@ -199,11 +199,11 @@ async function runScenarioAsync(
    })
    const metadata = { steps: combinedSteps.map((step) => step(GET_IMPL)), ...getAllEffectiveHooks(scenario.getEffectiveTags()) }
    try {
-      await runHooks(metadata.beforeScenario, scenario, context,(impl) => adapter.beforeScenario(impl, metadata))
+      await runHooksAsync(metadata.beforeScenario, scenario, context,(impl) => adapter.beforeScenario(impl, metadata))
       for (const step of combinedSteps) {
          await step(context)
       }
-      await runHooks(metadata.afterScenario, scenario, context,(impl) => adapter.afterScenario(impl, metadata))
+      await runHooksAsync(metadata.afterScenario, scenario, context,(impl) => adapter.afterScenario(impl, metadata))
    } finally {
       setContext(previousExample)
    }
@@ -308,9 +308,9 @@ async function runHooksAsync(hooks: any, scenario: Scenario, context: any, cb: (
 
 function getAllEffectiveHooks(tags: Set<string>) {
    const beforeScenario = getEffectiveHooks(hooks.beforeScenario, tags)
-   const afterScenario = getEffectiveHooks(hooks.beforeScenario, tags)
-   const beforeStep = getEffectiveHooks(hooks.beforeScenario, tags)
-   const afterStep = getEffectiveHooks(hooks.beforeScenario, tags)
+   const afterScenario = getEffectiveHooks(hooks.afterScenario, tags)
+   const beforeStep = getEffectiveHooks(hooks.beforeStep, tags)
+   const afterStep = getEffectiveHooks(hooks.afterStep, tags)
    return { beforeScenario, afterScenario, beforeStep, afterStep }
 }
 
@@ -327,10 +327,11 @@ function runExamples(examples: any[], exampleTags: Set<any>, scenario: Scenario,
          scenario.feature,
          scenario
       )
+      console.log('data', data)
       const metadata = { flag, steps: steps.map((step) => step(GET_IMPL)), ...getAllEffectiveHooks(exampleScenario.getEffectiveTags()) }
       adapter.test(
          exampleScenario.name,
-         (context) => {
+         (ctx) => {
             return (adapter.isAsync ? runScenarioAsync : runScenario)(
                adapter,
                steps,
@@ -338,7 +339,7 @@ function runExamples(examples: any[], exampleTags: Set<any>, scenario: Scenario,
                exampleScenario,
                [],
                data,
-               context
+               ctx
             )
          },
          metadata,
@@ -386,8 +387,8 @@ export function scenario(name: string, fn: () => void) {
             const metadata = { flag, steps: combinedSteps.map((step) => step(GET_IMPL)), ...getAllEffectiveHooks(scenario.getEffectiveTags()) }
             adapter.test(
                name,
-               function (context) {
-                  return (adapter.isAsync ? runScenarioAsync : runScenario)(adapter, combinedSteps, feature, scenario, context.examples, undefined, context)
+               function (ctx) {
+                  return (adapter.isAsync ? runScenarioAsync : runScenario)(adapter, combinedSteps, feature, scenario, context.examples, undefined, ctx)
                },
                metadata,
             )
@@ -474,6 +475,10 @@ function createStep(steps: Steps) {
       assertNoTags(name.toLowerCase())
       const adapter = getAdapter()
       context.scenario.addStep((ctx: any) => {
+         const impl = steps.getImplementation(step)
+         if (ctx === GET_IMPL) {
+            return impl as any
+         }
          let parsedArgs = args as any[]
          if (!parsedArgs.length) {
             parsedArgs = parseArguments(step)
@@ -482,10 +487,6 @@ function createStep(steps: Steps) {
             parsedArgs = steps.getArgsFromObject(step, context.data)
          }
          let testName = steps.getTestName(step, parsedArgs)
-         const impl = steps.getImplementation(step)
-         if (ctx === GET_IMPL) {
-            return impl as any
-         }
          const { scenario } = context
          const metadata = { steps: scenario.steps.map((step) => step(GET_IMPL)), ...getAllEffectiveHooks(scenario.getEffectiveTags()) }
 

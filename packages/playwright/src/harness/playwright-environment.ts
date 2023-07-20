@@ -1,4 +1,10 @@
-import { HarnessEnvironment } from "../harness-environment"
+import {
+   ComponentHarness,
+   ComponentHarnessConstructor,
+   TestElement,
+} from "@antischematic/leftest-harness"
+import { ElementHandle, Locator, Page } from "@playwright/test"
+import { HarnessEnvironment } from "../../../harness/src/harness-environment"
 import {isLocator, PlaywrightElement} from './element';
 
 /**
@@ -14,22 +20,26 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
     * @readonly
     * @type {import('@playwright/test').Page}
     */
-   #page;
+   #page: Page;
 
    /**
     * @readonly
     * @type {import('@playwright/test').Locator}
     */
-   #documentRoot;
+   #documentRoot: Locator;
 
    /**
     * @readonly
     * @type {Required<import('./abstract-environment.js').PlaywrightHarnessEnvironmentOptions>}
     */
-   #opts;
+   #opts: any;
 
-   static loader(page) {
+   static loader(page: Page) {
       return new PlaywrightHarnessEnvironment(page)
+   }
+
+   static harnessForPage<T extends ComponentHarness>(page: Page, harness: ComponentHarnessConstructor<T>) {
+      return this.loader(page).getHarness(harness)
    }
 
    /**
@@ -40,7 +50,7 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
     * @param {import('@playwright/test').ElementHandle<HTMLElement | SVGElement> | import('@playwright/test').Locator=} element
     */
    constructor(
-      page,
+      page: Page,
       {respectShadowBoundaries = false, useLocators = false} = {},
       documentRoot = page.locator(':root'),
       element = documentRoot,
@@ -103,7 +113,7 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
     * @returns {Promise<import('@playwright/test').ElementHandle<HTMLElement | SVGElement>>}
     * @override
     */
-   async getPlaywrightHandle(element) {
+   async getPlaywrightHandle(element: TestElement) {
       const handleOrLocator = elementHandles.get(element);
 
       if (handleOrLocator == null) {
@@ -128,7 +138,7 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
     * @returns {import('@playwright/test').Locator}
     * @override
     */
-   getPlaywrightLocator(element) {
+   getPlaywrightLocator(element: TestElement) {
       const handleOrLocator = elementHandles.get(element);
 
       if (handleOrLocator == null) {
@@ -151,7 +161,7 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
     * @returns {PlaywrightHarnessEnvironment}
     * @override
     */
-   withOptions(options) {
+   withOptions(options: any) {
       return new PlaywrightHarnessEnvironment(
          this.#page,
          {
@@ -179,7 +189,7 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
     * @override
     * @protected
     */
-   createTestElement(handle) {
+   createTestElement(handle: ElementHandle<HTMLElement | SVGElement> | Locator): TestElement {
       // This function is called in the HarnessEnvironment constructor, so we
       // can't directly use private properties here due to the polyfill in tslib
       const element = new PlaywrightElement(
@@ -203,7 +213,7 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
     * @override
     * @protected
     */
-   createEnvironment(element) {
+   createEnvironment(element: any) {
       return new PlaywrightHarnessEnvironment(
          this.#page,
          this.#opts,
@@ -218,7 +228,7 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
     * @override
     * @protected
     */
-   async getAllRawElements(selector) {
+   async getAllRawElements(selector: string) {
       if (!isLocator(this.rawRootElement)) {
          return await this.rawRootElement.$$(
             this.respectShadowBoundaries
@@ -243,4 +253,8 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
          );
       }
    }
+}
+
+export function getHarness<T extends ComponentHarness>(page: Page, harness: ComponentHarnessConstructor<T>) {
+   return PlaywrightHarnessEnvironment.harnessForPage(page, harness)
 }

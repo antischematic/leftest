@@ -1,4 +1,5 @@
-import {TestKey} from '../index';
+import { EventData, ModifierKeys, TestKey, TextOptions } from "@antischematic/leftest-harness"
+import { ElementHandle, Locator, Page } from "@playwright/test"
 
 /** @typedef {import('@angular/cdk/testing').ElementDimensions} ElementDimensions */
 /** @typedef {import('@angular/cdk/testing').EventData} EventData */
@@ -9,7 +10,7 @@ import {TestKey} from '../index';
 /** @typedef {import('@playwright/test').Locator} Locator */
 /** @typedef {import('@playwright/test').Page} Page */
 
-import * as contentScripts from './browser.js';
+import * as contentScripts from './browser';
 
 /**
  * @type {Map<TestKey, string>}
@@ -52,12 +53,12 @@ const modifierMapping = /** @type {const} */ ([
    ['shift', 'Shift'],
    ['meta', 'Meta'],
    ['control', 'Control'],
-]);
+]) as const;
 
 /**
  * @param {ModifierKeys} modifiers
  */
-function getModifiers(modifiers) {
+function getModifiers(modifiers: ModifierKeys) {
    return modifierMapping
       .filter(([modifier]) => modifiers[modifier])
       .map(([, modifier]) => modifier);
@@ -67,7 +68,7 @@ function getModifiers(modifiers) {
  * @param {(string | TestKey)[] | [ModifierKeys, ...(string | TestKey)[]]} keys
  * @returns {keys is [ModifierKeys, ...(string | TestKey)[]]}
  */
-function hasModifiers(keys) {
+function hasModifiers(keys: [ModifierKeys, ...(string | TestKey)[]]) {
    return typeof keys[0] === 'object';
 }
 
@@ -76,7 +77,7 @@ function hasModifiers(keys) {
  * @param {T} args
  * @returns {args is T & ['center', ...unknown[]]}
  */
-function isCenterClick(args) {
+function isCenterClick(args: ClickParameters) {
    return args[0] === 'center';
 }
 
@@ -84,7 +85,7 @@ function isCenterClick(args) {
  * @param {ClickParameters} args
  * @returns {args is [number, number, ModifierKeys?]}
  */
-function isPositionedClick(args) {
+function isPositionedClick(args: ClickParameters) {
    return typeof args[0] === 'number';
 }
 
@@ -92,12 +93,14 @@ function isPositionedClick(args) {
  * @typedef {[ModifierKeys?] | ['center', ModifierKeys?] | [number, number, ModifierKeys?]} ClickParameters
  */
 
+type ClickParameters = [ModifierKeys?] | ['center', ModifierKeys?] | [number, number, ModifierKeys?]
+
 /**
  *
  * @param {ElementHandle<unknown> | Locator} handleOrLocator
  * @returns {handleOrLocator is Locator}
  */
-export function isLocator(handleOrLocator) {
+export function isLocator(handleOrLocator: ElementHandle<unknown> | Locator) {
    return !('$$' in handleOrLocator);
 }
 
@@ -114,7 +117,7 @@ export class PlaywrightElement {
     * @readonly
     * @type {() => Page}
     */
-   #page;
+   #page: () => Page;
 
    /**
     * Awaits for the angular app to become stable
@@ -124,7 +127,7 @@ export class PlaywrightElement {
     * @readonly
     * @type {<T>(fn: (handle: Locator | ElementHandle<HTMLElement | SVGElement>) => Promise<T>) => Promise<T>}
     */
-   #query;
+   #query: <T>(fn: (handle: Locator | ElementHandle<HTMLElement | SVGElement>) => Promise<T>) => Promise<T>;
 
    /**
     * Awaits for the angular app to become stable
@@ -134,7 +137,7 @@ export class PlaywrightElement {
     * @readonly
     * @type {(fn: (handle: Locator | ElementHandle<HTMLElement | SVGElement>) => Promise<void>) => Promise<void>}
     */
-   #perform;
+   #perform: (fn: (handle: Locator | ElementHandle<HTMLElement | SVGElement>) => Promise<void>) => Promise<void>;
 
    /**
     * Execute the given script
@@ -142,22 +145,22 @@ export class PlaywrightElement {
     * @readonly
     * @type {Locator['evaluate']}
     */
-   #evaluate;
+   #evaluate: Locator['evaluate'];
 
    /**
     * @param {() => Page} page
     * @param {ElementHandle<HTMLElement | SVGElement> | Locator} handleOrLocator
     * @param {() => Promise<void>} whenStable
     */
-   constructor(page, handleOrLocator, whenStable) {
+   constructor(page: () => Page, handleOrLocator: ElementHandle<HTMLElement | SVGElement> | Locator, whenStable: () => Promise<void>) {
       this.#page = page;
 
-      this.#query = async fn => {
+      this.#query = async (fn: any) => {
          await whenStable();
          return fn(handleOrLocator);
       };
 
-      this.#perform = async fn => {
+      this.#perform = async (fn: any) => {
          try {
             return await fn(handleOrLocator);
          } finally {
@@ -175,7 +178,7 @@ export class PlaywrightElement {
     * @param  {ClickParameters} args
     * @returns {Promise<Parameters<ElementHandle['click']>[0]>}
     */
-   #toClickOptions = async (...args) => {
+   #toClickOptions = async (...args: ClickParameters) => {
       /** @type {Parameters<ElementHandle['click']>[0]} */
       const clickOptions = {} as any;
       /** @type {ModifierKeys | undefined} */
@@ -190,7 +193,7 @@ export class PlaywrightElement {
          };
 
          modifierKeys = args[1];
-      } else if (isPositionedClick(args)) {
+      } else if (isPositionedClick(args as any)) {
          clickOptions.position = {x: args[0], y: args[1]};
          modifierKeys = args[2];
       } else {
@@ -198,7 +201,7 @@ export class PlaywrightElement {
       }
 
       if (modifierKeys) {
-         clickOptions.modifiers = getModifiers(modifierKeys);
+         clickOptions.modifiers = getModifiers(modifierKeys as any);
       }
 
       return clickOptions;
@@ -224,7 +227,7 @@ export class PlaywrightElement {
     * @param {ClickParameters} args
     * @returns {Promise<void>}
     */
-   click(...args) {
+   click(...args: ClickParameters) {
       return this.#perform(async handle =>
          handle.click(await this.#toClickOptions(...args)),
       );
@@ -234,7 +237,7 @@ export class PlaywrightElement {
     * @param {ClickParameters} args
     * @returns {Promise<void>}
     */
-   rightClick(...args) {
+   rightClick(...args: ClickParameters) {
       return this.#perform(async handle =>
          handle.click({
             ...(await this.#toClickOptions(...args)),
@@ -248,7 +251,7 @@ export class PlaywrightElement {
     * @param {Record<string, EventData>=} data
     * @returns {Promise<void>}
     */
-   dispatchEvent(name, data) {
+   dispatchEvent(name: string, data: Record<string, EventData>) {
       // ElementHandle#dispatchEvent executes the equivalent of
       //   `element.dispatchEvent(new CustomEvent(name, {detail: data}))`
       // which doesn't match what angular wants: `data` are properties to be
@@ -257,7 +260,7 @@ export class PlaywrightElement {
       return this.#perform(() =>
          // Cast to `any` needed because of infinite type instantiation
          this.#evaluate(
-            contentScripts.dispatchEvent,
+            contentScripts.dispatchEvent as any,
             /** @type {[string, any]} */ ([name, data]),
          ),
       );
@@ -274,7 +277,7 @@ export class PlaywrightElement {
     * @param {string} property
     * @returns {Promise<string>}
     */
-   async getCssValue(property) {
+   async getCssValue(property: string): Promise<string> {
       return this.#query(() =>
          this.#evaluate(contentScripts.getStyleProperty, property),
       );
@@ -291,7 +294,7 @@ export class PlaywrightElement {
     * @returns {Promise<void>}
     */
    async mouseAway() {
-      const {left, top} = await this.#query(async handle => {
+      const {left, top} = await this.#query(async (handle: any) => {
          let {left, top} = await this.#evaluate(
             contentScripts.getBoundingClientRect,
          );
@@ -316,7 +319,7 @@ export class PlaywrightElement {
     * @param  {...number} optionIndexes
     * @returns {Promise<void>}
     */
-   selectOptions(...optionIndexes) {
+   selectOptions(...optionIndexes: number[]) {
       // ElementHandle#selectOption supports selecting multiple options at once,
       // but that triggers only one change event.
       // So we select options as if we're a user: one at a time
@@ -336,17 +339,17 @@ export class PlaywrightElement {
     * @param  {(string | TestKey)[] | [ModifierKeys, ...(string | TestKey)[]]} input
     * @returns {Promise<void>}
     */
-   sendKeys(...input) {
+   sendKeys(...input: (string | TestKey)[] | [ModifierKeys, ...(string | TestKey)[]]) {
       return this.#perform(async handle => {
          /** @type {string | undefined} */
          let modifiers;
          let keys;
-         if (hasModifiers(input)) {
+         if (hasModifiers(input as any)) {
             /** @type {ModifierKeys} */
             let modifiersObject;
             [modifiersObject, ...keys] = input;
 
-            modifiers = getModifiers(modifiersObject).join('+');
+            modifiers = getModifiers(modifiersObject as any).join('+');
          } else {
             keys = input;
          }
@@ -368,10 +371,10 @@ export class PlaywrightElement {
             for (const key of /** @type {(string | TestKey)[]} */ (keys)) {
                if (typeof key === 'string') {
                   await keyboard.type(key);
-               } else if (keyMap.has(key)) {
-                  await keyboard.press(/** @type {string} */ (keyMap.get(key)));
+               } else if (keyMap.has(key as any)) {
+                  await keyboard.press(/** @type {string} */ (keyMap.get(key as any)) as any);
                } else {
-                  throw new Error(`Unknown key: ${TestKey[key] ?? key}`);
+                  throw new Error(`Unknown key: ${TestKey[key as any] ?? key}`);
                }
             }
          } finally {
@@ -386,7 +389,7 @@ export class PlaywrightElement {
     * @param {string} value
     * @returns {Promise<void>}
     */
-   setInputValue(value) {
+   setInputValue(value: string) {
       return this.#perform(handle => handle.fill(value));
    }
 
@@ -394,7 +397,7 @@ export class PlaywrightElement {
     * @param {TextOptions=} options
     * @returns {Promise<string>}
     */
-   text(options) {
+   text(options: TextOptions) {
       return this.#query(handle => {
          if (options?.exclude) {
             return this.#evaluate(
@@ -411,7 +414,7 @@ export class PlaywrightElement {
     * @param {string} value
     * @returns {Promise<void>}
     */
-   setContenteditableValue(value) {
+   setContenteditableValue(value: string) {
       return this.#perform(() =>
          this.#evaluate(contentScripts.setContenteditableValue, value),
       );
@@ -421,7 +424,7 @@ export class PlaywrightElement {
     * @param {string} name
     * @returns {Promise<string | null>}
     */
-   getAttribute(name) {
+   getAttribute(name: string) {
       return this.#query(handle => handle.getAttribute(name));
    }
 
@@ -429,7 +432,7 @@ export class PlaywrightElement {
     * @param {string} name
     * @returns {Promise<boolean>}
     */
-   async hasClass(name) {
+   async hasClass(name: string) {
       const classes =
          (await this.#query(handle => handle.getAttribute('class')))?.split(
             /\s+/,
@@ -451,8 +454,8 @@ export class PlaywrightElement {
     * @param {string} name
     * @returns {Promise<any>}
     */
-   async getProperty(name) {
-      const property = await this.#query(async handle => {
+   async getProperty(name: string) {
+      const property = await this.#query(async (handle: any) => {
          if (isLocator(handle)) {
             return handle.evaluateHandle(contentScripts.getProperty, name);
          } else {
@@ -471,7 +474,7 @@ export class PlaywrightElement {
     * @param {string} selector
     * @returns {Promise<boolean>}
     */
-   async matchesSelector(selector) {
+   async matchesSelector(selector: string) {
       return this.#query(() => this.#evaluate(contentScripts.matches, selector));
    }
 

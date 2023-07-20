@@ -6,6 +6,8 @@
  * other functions in this file.
  */
 
+import { EventData } from "@antischematic/leftest-harness"
+
 /**
  * Gets text of element excluding certain selectors within the element.
  *
@@ -14,16 +16,16 @@
  * @internal
  * @returns {string}
  */
-export function getTextWithExcludedElements(element, excludeSelector) {
-   const clone = /** @type {Element} */ (element.cloneNode(true));
+export function getTextWithExcludedElements(element: Element, excludeSelector: string) {
+   const clone = /** @type {Element} */ (element.cloneNode(true)) as Element;
 
-   for (const child of clone.querySelectorAll(excludeSelector)) {
+   for (const child of Array.from(clone.querySelectorAll(excludeSelector))) {
       child.parentNode?.removeChild(child);
    }
 
    // Fallback to textContent for SVG elements
    return (
-      /** @type {Element & Partial<HTMLElement>} */ (clone).innerText ??
+      /** @type {Element & Partial<HTMLElement>} */ (clone as HTMLElement).innerText ??
       clone.textContent ??
       ''
    );
@@ -34,7 +36,7 @@ export function getTextWithExcludedElements(element, excludeSelector) {
  * @param {HTMLElement | SVGElement} element Element to blur
  * @internal
  */
-export function blur(element) {
+export function blur(element: HTMLElement | SVGElement) {
    element.blur();
 }
 
@@ -46,7 +48,7 @@ export function blur(element) {
  * @returns {boolean} Whether the element matches the selector
  * @internal
  */
-export function matches(element, selector) {
+export function matches(element: Element, selector: string) {
    return element.matches(selector);
 }
 
@@ -57,7 +59,7 @@ export function matches(element, selector) {
  * @returns {import('@angular/cdk/testing').ElementDimensions} The dimensions of the element
  * @internal
  */
-export function getBoundingClientRect(element) {
+export function getBoundingClientRect(element: Element) {
    const {left, top, width, height} = element.getBoundingClientRect();
    return {left, top, width, height};
 }
@@ -69,7 +71,7 @@ export function getBoundingClientRect(element) {
  * @param {string} styleProperty The style property to get
  * @returns {string} The value for the style property
  */
-export function getStyleProperty(element, styleProperty) {
+export function getStyleProperty(element: Element, styleProperty: string) {
    return getComputedStyle(element).getPropertyValue(styleProperty);
 }
 
@@ -81,7 +83,7 @@ export function getStyleProperty(element, styleProperty) {
 export function isAngularBootstrapped() {
    return (
       typeof (
-         /** @type {import('./angular-types').AngularWindow} */ (globalThis)
+         /** @type {import('./angular-types').AngularWindow} */ (globalThis as any)
             .frameworkStabilizers
       ) !== 'undefined'
    );
@@ -95,14 +97,14 @@ export function isAngularBootstrapped() {
 export async function waitUntilAngularStable() {
    if (
       typeof (
-         /** @type {import('./angular-types').AngularWindow} */ (globalThis)
+         /** @type {import('./angular-types').AngularWindow} */ (globalThis as any)
             .frameworkStabilizers
       ) !== 'undefined'
    ) {
       await Promise.all(
          /** @type {import('./angular-types').AngularWindow} */ (
-            globalThis
-         ).frameworkStabilizers.map(fn => new Promise(fn)),
+            globalThis as any
+         ).frameworkStabilizers.map((fn: any) => new Promise(fn)),
       );
    }
 }
@@ -113,7 +115,7 @@ export async function waitUntilAngularStable() {
  * @param {[string, Record<string, import('@angular/cdk/testing').EventData>]} event
  * @returns {void}
  */
-export function dispatchEvent(element, [name, properties]) {
+export function dispatchEvent(element: Element, [name, properties]: [string, Record<string, EventData>]) {
    const {detail, ...otherProps} = properties ?? {};
 
    const event = new CustomEvent(name, {detail});
@@ -126,8 +128,8 @@ export function dispatchEvent(element, [name, properties]) {
  * @param {Element} element
  * @param {string} value
  */
-export function setContenteditableValue(element, value) {
-   if (!(/** @type {HTMLElement} */ (element).isContentEditable)) {
+export function setContenteditableValue(element: Element, value: string) {
+   if (!(/** @type {HTMLElement} */ (element as HTMLElement).isContentEditable)) {
       throw new Error(
          "setContenteditableValue can only be called on a 'contenteditable' element",
       );
@@ -140,6 +142,6 @@ export function setContenteditableValue(element, value) {
  * @param {Element} element
  * @param {string} property
  */
-export function getProperty(element, property) {
-   return /** @type {any} */ (element)[property];
+export function getProperty(element: Element, property: string) {
+   return /** @type {any} */ (element as any)[property];
 }

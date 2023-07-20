@@ -113,11 +113,11 @@ export interface TestSuiteAdapter {
    isAsync: boolean
    suite(name: string, impl: () => void, flag: Flag): void
    test(name: string, impl: (context?: any) => void, metadata: TestSuiteAdapterMetadata): void
-   step(name: string, description: string, impl: (context?: any) => void, metadata: TestSuiteAdapterMetadata): void
-   beforeScenario(impl: (context?: any) => void, metadata: TestSuiteAdapterMetadata): void
-   afterScenario(impl: (context?: any) => void, metadata: TestSuiteAdapterMetadata): void
-   beforeStep(impl: (context?: any) => void, metadata: TestSuiteAdapterMetadata): void
-   afterStep(impl: (context?: any) => void, metadata: TestSuiteAdapterMetadata): void
+   step(name: string, description: string, impl: (context?: any) => any, metadata: TestSuiteAdapterMetadata): void
+   beforeScenario(impl: (context?: any) => any, metadata: TestSuiteAdapterMetadata): void
+   afterScenario(impl: (context?: any) => any, metadata: TestSuiteAdapterMetadata): void
+   beforeStep(impl: (context?: any) => any, metadata: TestSuiteAdapterMetadata): void
+   afterStep(impl: (context?: any) => any, metadata: TestSuiteAdapterMetadata): void
 }
 
 export enum Flag {

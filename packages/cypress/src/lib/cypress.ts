@@ -1,6 +1,14 @@
-import { Flag, setAdapter, setTags, TestSuiteAdapter } from "@antischematic/leftest"
+import {
+   Flag,
+   setAdapter,
+   setTags,
+   TestSuiteAdapter,
+   TestSuiteAdapterMetadata,
+} from "@antischematic/leftest"
 
 export class CypressTestSuiteAdapter implements TestSuiteAdapter {
+   isAsync = false
+
    suite(name: string, impl: () => void, flag: Flag): void {
       switch (flag) {
          case Flag.SKIP:
@@ -14,16 +22,16 @@ export class CypressTestSuiteAdapter implements TestSuiteAdapter {
       }
    }
 
-   test(name: string, impl: () => void, flag: Flag): void {
+   test(name: string, impl: () => void, { flag }: TestSuiteAdapterMetadata): void {
       switch (flag) {
          case Flag.SKIP:
-            it.skip(name, impl)
+            it.skip(name, () => impl())
             break
          case Flag.ONLY:
-            it.only(name, impl)
+            it.only(name, () => impl())
             break
          case Flag.DEFAULT:
-            it(name, impl)
+            it(name, () => impl())
       }
    }
 

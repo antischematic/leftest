@@ -1,7 +1,9 @@
 import { suite, test } from "vitest"
-import { Flag, TestSuiteAdapter } from "./types"
+import { Flag, TestSuiteAdapter, TestSuiteAdapterMetadata } from "./types"
 
 export class VitestAdapter implements TestSuiteAdapter {
+   isAsync = false
+
    suite(name: string, impl: () => void, flag: Flag) {
       switch (flag) {
          case Flag.SKIP:
@@ -15,7 +17,7 @@ export class VitestAdapter implements TestSuiteAdapter {
       }
    }
 
-   test(name: string, impl: () => void, flag: Flag): void {
+   test(name: string, impl: () => void, { flag }: TestSuiteAdapterMetadata): void {
       switch (flag) {
          case Flag.SKIP:
             test.skip(name, impl)
