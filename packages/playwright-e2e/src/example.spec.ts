@@ -7,6 +7,6 @@ feature('test feature', () => {
    scenario('has title', () => {
       given('I visit "https://playwright.dev/"')
       when('I click the get started link')
-      then('The url should be <url>', /.*intro/)
+      then('the url should be <url>', '.*intro')
    })
 })

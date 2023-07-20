@@ -13,7 +13,6 @@ import { test } from '@playwright/test';
 import {
    PlaywrightTestArgs,
    PlaywrightTestOptions,
-   PlaywrightWorkerArgs, PlaywrightWorkerOptions,
 } from "@playwright/test/types/test"
 
 import process from  "node:process"
@@ -48,24 +47,24 @@ export class PlaywrightTestSuiteAdapter implements TestSuiteAdapter {
       }
    }
 
-   afterScenario(impl: (context?: any) => void, metadata: TestSuiteAdapterMetadata): void {
-      return impl()
+   afterScenario(impl: (context?: any) => any, metadata: TestSuiteAdapterMetadata) {
+      return test.step('After Scenario', impl)
    }
 
-   afterStep(impl: (context?: any) => void, metadata: TestSuiteAdapterMetadata): void {
-      return impl()
+   afterStep(impl: (context?: any) => any, metadata: TestSuiteAdapterMetadata) {
+      return test.step('After Step', impl)
    }
 
-   beforeScenario(impl: (context?: any) => void, metadata: TestSuiteAdapterMetadata): void {
-      return impl()
+   beforeScenario(impl: (context?: any) => any, metadata: TestSuiteAdapterMetadata) {
+      return test.step('Before Scenario', impl)
    }
 
-   beforeStep(impl: (context?: any) => void, metadata: TestSuiteAdapterMetadata): void {
-      return impl()
+   beforeStep(impl: (context?: any) => any, metadata: TestSuiteAdapterMetadata) {
+      return test.step('Before Step', impl)
    }
 
    step(name: string, description: string, impl: (context?: any) => void) {
-      return test.step(description, impl)
+      return test.step(`${name} ${description}`, impl)
    }
 
    private decorateFunction(fn: Function, name: string, steps: readonly Function[]) {

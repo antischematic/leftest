@@ -21,7 +21,6 @@ export {
    isIncluded,
    getAllScenarios,
    isTagUsed,
-   overrideScenario
 } from "./lib/core"
 export {
    TestSuiteAdapter,
