@@ -52,7 +52,7 @@ enum Type {
    EXAMPLE = "examples",
 }
 
-export class Scenario {
+class Scenario {
    data: { [key: string]: unknown } = {}
    failed = false
    steps: any[] = []

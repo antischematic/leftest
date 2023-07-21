@@ -1,4 +1,4 @@
-import { ComponentHarness, click } from "@antischematic/leftest-harness"
+import { ComponentHarness, click } from "@antischematic/leftest"
 
 export class RootHarness extends ComponentHarness {
    static hostSelector = "body"
