@@ -159,14 +159,16 @@ export interface DomInvoker {
 
 const dom: DomInvoker = Array.from(methodNames).reduce((acc, method) => {
    acc[method] = async (handle: TestElementInput, ...args: any[]) => {
+      const d: any = dom
+      const h: any = handle
       if (typeof handle === "function") {
-         return dom[method](handle())
+         return d[method](handle())
       } else if (handle && "then" in handle) {
-         return handle.then((result) => dom[method](result))
+         return handle.then((result) => d[method](result))
       } else if (handle && "host" in handle) {
-         return dom[method](handle.host())
+         return d[method](handle.host())
       } else {
-         return handle?.[method](...args)
+         return h?.[method](...args)
       }
    }
    return acc

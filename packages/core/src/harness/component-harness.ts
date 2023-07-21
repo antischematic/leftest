@@ -443,7 +443,7 @@ export abstract class ComponentHarness {
    >(query: T): unknown {
       return (options?: ElementHarnessOptions) => {
          if (typeof query === "string") {
-            return this.locatorForAll(selector(query).with(options))()
+            return this.locatorForAll(selector(query).with(options ?? {}))()
          } else {
             return this.locatorForAll(
                options ? query.with?.(options) ?? query : query,
@@ -752,7 +752,7 @@ function _restoreSelector(selector: string, placeholders: string[]): string {
 
 
 export interface ElementHarnessOptions extends BaseHarnessFilters {
-   text: string | RegExp
+   text?: string | RegExp
 }
 
 export const methodNames = new Set<any>([
@@ -802,7 +802,7 @@ export class ElementHarness extends ComponentHarness {
             }
             if (methodNames.has(p)) {
                return async function (...args: any[]) {
-                  const host = await target.host()
+                  const host: any = await target.host()
                   return host[p](...args)
                }
             }
@@ -811,9 +811,9 @@ export class ElementHarness extends ComponentHarness {
    }
 }
 
-export function selector(selector: string) {
-   return class extends ElementHarness {
-      static hostSelector = selector
+export function selector(selector: string): typeof ElementHarness {
+   return class SelectorHarness extends ElementHarness {
+      static override hostSelector = selector
    }
 }
 

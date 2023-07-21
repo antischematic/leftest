@@ -9,13 +9,13 @@ import {
    afterStep as _afterStep,
 } from "@antischematic/leftest"
 
-import { test } from '@playwright/test';
 import {
+   test,
    PlaywrightTestArgs,
    PlaywrightTestOptions,
-} from "@playwright/test/types/test"
+} from "@playwright/test"
 
-import process from  "node:process"
+// import process from  "node:process"
 
 export class PlaywrightTestSuiteAdapter implements TestSuiteAdapter {
    isAsync = true

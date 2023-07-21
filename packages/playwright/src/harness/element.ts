@@ -1,4 +1,4 @@
-import { EventData, ModifierKeys, TestKey, TextOptions } from "@antischematic/leftest-harness"
+import { EventData, ModifierKeys, TestKey, TextOptions } from "@antischematic/leftest"
 import { ElementHandle, Locator, Page } from "@playwright/test"
 
 /** @typedef {import('@angular/cdk/testing').ElementDimensions} ElementDimensions */

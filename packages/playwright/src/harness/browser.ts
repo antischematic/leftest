@@ -6,7 +6,7 @@
  * other functions in this file.
  */
 
-import { EventData } from "@antischematic/leftest-harness"
+import { EventData } from "@antischematic/leftest"
 
 /**
  * Gets text of element excluding certain selectors within the element.

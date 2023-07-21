@@ -2,9 +2,9 @@ import {
    ComponentHarness,
    ComponentHarnessConstructor,
    TestElement,
-} from "@antischematic/leftest-harness"
+   HarnessEnvironment
+} from "@antischematic/leftest"
 import { ElementHandle, Locator, Page } from "@playwright/test"
-import { HarnessEnvironment } from "../../../harness/src/harness-environment"
 import {isLocator, PlaywrightElement} from './element';
 
 /**
