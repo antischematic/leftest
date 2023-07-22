@@ -213,28 +213,25 @@ feature("My new awesome feature", () => {
 The `beforeScenario`, `beforeStep`, `afterScenario` and `afterStep` hooks can be used to customise test behaviour.
 
 ```ts
-import { beforeStep, isIncluded } from "@antischematic/leftest"
+import { beforeScenario } from "@antischematic/leftest"
 
-beforeStep((scenario) => {
+beforeScenario((scenario) => {
    if (scenario.hasTag(mobile) && !scenario.hasTag(tablet)) {
       cy.viewport("iphone-6")
    }
 })
 ```
 
-> Note: These hooks exhibit the same behaviour as `before`/`beforeEach` would with automatic resetting of mocks, viewports and
-> intercepts between each test. Each step creates a new test.
-
 ### Tagged hooks
 
 Hooks can be configured to run on specific features, scenarios or examples. Combine `and`, `or`, `eq` and `not` matchers to match different tag combinations.
 
 ```ts
-import { beforeStep, getTags, and, eq, not } from "@antischematic/leftest"
+import { beforeScenario, getTags, and, eq, not } from "@antischematic/leftest"
 
 const { mobile, tablet } = getTags()
 
-beforeStep(and(eq(mobile), not(tablet)), () => {
+beforeScenario(and(eq(mobile), not(tablet)), () => {
    cy.viewport("iphone-6")
 })
 ```
