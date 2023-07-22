@@ -410,22 +410,44 @@ export abstract class ComponentHarness {
       return this.locatorFactory.waitForTasksOutsideAngular()
    }
 
-   protected query<T extends ComponentHarnessConstructor<any> & { with?: any }>(
+   protected find<T extends ComponentHarnessConstructor<any> & { with?: any }>(
       harness: T,
       ...options: Parameters<T["with"]>
    ): (...options: Parameters<T["with"]>) => Promise<InstanceType<T>>
+   protected find(
+      selector: string,
+      options?: ElementHarnessOptions,
+   ): (options?: ElementHarnessOptions) => Promise<ElementHarness>
+   protected find<
+      T extends string | (ComponentHarnessConstructor<any> & { with: any }),
+   >(query: T, defaultOptions?: any): unknown {
+      return (options: any = defaultOptions) => {
+         if (typeof query === "string") {
+            return options ? this.locatorFor(selector(query).with(options))() : this.locatorFor(selector(query))
+         } else {
+            return this.locatorFor(
+               options ? query.with?.(options) ?? query : query,
+            )
+         }
+      }
+   }
+
+   protected query<T extends ComponentHarnessConstructor<any> & { with?: any }>(
+      harness: T,
+      ...options: Parameters<T["with"]>
+   ): (...options: Parameters<T["with"]>) => Promise<InstanceType<T> | null>
    protected query(
       selector: string,
-      options: ElementHarnessOptions | void,
-   ): (options?: ElementHarnessOptions) => Promise<ElementHarness>
+      options?: ElementHarnessOptions,
+   ): (options?: ElementHarnessOptions) => Promise<ElementHarness | null>
    protected query<
       T extends string | (ComponentHarnessConstructor<any> & { with: any }),
    >(query: T, defaultOptions?: any): unknown {
       return (options: any = defaultOptions) => {
          if (typeof query === "string") {
-            return this.locatorFor(selector(query).with(options))()
+            return options ? this.locatorForOptional(selector(query).with(options))() : this.locatorForOptional(selector(query))
          } else {
-            return this.locatorFor(
+            return this.locatorForOptional(
                options ? query.with?.(options) ?? query : query,
             )
          }
