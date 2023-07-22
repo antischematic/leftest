@@ -8,6 +8,10 @@
 
 import {ElementDimensions} from './element-dimensions';
 
+export function getNoKeysSpecifiedError() {
+   return Error('No keys have been specified.');
+}
+
 /** Modifier keys that may be held while typing. */
 export interface ModifierKeys {
     control?: boolean;
@@ -66,6 +70,7 @@ export enum TestKey {
     F11,
     F12,
     META,
+    COMMA,
 }
 
 /**

@@ -6,7 +6,11 @@ import {
    isExcluded,
    isIncluded,
 } from "@antischematic/leftest"
+import { getHarness } from "@antischematic/leftest-cypress"
 import { custom, include, notThis } from "../fixtures/tags.example"
+import { AppHarness } from "../support/app.po"
+
+const app = getHarness(AppHarness)
 
 export default {
    "I run a test": (scenario) => {
@@ -35,6 +39,14 @@ export default {
                console.log('Successfully fetched https://jsonplaceholder.cypress.io/todos/1', await result.json())
             })
       })
+   },
+
+   "I visit <url>": (url: string) => {
+      cy.visit(url)
+   },
+
+   "I see the greeting <text>": (text) => {
+      app.getGreeting().should('eq', text)
    }
 }
 
