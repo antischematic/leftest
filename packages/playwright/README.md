@@ -1,22 +1,14 @@
-# @antischematic/leftest-cypress
+# @antischematic/leftest-playwright
 
-Shift-Left Testing for Cypress
+Shift-Left Testing for Playwright
 
 ## Setup
 
 ```bash
-npm add @antischematic/leftest-cypress
-```
-
-Import `@antischematic/leftest-cypress` in your support file.
-
-```ts
-import "@antischematic/leftest-cypress"
+npm add @antischematic/leftest-playwright
 ```
 
 ## Usage
-
-> This library **requires** Cypress to be configured with `testIsolation: false`. [Read more](https://docs.cypress.io/guides/core-concepts/test-isolation)
 
 Define your feature specs. Tag new features and/or scenarios with `~todo` to prevent them running.
 
@@ -30,6 +22,8 @@ import {
 } from "@antischematic/leftest"
 
 const { given, when, then, examples } = createTestSuite()
+import { createTestSuite, feature, scenario } from "@antischematic/leftest"
+import steps from "./steps"
 
 ~todo
 feature("My awesome new feature", () => {
@@ -56,27 +50,22 @@ feature("My awesome new feature", () => {
 Implement steps in a `steps.ts` file
 
 ```ts
-export default {
-   "I am logged in as <user>": (user: string) => {
-      cy.session(user, () => {
-         cy.visit("/login")
-         cy.get('input[name="user"]').type(user)
-         cy.get('input[name="password"]').type("s3cr3t")
-         cy.get('input[type="submit"]').click()
-      })
+import { createSteps } from "@antischematic/leftest-playwright"
+
+export default createSteps({
+   "I visit <url>": async ({ page }, url: string) => {
+      await page.goto(url)
    },
-   "I visit <page>": (page: string) => {
-      cy.visit(page)
+
+   "I press the button <number> times": async ({ page }, number: number) => {
+      // implementation
    },
-   "I press the button <several> times": (several: number) => {
-      for (let i = 0; i < several; i++) {
-         cy.get("button").click()
-      }
+
+   "Something <awesome> happens": async ({ page }, awesome: unknown) => {
+      // implementation
    },
-   "Something <awesome> happens": (awesome: unknown) => {
-      cy.log("What's awesome?:", awesome)
-   },
-}
+})
+
 ```
 
 Import steps into your feature and (optionally) extract placeholder arguments.
@@ -167,20 +156,7 @@ feature("My new awesome feature", () => {
 Features, scenarios or examples can be included or excluded for a test run.
 
 ```bash
-TAGS=include,^butNotThisOne cypress run
-```
-
-To enable this feature, add the `LEFTEST_TAGS` entry to your cypress config:
-
-```ts
-import { defineConfig } from "cypress"
-
-export default defineConfig({
-   env: {
-      // Set this
-      LEFTEST_TAGS: process.env.TAGS,
-   },
-})
+TAGS=include,^butNotThisOne npx playwright test
 ```
 
 Only tests with matching tags will be executed.
@@ -215,29 +191,28 @@ feature("My new awesome feature", () => {
 The `beforeScenario`, `beforeStep`, `afterScenario` and `afterStep` hooks can be used to customise test behaviour.
 
 ```ts
-import { beforeStep, isIncluded } from "@antischematic/leftest"
+import { devices } from "@playwright/test"
+import { beforeScenario } from "@antischematic/leftest-playwright"
 
-beforeStep((scenario) => {
+beforeScenario(({ page }, scenario) => {
    if (scenario.hasTag(mobile) && !scenario.hasTag(tablet)) {
-      cy.viewport("iphone-6")
+      page.setViewportSize(devices['iPhone X'].viewport);
    }
 })
 ```
-
-> Note: These hooks exhibit the same behaviour as `before`/`beforeEach` would with automatic resetting of mocks, viewports and
-> intercepts between each test. Each step creates a new test.
 
 ### Tagged hooks
 
 Hooks can be configured to run on specific features, scenarios or examples. Combine `and`, `or`, `eq` and `not` matchers to match different tag combinations.
 
 ```ts
-import { beforeStep, getTags, and, eq, not } from "@antischematic/leftest"
+import { getTags, and, eq, not } from "@antischematic/leftest"
+import { beforeScenario } from "@antischematic/leftest-playwright"
 
 const { mobile, tablet } = getTags()
 
-beforeStep(and(eq(mobile), not(tablet)), () => {
-   cy.viewport("iphone-6")
+beforeScenario(and(eq(mobile), not(tablet)), ({ page }) => {
+   page.setViewportSize(devices['iPhone X'].viewport);
 })
 ```
 
@@ -246,3 +221,5 @@ beforeStep(and(eq(mobile), not(tablet)), () => {
 `isIncluded` checks if a tag is included via the `LEFTEST_TAGS` environment variable
 
 `isExcluded` checks if a tag is excluded via the `LEFTEST_TAGS` environment variable
+
+`isUsed` checks if a tag is used in the current test run

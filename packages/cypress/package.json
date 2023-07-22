@@ -1,8 +1,8 @@
 {
    "name": "@antischematic/leftest-cypress",
    "description": "Shift-Left Testing for Cypress",
-   "version": "0.0.10",
-   "keywords": ["Leftest", "Cypress", "Test", "Testing", "BDD", "GWT", "TypeScript"],
+   "version": "0.1.0",
+   "keywords": ["Leftest", "Cypress", "Test", "Testing", "BDD", "GWT", "Component", "TypeScript"],
    "license": "MIT",
    "repository": {
       "type": "git",
@@ -15,6 +15,6 @@
    "peerDependencies": {
       "cypress-pipe": "^2.0.0",
       "mocha": "^10.0.0",
-      "@antischematic/leftest": "^0.0.10"
+      "@antischematic/leftest": "~0.1.0"
    }
 }
