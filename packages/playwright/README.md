@@ -50,21 +50,23 @@ feature("My awesome new feature", () => {
 Implement steps in a `steps.ts` file
 
 ```ts
-import { createSteps } from "@antischematic/leftest-playwright"
+import { createSteps, TestFixtures } from "@antischematic/leftest-playwright"
 
-export default createSteps({
-   "I visit <url>": async ({ page }, url: string) => {
+const steps = {
+   "I visit <url>": async ({ page }: TestFixtures, url: string) => {
       await page.goto(url)
    },
 
-   "I press the button <number> times": async ({ page }, number: number) => {
+   "I press the button <number> times": async ({ page }: TestFixtures, number: number) => {
       // implementation
    },
 
-   "Something <awesome> happens": async ({ page }, awesome: unknown) => {
+   "Something <awesome> happens": async ({ page }: TestFixtures, awesome: unknown) => {
       // implementation
    },
-})
+}
+
+export default createSteps(steps)
 
 ```
 
@@ -242,9 +244,11 @@ Then use this to create your steps
 ```tsx
 import { createSteps } from "./support"
 
-export default createSteps({
+const steps = {
    "I mount the component": async ({ mount }) => {
       const component = await mount(<App />)
    }
-})
+}
+
+export default createSteps(steps)
 ```
