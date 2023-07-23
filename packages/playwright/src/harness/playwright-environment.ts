@@ -1,11 +1,11 @@
 import {
    ComponentHarness,
    ComponentHarnessConstructor,
-   TestElement,
-   HarnessEnvironment
+   HarnessEnvironment,
+   TestElement, TestElementInput,
 } from "@antischematic/leftest"
-import { ElementHandle, Locator, Page } from "@playwright/test"
-import {isLocator, PlaywrightElement} from './element';
+import { ElementHandle, Locator, Page, expect } from "@playwright/test"
+import { isLocator, PlaywrightElement } from "./element"
 
 /**
  * @type {WeakMap<import('@angular/cdk/testing').TestElement, import('@playwright/test').ElementHandle<HTMLElement | SVGElement> | import('@playwright/test').Locator>}
@@ -51,7 +51,7 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
     */
    constructor(
       page: Page,
-      {respectShadowBoundaries = false, useLocators = false} = {},
+      {respectShadowBoundaries = false, useLocators = true} = {},
       documentRoot = page.locator(':root'),
       element = documentRoot,
    ) {
@@ -257,4 +257,10 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
 
 export function getHarness<T extends ComponentHarness>(page: Page, harness: ComponentHarnessConstructor<T>) {
    return PlaywrightHarnessEnvironment.harnessForPage(page, harness)
+}
+
+declare module "@antischematic/leftest" {
+   export interface DomInvoker {
+      getHandle(input: TestElementInput): Promise<Locator>
+   }
 }

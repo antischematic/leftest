@@ -8,7 +8,7 @@ import {
    TextOptions,
 } from "./test-element"
 
-type TestElementInput =
+export type TestElementInput =
    | ComponentHarness
    | TestElement
    | Promise<ComponentHarness | TestElement>
@@ -148,13 +148,17 @@ export interface DomInvoker {
    // Since the value will be truncated, we can't rely on it to do the lookup in the DOM. See:
    // https://github.com/angular/angular/blob/main/packages/forms/src/directives/select_control_value_accessor.ts#L19
    /** Selects the options at the specified indexes inside of a native `select` element. */
-   selectOptions(...optionIndexes: number[]): Promise<void>
+   selectOptions(element: TestElementInput, ...optionIndexes: number[]): Promise<void>
 
    /**
     * Dispatches an event with a particular name.
+    * @param element
     * @param name Name of the event to be dispatched.
+    * @param data
     */
-   dispatchEvent(name: string, data?: Record<string, EventData>): Promise<void>
+   dispatchEvent(element: TestElementInput, name: string, data?: Record<string, EventData>): Promise<void>
+
+   getHandle<T = any>(element: TestElementInput): T
 }
 
 const dom: DomInvoker = Array.from(methodNames).reduce((acc, method) => {
@@ -168,7 +172,7 @@ const dom: DomInvoker = Array.from(methodNames).reduce((acc, method) => {
       } else if (handle && "host" in handle) {
          return d[method](handle.host())
       } else {
-         return h?.[method](...args)
+         return h?.[method]?.(...args)
       }
    }
    return acc
@@ -195,4 +199,5 @@ export const {
    text,
    rightClick,
    clear,
+   getHandle
 } = dom

@@ -1,1 +1,1 @@
-export { PlaywrightHarnessEnvironment, getHarness } from "./playwright-environment"
+export * from "./playwright-environment"

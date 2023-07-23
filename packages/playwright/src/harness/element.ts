@@ -1,5 +1,5 @@
-import { EventData, ModifierKeys, TestKey, TextOptions } from "@antischematic/leftest"
-import { ElementHandle, Locator, Page } from "@playwright/test"
+import { EventData, ModifierKeys, TestElement, TestKey, TextOptions } from "@antischematic/leftest"
+import { ElementHandle, expect, Locator, Page } from "@playwright/test"
 
 /** @typedef {import('@angular/cdk/testing').ElementDimensions} ElementDimensions */
 /** @typedef {import('@angular/cdk/testing').EventData} EventData */
@@ -110,7 +110,7 @@ export function isLocator(handleOrLocator: ElementHandle<unknown> | Locator) {
  * @internal
  * @implements TestElement
  */
-export class PlaywrightElement {
+export class PlaywrightElement implements TestElement {
    /**
     * The page the element is on
     *
@@ -152,7 +152,7 @@ export class PlaywrightElement {
     * @param {ElementHandle<HTMLElement | SVGElement> | Locator} handleOrLocator
     * @param {() => Promise<void>} whenStable
     */
-   constructor(page: () => Page, handleOrLocator: ElementHandle<HTMLElement | SVGElement> | Locator, whenStable: () => Promise<void>) {
+   constructor(page: () => Page, private handleOrLocator: ElementHandle<HTMLElement | SVGElement> | Locator, whenStable: () => Promise<void>) {
       this.#page = page;
 
       this.#query = async (fn: any) => {
@@ -483,5 +483,9 @@ export class PlaywrightElement {
     */
    async isFocused() {
       return this.matchesSelector(':focus');
+   }
+
+   getHandle<T = ElementHandle>(): T {
+      return this.handleOrLocator as T
    }
 }

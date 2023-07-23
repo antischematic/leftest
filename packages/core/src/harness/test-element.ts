@@ -183,6 +183,8 @@ export interface TestElement {
      * @param name Name of the event to be dispatched.
      */
     dispatchEvent(name: string, data?: Record<string, EventData>): Promise<void>;
+
+    getHandle<T = any>(): T
 }
 
 export interface TextOptions {

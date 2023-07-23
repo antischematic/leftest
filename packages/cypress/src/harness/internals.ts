@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ComponentHarness } from '@antischematic/leftest';
+import { ComponentHarness, getHandle } from "@antischematic/leftest"
 import { CypressHarnessEnvironment } from './cypress-harness-environment';
 
 export type ChainableHarness<HARNESS> = Cypress.Chainable<HARNESS> & {
@@ -34,6 +34,11 @@ export function addHarnessMethodsToChainer<HARNESS extends ComponentHarness>(
             (...args: any[]) => {
                /* Don't wrap cypress methods like `invoke`, `should` etc.... */
                if (prop in chainableTarget) {
+                  if (prop === "should") {
+                     return chainableTarget.then(async (target: any) => {
+                        return typeof target === "object" ? getHandle(target) : target
+                     }).should(...args)
+                  }
                   return chainableTarget[prop](...args);
                }
 

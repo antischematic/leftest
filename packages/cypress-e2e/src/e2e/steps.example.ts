@@ -46,7 +46,9 @@ export default {
    },
 
    "I see the greeting <text>": (text) => {
-      app.getGreeting().should('eq', text)
+      app.should('be.visible')
+      app.greeting().should('contain.text', text).and('be.visible')
+      app.getGreetingText().should('eq', text)
    }
 }
 

@@ -288,6 +288,10 @@ export class UnitTestElement implements TestElement {
       await this._stabilize();
    }
 
+   getHandle<T = Element>(): T {
+      return this.element as T
+   }
+
    /**
     * Dispatches a pointer event on the current element if the browser supports it.
     * @param name Name of the pointer event to be dispatched.

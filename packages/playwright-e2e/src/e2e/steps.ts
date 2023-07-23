@@ -1,6 +1,12 @@
-import { afterScenario, createSteps, getHarness } from "@antischematic/leftest-playwright"
+import { getHandle } from "@antischematic/leftest"
+import {
+   afterScenario,
+   createSteps,
+   getHarness,
+} from "@antischematic/leftest-playwright"
 import { expect } from "@playwright/test"
 import { RootHarness } from "../harnesses"
+
 
 afterScenario(async ({ page }) => {
    await expect(page).toHaveURL(new RegExp(".*intro"))
@@ -13,6 +19,7 @@ export default createSteps({
 
    "I click the get started link": async ({ page }) => {
       const harness = await getHarness(page, RootHarness)
+      await expect(await getHandle(harness.getStartedButton)).toBeInViewport()
       await harness.getStarted()
    },
 

@@ -6,13 +6,13 @@ import {
    beforeScenario as _beforeScenario,
    afterScenario as _afterScenario,
    beforeStep as _beforeStep,
-   afterStep as _afterStep,
+   afterStep as _afterStep, ComponentHarness,
 } from "@antischematic/leftest"
 
 import {
    test,
    PlaywrightTestArgs,
-   PlaywrightTestOptions, TestType, PlaywrightWorkerArgs, PlaywrightWorkerOptions,
+   PlaywrightTestOptions, TestType, PlaywrightWorkerArgs, PlaywrightWorkerOptions, expect,
 } from "@playwright/test"
 
 // import process from  "node:process"
@@ -101,7 +101,11 @@ export class PlaywrightTestSuiteAdapter implements TestSuiteAdapter {
 
 export interface PlaywrightContext extends PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions {}
 
-export interface PlaywrightSteps<T = PlaywrightContext> {
+export interface PlaywrightSteps {
+   [key: string]: (context: PlaywrightContext, ...args: any[]) => void
+}
+
+export interface ExtendPlaywrightSteps<T extends any> {
    [key: string]: (context: T, ...args: any[]) => void
 }
 
@@ -206,7 +210,7 @@ export function afterStep(
    bindHook(_afterStep, filter, fn)
 }
 
-export const createSteps = <T extends PlaywrightSteps<any>>(steps: T): MappedSteps<T> => {
+export const createSteps = <T extends PlaywrightSteps>(steps: T): MappedSteps<T> => {
    const mapped = {} as any
    for (const key in steps) {
       mapped[key] = function (this: any, ...args: any[]) {
@@ -217,9 +221,9 @@ export const createSteps = <T extends PlaywrightSteps<any>>(steps: T): MappedSte
    return mapped
 }
 
-export function extendTest<T extends Record<any, any>, U extends Record<any, any>,>(test: TestType<T, U>): typeof createSteps<PlaywrightSteps<T & U>> {
+export function extendTest<T extends Record<any, any>, U extends Record<any, any>>(test: TestType<T, U>): <V extends ExtendPlaywrightSteps<T & U>>(steps: V) => MappedSteps<PlaywrightSteps & V> {
    setAdapter(new PlaywrightTestSuiteAdapter(test))
-   return createSteps
+   return createSteps as any
 }
 
 setAdapter(new PlaywrightTestSuiteAdapter(test))

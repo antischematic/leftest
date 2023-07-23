@@ -409,70 +409,6 @@ export abstract class ComponentHarness {
    protected async waitForTasksOutsideAngular() {
       return this.locatorFactory.waitForTasksOutsideAngular()
    }
-
-   protected find<T extends ComponentHarnessConstructor<any> & { with?: any }>(
-      harness: T,
-      ...options: Parameters<T["with"]>
-   ): (...options: Parameters<T["with"]>) => Promise<InstanceType<T>>
-   protected find(
-      selector: string,
-      options?: ElementHarnessOptions,
-   ): (options?: ElementHarnessOptions) => Promise<ElementHarness>
-   protected find<
-      T extends string | (ComponentHarnessConstructor<any> & { with: any }),
-   >(query: T, defaultOptions?: any): unknown {
-      return (options: any = defaultOptions) => {
-         if (typeof query === "string") {
-            return options ? this.locatorFor(selector(query).with(options))() : this.locatorFor(selector(query))
-         } else {
-            return this.locatorFor(
-               options ? query.with?.(options) ?? query : query,
-            )
-         }
-      }
-   }
-
-   protected query<T extends ComponentHarnessConstructor<any> & { with?: any }>(
-      harness: T,
-      ...options: Parameters<T["with"]>
-   ): (...options: Parameters<T["with"]>) => Promise<InstanceType<T> | null>
-   protected query(
-      selector: string,
-      options?: ElementHarnessOptions,
-   ): (options?: ElementHarnessOptions) => Promise<ElementHarness | null>
-   protected query<
-      T extends string | (ComponentHarnessConstructor<any> & { with: any }),
-   >(query: T, defaultOptions?: any): unknown {
-      return (options: any = defaultOptions) => {
-         if (typeof query === "string") {
-            return options ? this.locatorForOptional(selector(query).with(options))() : this.locatorForOptional(selector(query))
-         } else {
-            return this.locatorForOptional(
-               options ? query.with?.(options) ?? query : query,
-            )
-         }
-      }
-   }
-
-   protected queryAll<
-      T extends ComponentHarnessConstructor<any> & { with?: any },
-   >(harness: T): (options?: Parameters<T["with"]>) => Promise<InstanceType<T>[]>
-   protected queryAll(
-      selector: string,
-   ): (options?: ElementHarnessOptions) => Promise<ElementHarness[]>
-   protected queryAll<
-      T extends string | (ComponentHarnessConstructor<any> & { with: any }),
-   >(query: T): unknown {
-      return (options?: ElementHarnessOptions) => {
-         if (typeof query === "string") {
-            return this.locatorForAll(selector(query).with(options ?? {}))()
-         } else {
-            return this.locatorForAll(
-               options ? query.with?.(options) ?? query : query,
-            )
-         }
-      }
-   }
 }
 
 /**
@@ -798,6 +734,7 @@ export const methodNames = new Set<any>([
    "setInputValue",
    "selectOptions",
    "dispatchEvent",
+   "getHandle"
 ])
 
 export interface ElementHarness extends TestElement {}
@@ -833,10 +770,13 @@ export class ElementHarness extends ComponentHarness {
    }
 }
 
-export function selector(selector: string): typeof ElementHarness {
-   return class SelectorHarness extends ElementHarness {
+export function selector(selector: string): typeof ElementHarness
+export function selector(selector: string, options: ElementHarnessOptions): HarnessPredicate<ElementHarness>
+export function selector(selector: string, options?: ElementHarnessOptions): typeof ElementHarness | HarnessPredicate<ElementHarness> {
+   class SelectorHarness extends ElementHarness {
       static override hostSelector = selector
    }
+   return options ? SelectorHarness.with(options) : SelectorHarness
 }
 
 export function testId(id: string) {
