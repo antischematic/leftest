@@ -10,17 +10,20 @@ npm add @antischematic/leftest
 
 ## Usage
 
-Create a `TestSuiteAdapter` for your favourite testing library.
+Create a support file for your favourite testing library.
 
 ```ts
 import {
    createTestSuiteFactory,
+   setAdapter,
    TestSuiteAdapter,
    Flag,
 } from "@antischematic/leftest"
 import { suite, test } from "vitest"
 
 export class VitestAdapter implements TestSuiteAdapter {
+   isAsync = true
+   
    suite(name: string, impl: () => void, flag: Flag) {
       switch (flag) {
          case Flag.SKIP:
@@ -69,11 +72,14 @@ export class VitestAdapter implements TestSuiteAdapter {
    }
 }
 
-export const configure = configureFactory(new CustomAdapter())
+setAdapter(new CustomAdapter())
 ```
 
-Then call `configure` in your test suite. That's it!
+Then import the support file into your test suite.
 
----
+## Component harnesses
 
-Made a new test suite adapter? Pull requests welcome!
+[Learn about test harnesses here](https://material.angular.io/cdk/test-harnesses)
+
+This library exports a type-compatible API based on the same concepts, without any
+ dependencies. It is intended to be used with other web libraries such as React.
