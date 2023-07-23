@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "pack": "nx run-many --target=build --projects=leftest,leftest-cypress && cd dist/packages/core && npm pack && cd ../cypress && npm pack"
+    "pack": "nx run-many --target=build --projects=leftest,leftest-cypress && cd dist/packages/core && npm pack && cd ../cypress && npm pack",
+    "test-ct": "playwright test -c playwright-ct.config.ts"
   },
   "private": true,
   "devDependencies": {
@@ -12,6 +13,7 @@
     "@nrwl/linter": "15.9.2",
     "@nrwl/rollup": "15.9.2",
     "@nrwl/vite": "15.9.2",
+    "@playwright/experimental-ct-react": "^1.36.1",
     "@playwright/test": "^1.36.1",
     "@pollyjs/adapter-fetch": "^6.0.5",
     "@pollyjs/adapter-xhr": "^6.0.5",
@@ -34,6 +36,8 @@
     "jsdom": "~20.0.3",
     "nx": "15.9.2",
     "prettier": "^2.6.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "typescript": "~4.9.5",
     "typescript-transform-paths": "^3.4.6",
     "vite": "^4.0.1",

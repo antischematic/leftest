@@ -12,7 +12,7 @@ import {
 import {
    test,
    PlaywrightTestArgs,
-   PlaywrightTestOptions,
+   PlaywrightTestOptions, TestType, PlaywrightWorkerArgs, PlaywrightWorkerOptions,
 } from "@playwright/test"
 
 // import process from  "node:process"
@@ -37,34 +37,34 @@ export class PlaywrightTestSuiteAdapter implements TestSuiteAdapter {
       this.decorateFunction(impl, name, [...metadata.steps, ...metadata.beforeScenario, ...metadata.afterScenario, ...metadata.beforeStep, ...metadata.afterStep])
       switch (metadata.flag) {
          case Flag.SKIP:
-            test.skip(name, impl)
+            this._test.skip(name, impl)
             break
          case Flag.ONLY:
-            test.only(name, impl)
+            this._test.only(name, impl)
             break
          case Flag.DEFAULT:
-            test(name, impl)
+            this._test(name, impl)
       }
    }
 
    afterScenario(impl: (context?: any) => any, metadata: TestSuiteAdapterMetadata) {
-      return test.step('After Scenario', impl)
+      return this._test.step('After Scenario', impl)
    }
 
    afterStep(impl: (context?: any) => any, metadata: TestSuiteAdapterMetadata) {
-      return test.step('After Step', impl)
+      return this._test.step('After Step', impl)
    }
 
    beforeScenario(impl: (context?: any) => any, metadata: TestSuiteAdapterMetadata) {
-      return test.step('Before Scenario', impl)
+      return this._test.step('Before Scenario', impl)
    }
 
    beforeStep(impl: (context?: any) => any, metadata: TestSuiteAdapterMetadata) {
-      return test.step('Before Step', impl)
+      return this._test.step('Before Step', impl)
    }
 
    step(name: string, description: string, impl: (context?: any) => void) {
-      return test.step(`${name} ${description}`, impl)
+      return this._test.step(`${name} ${description}`, impl)
    }
 
    private decorateFunction(fn: Function, name: string, steps: readonly Function[]) {
@@ -95,10 +95,14 @@ export class PlaywrightTestSuiteAdapter implements TestSuiteAdapter {
    private getFixtures(steps: readonly Function[]) {
       return Array.from(new Set(steps.flatMap((step) => this.parseFixtures(step))))
    }
+   
+   constructor(private _test: TestType<any, any>) {}
 }
 
-interface PlaywrightSteps {
-   [key: string]: (context: PlaywrightTestArgs & PlaywrightTestOptions, ...args: any[]) => void
+export interface PlaywrightContext extends PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions {}
+
+export interface PlaywrightSteps<T = PlaywrightContext> {
+   [key: string]: (context: T, ...args: any[]) => void
 }
 
 type MappedSteps<T extends PlaywrightSteps> = {
@@ -106,7 +110,7 @@ type MappedSteps<T extends PlaywrightSteps> = {
 }
 
 function bindHook(register: any, filter: any, fn: any) {
-   const hook = (fn || filter) as (context: PlaywrightTestArgs & PlaywrightTestOptions, scenario: ReadonlyScenario) => void
+   const hook = (fn || filter) as (context: PlaywrightContext, scenario: ReadonlyScenario) => void
    function cb(this: any, scenario: any) {
       return hook(this, scenario)
    }
@@ -131,10 +135,10 @@ export function beforeScenario<T extends ReadonlyScenario>(
  * Run code before every scenario is executed.
  * @param fn
  */
-export function beforeScenario<T extends ReadonlyScenario>(fn: (context: PlaywrightTestArgs & PlaywrightTestOptions, scenario: T) => void): void
+export function beforeScenario<T extends ReadonlyScenario>(fn: (context: PlaywrightContext, scenario: T) => void): void
 export function beforeScenario(
-   filter: ((filter: TagFilter) => boolean) | ((context: PlaywrightTestArgs & PlaywrightTestOptions, scenario: ReadonlyScenario) => void),
-   fn?: (context: PlaywrightTestArgs & PlaywrightTestOptions, scenario: ReadonlyScenario) => void,
+   filter: ((filter: TagFilter) => boolean) | ((context: PlaywrightContext, scenario: ReadonlyScenario) => void),
+   fn?: (context: PlaywrightContext, scenario: ReadonlyScenario) => void,
 ) {
    bindHook(_beforeScenario, filter, fn)
 }
@@ -146,16 +150,16 @@ export function beforeScenario(
  */
 export function beforeStep<T extends ReadonlyScenario>(
    filter: ((filter: TagFilter) => boolean),
-   fn: (context: PlaywrightTestArgs & PlaywrightTestOptions, scenario: T) => void,
+   fn: (context: PlaywrightContext, scenario: T) => void,
 ): void
 /**
  * Run code before every step is executed.
  * @param fn
  */
-export function beforeStep<T extends ReadonlyScenario>(fn: (context: PlaywrightTestArgs & PlaywrightTestOptions, scenario: T) => void): void
+export function beforeStep<T extends ReadonlyScenario>(fn: (context: PlaywrightContext, scenario: T) => void): void
 export function beforeStep(
-   filter: ((filter: TagFilter) => boolean) | ((context: PlaywrightTestArgs & PlaywrightTestOptions, scenario: ReadonlyScenario) => void),
-   fn?: (context: PlaywrightTestArgs & PlaywrightTestOptions, scenario: ReadonlyScenario) => void,
+   filter: ((filter: TagFilter) => boolean) | ((context: PlaywrightContext, scenario: ReadonlyScenario) => void),
+   fn?: (context: PlaywrightContext, scenario: ReadonlyScenario) => void,
 ) {
    bindHook(_beforeStep, filter, fn)
 }
@@ -167,16 +171,16 @@ export function beforeStep(
  */
 export function afterScenario<T extends ReadonlyScenario>(
    filter: ((filter: TagFilter) => boolean),
-   fn: (context: PlaywrightTestArgs & PlaywrightTestOptions, scenario: T) => void,
+   fn: (context: PlaywrightContext, scenario: T) => void,
 ): void
 /**
  * Run code after every scenario is executed.
  * @param fn
  */
-export function afterScenario<T extends ReadonlyScenario>(fn: (context: PlaywrightTestArgs & PlaywrightTestOptions, scenario: T) => void): void
+export function afterScenario<T extends ReadonlyScenario>(fn: (context: PlaywrightContext, scenario: T) => void): void
 export function afterScenario(
-   filter: ((filter: TagFilter) => boolean) | ((context: PlaywrightTestArgs & PlaywrightTestOptions, scenario: ReadonlyScenario) => void),
-   fn?: (context: PlaywrightTestArgs & PlaywrightTestOptions, scenario: ReadonlyScenario) => void,
+   filter: ((filter: TagFilter) => boolean) | ((context: PlaywrightContext, scenario: ReadonlyScenario) => void),
+   fn?: (context: PlaywrightContext, scenario: ReadonlyScenario) => void,
 ) {
    bindHook(_afterScenario, filter, fn)
 }
@@ -194,15 +198,15 @@ export function afterStep<T extends ReadonlyScenario>(
  * Run code after every step is executed.
  * @param fn
  */
-export function afterStep<T extends ReadonlyScenario>(fn: (context: PlaywrightTestArgs & PlaywrightTestOptions, scenario: ReadonlyScenario) => void): void
+export function afterStep<T extends ReadonlyScenario>(fn: (context: PlaywrightContext, scenario: ReadonlyScenario) => void): void
 export function afterStep(
-   filter: ((filter: TagFilter) => boolean) | ((context: PlaywrightTestArgs & PlaywrightTestOptions, scenario: ReadonlyScenario) => void),
-   fn?: (context: PlaywrightTestArgs & PlaywrightTestOptions, scenario: ReadonlyScenario) => void,
+   filter: ((filter: TagFilter) => boolean) | ((context: PlaywrightContext, scenario: ReadonlyScenario) => void),
+   fn?: (context: PlaywrightContext, scenario: ReadonlyScenario) => void,
 ) {
    bindHook(_afterStep, filter, fn)
 }
 
-export const createSteps = <T extends PlaywrightSteps>(steps: T): MappedSteps<T> => {
+export const createSteps = <T extends PlaywrightSteps<any>>(steps: T): MappedSteps<T> => {
    const mapped = {} as any
    for (const key in steps) {
       mapped[key] = function (this: any, ...args: any[]) {
@@ -213,5 +217,10 @@ export const createSteps = <T extends PlaywrightSteps>(steps: T): MappedSteps<T>
    return mapped
 }
 
-setAdapter(new PlaywrightTestSuiteAdapter())
+export function extendTest<T extends Record<any, any>, U extends Record<any, any>,>(test: TestType<T, U>): typeof createSteps<PlaywrightSteps<T & U>> {
+   setAdapter(new PlaywrightTestSuiteAdapter(test))
+   return createSteps
+}
+
+setAdapter(new PlaywrightTestSuiteAdapter(test))
 setTags(process.env["LEFTEST_TAGS"] ?? "")

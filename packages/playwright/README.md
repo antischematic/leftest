@@ -156,7 +156,7 @@ feature("My new awesome feature", () => {
 Features, scenarios or examples can be included or excluded for a test run.
 
 ```bash
-TAGS=include,^butNotThisOne npx playwright test
+LEFTEST_TAGS=include,^butNotThisOne npx playwright test
 ```
 
 Only tests with matching tags will be executed.
@@ -223,3 +223,28 @@ beforeScenario(and(eq(mobile), not(tablet)), ({ page }) => {
 `isExcluded` checks if a tag is excluded via the `LEFTEST_TAGS` environment variable
 
 `isUsed` checks if a tag is used in the current test run
+
+## Extending Playwright test context
+
+To extend the test context, call `extendTest` with an instance of `TestType` and extend the `PlaywrightContext` interface.
+
+For example, to enable component testing for react, create a `support.ts` file.
+
+```ts
+import { test } from "@playwright/experimental-ct-react"
+import { extendTest } from "@antischematic/leftest-playwright"
+
+export const createSteps = extendTest(test)
+```
+
+Then use this to create your steps
+
+```tsx
+import { createSteps } from "./support"
+
+export default createSteps({
+   "I mount the component": async ({ mount }) => {
+      const component = await mount(<App />)
+   }
+})
+```

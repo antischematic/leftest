@@ -1,6 +1,6 @@
 import { afterScenario, createSteps, getHarness } from "@antischematic/leftest-playwright"
 import { expect } from "@playwright/test"
-import { RootHarness } from "./harnesses"
+import { RootHarness } from "../harnesses"
 
 afterScenario(async ({ page }) => {
    await expect(page).toHaveURL(new RegExp(".*intro"))
