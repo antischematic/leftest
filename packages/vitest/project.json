@@ -11,9 +11,13 @@
             "outputPath": "dist/packages/vitest",
             "main": "packages/vitest/src/index.ts",
             "tsConfig": "packages/vitest/tsconfig.lib.json",
-            "assets": [],
+            "assets": [{
+               "input": "packages/vitest",
+               "glob": "README.md",
+               "output": "."
+            }],
             "project": "packages/vitest/package.json",
-            "compiler": "swc"
+            "compiler": "tsc"
          }
       },
       "lint": {
