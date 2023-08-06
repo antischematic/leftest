@@ -174,7 +174,9 @@ function runScenario(
    try {
       runHooks(metadata.beforeScenario, scenario, context, (impl) => adapter.beforeScenario(impl, metadata))
       for (const step of combinedSteps) {
+         runHooks(metadata.beforeStep, scenario, context, (impl) => adapter.beforeStep(impl, metadata))
          step(context)
+         runHooks(metadata.afterStep, scenario, context, (impl) => adapter.afterStep(impl, metadata))
       }
       runHooks(metadata.afterScenario, scenario, context, (impl) => adapter.afterScenario(impl, metadata))
    } finally {
@@ -201,7 +203,9 @@ async function runScenarioAsync(
    try {
       await runHooksAsync(metadata.beforeScenario, scenario, context,(impl) => adapter.beforeScenario(impl, metadata))
       for (const step of combinedSteps) {
+         await runHooksAsync(metadata.beforeStep, scenario, context,(impl) => adapter.beforeStep(impl, metadata))
          await step(context)
+         await runHooksAsync(metadata.afterStep, scenario, context,(impl) => adapter.afterStep(impl, metadata))
       }
       await runHooksAsync(metadata.afterScenario, scenario, context,(impl) => adapter.afterScenario(impl, metadata))
    } finally {
@@ -290,7 +294,8 @@ function getEffectiveHooks(hooks: any, tags: Set<string>) {
    return effectiveHooks
 }
 
-function runHooks(hooks: any, scenario: Scenario, context: any, cb: (impl: () => void) => void) {
+function runHooks(hooks: any[], scenario: Scenario, context: any, cb: (impl: () => void) => void) {
+   if (!hooks.length) return
    cb(() => {
       for (const hook of hooks) {
          hook.call(context, scenario)
@@ -298,7 +303,8 @@ function runHooks(hooks: any, scenario: Scenario, context: any, cb: (impl: () =>
    })
 }
 
-async function runHooksAsync(hooks: any, scenario: Scenario, context: any, cb: (impl: () => void) => void) {
+async function runHooksAsync(hooks: any[], scenario: Scenario, context: any, cb: (impl: () => void) => void) {
+   if (!hooks.length) return
    return cb(async () => {
       for (const hook of hooks) {
          await hook.call(context, scenario)
@@ -499,9 +505,7 @@ function createStep(steps: Steps) {
                      throw new Error("Previous step failed")
                   }
                   try {
-                     await runHooksAsync(metadata.beforeStep, scenario, ctx, (impl) => adapter.beforeStep(impl, metadata))
                      await impl.apply(ctx, parsedArgs)
-                     await runHooksAsync(metadata.afterStep, scenario, ctx, (impl) => adapter.afterStep(impl, metadata))
                   } catch (e) {
                      scenario.markAsFailed()
                      throw e
@@ -514,9 +518,7 @@ function createStep(steps: Steps) {
                      throw new Error("Previous step failed")
                   }
                   try {
-                     runHooks(metadata.beforeStep, scenario, ctx,(impl) => adapter.beforeStep(impl, metadata))
                      impl.apply(ctx, parsedArgs)
-                     runHooks(metadata.afterStep, scenario, ctx,(impl) => adapter.afterStep(impl, metadata))
                   } catch (e) {
                      scenario.markAsFailed()
                      throw e

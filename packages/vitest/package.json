@@ -1,8 +1,8 @@
 {
-   "name": "@antischematic/leftest-playwright",
-   "description": "Shift-Left Testing for Playwright",
+   "name": "@antischematic/leftest-vitest",
+   "description": "Shift-Left Testing for Vitest",
    "version": "0.1.2",
-   "keywords": ["Leftest", "Playwright", "Test", "Testing", "BDD", "GWT", "Component", "TypeScript"],
+   "keywords": ["Leftest", "Vitest", "Test", "Testing", "BDD", "GWT", "Component", "TypeScript"],
    "license": "MIT",
    "repository": {
       "type": "git",
@@ -13,7 +13,7 @@
    },
    "type": "module",
    "peerDependencies": {
-      "mocha": "^10.0.0",
+      "vitest": "^0.25.8",
       "@antischematic/leftest": "~0.1.2"
    }
 }

@@ -1,0 +1,36 @@
+{
+   "name": "vitest",
+   "$schema": "../../node_modules/nx/schemas/project-schema.json",
+   "sourceRoot": "packages/jest/src",
+   "projectType": "library",
+   "targets": {
+      "build": {
+         "executor": "@nrwl/rollup:rollup",
+         "outputs": ["{options.outputPath}"],
+         "options": {
+            "outputPath": "dist/packages/jest",
+            "main": "packages/jest/src/index.ts",
+            "tsConfig": "packages/jest/tsconfig.lib.json",
+            "assets": [],
+            "project": "packages/jest/package.json",
+            "compiler": "swc"
+         }
+      },
+      "lint": {
+         "executor": "@nrwl/linter:eslint",
+         "outputs": ["{options.outputFile}"],
+         "options": {
+            "lintFilePatterns": ["packages/jest/**/*.ts"]
+         }
+      },
+      "test": {
+         "executor": "@nrwl/vite:test",
+         "outputs": ["coverage/packages/vitest"],
+         "options": {
+            "passWithNoTests": true,
+            "reportsDirectory": "../../coverage/packages/vitest"
+         }
+      }
+   },
+   "tags": []
+}

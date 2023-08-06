@@ -17,7 +17,10 @@
       "paths": {
          "@antischematic/leftest": ["packages/core/src/index.ts"],
          "@antischematic/leftest-cypress": ["packages/cypress/src/index.ts"],
-         "@antischematic/leftest-playwright": ["packages/playwright/src/index.ts"],
+         "@antischematic/leftest-playwright": [
+            "packages/playwright/src/index.ts"
+         ],
+         "@antischematic/leftest-vitest": ["packages/vitest/src/index.ts"]
       }
    },
    "exclude": ["node_modules", "tmp"]
