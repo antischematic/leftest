@@ -780,9 +780,9 @@ export function selector(selector: string, options?: ElementHarnessOptions): typ
 }
 
 export function testId(id: string) {
-   return `[data-testid]="${id}"`
+   return `[data-testid="${id}"]`
 }
 
-export function role(name: string, selector = "") {
-   return `${selector}[role]="${name}"`
+export function role(name: string) {
+   return `[role="${name}"]`
 }

@@ -8,4 +8,6 @@ export class AppHarness extends ComponentHarness {
    getGreetingText() {
       return text(this.greeting)
    }
+
+   getParagraphs = this.locatorForAll('p')
 }

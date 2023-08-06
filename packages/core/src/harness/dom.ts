@@ -18,6 +18,17 @@ export type TestElementInput =
    | Promise<null>
    | (() => TestElementInput)
 
+
+export type TestElementInputArray =
+   | ComponentHarness[]
+   | TestElement[]
+   | Promise<ComponentHarness[] | TestElement[]>
+   | undefined
+   | null
+   | Promise<undefined>
+   | Promise<null>
+   | (() => TestElementInputArray)
+
 export interface DomInvoker {
    /** Blur the element. */
    blur(element: TestElementInput): Promise<void>
@@ -158,7 +169,7 @@ export interface DomInvoker {
     */
    dispatchEvent(element: TestElementInput, name: string, data?: Record<string, EventData>): Promise<void>
 
-   getHandle<T = any>(element: TestElementInput): T
+   getHandle<T = any>(element: TestElementInput): Promise<T>
 }
 
 const dom: DomInvoker = Array.from(methodNames).reduce((acc, method) => {
@@ -201,3 +212,14 @@ export const {
    clear,
    getHandle
 } = dom
+
+export async function getAllHandles<T = any>(input: TestElementInputArray): Promise<T[]> {
+   if (typeof input === "function") {
+      return getAllHandles(input())
+   } else if (input && "then" in input) {
+      return input.then(getAllHandles) as Promise<T[]>
+   } else if (Array.isArray(input)) {
+      return Promise.all(input.map(getHandle)) as Promise<T[]>
+   }
+   return [] as T[]
+}

@@ -6,16 +6,8 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
+import { ElementDimensions } from "./element-dimensions"
 import * as keyCodes from './keycodes';
-import {
-   _getTextWithExcludedElements,
-   ElementDimensions,
-   ModifierKeys,
-   TestElement,
-   TestKey,
-   TextOptions,
-   EventData,
-} from '@antischematic/leftest';
 import {
    clearElement,
    createFakeEvent,
@@ -28,6 +20,8 @@ import {
    typeInElement,
    dispatchEvent,
 } from './fake-events';
+import { EventData, ModifierKeys, TestElement, TestKey, TextOptions } from "./test-element"
+import { _getTextWithExcludedElements } from "./text-filtering"
 
 /** Maps `TestKey` constants to the `keyCode` and `key` values used by native browser events. */
 const keyMap = {

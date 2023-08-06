@@ -1,5 +1,4 @@
-import { HarnessEnvironment, TestElement } from '@antischematic/leftest';
-import { UnitTestElement } from "./cypress-element"
+import { HarnessEnvironment, TestElement, UnitTestElement } from '@antischematic/leftest';
 
 export class CypressHarnessEnvironment extends HarnessEnvironment<Element> {
    /**

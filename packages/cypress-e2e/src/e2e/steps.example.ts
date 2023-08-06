@@ -49,6 +49,8 @@ export default {
       app.should('be.visible')
       app.greeting().should('contain.text', text).and('be.visible')
       app.getGreetingText().should('eq', text)
+      app.getParagraphs().should('exist')
+      app.getParagraphs().eq(1).should('have.css', 'display', 'inline-block')
    }
 }
 

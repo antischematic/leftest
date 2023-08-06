@@ -6,3 +6,4 @@ export * from './element-dimensions';
 export * from './text-filtering';
 export * from './change-detection';
 export * from './dom';
+export * from './unit-test-element'

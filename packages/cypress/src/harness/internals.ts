@@ -34,12 +34,9 @@ export function addHarnessMethodsToChainer<HARNESS extends ComponentHarness>(
             (...args: any[]) => {
                /* Don't wrap cypress methods like `invoke`, `should` etc.... */
                if (prop in chainableTarget) {
-                  if (prop === "should") {
-                     return chainableTarget.then(async (target: any) => {
-                        return typeof target === "object" ? getHandle(target) : target
-                     }).should(...args)
-                  }
-                  return chainableTarget[prop](...args);
+                  return chainableTarget.then(async (target: any) => {
+                     return (Array.isArray(target) ? Promise.all(target.map(t => getHandle(t) ?? t)) : typeof target === "object" ? getHandle(target) ?? target : target)
+                  })[prop](...args);
                }
 
                return addHarnessMethodsToChainer(
