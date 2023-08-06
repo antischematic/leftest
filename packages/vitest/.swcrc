@@ -21,11 +21,11 @@
    },
    "sourceMaps": true,
    "exclude": [
-      "jest.config.ts",
+      "vite.config.ts",
       ".*\\.spec.tsx?$",
       ".*\\.test.tsx?$",
-      "./src/jest-setup.ts$",
-      "./**/jest-setup.ts$",
+      "./src/vitest-setup.ts$",
+      "./**/vitest-setup.ts$",
       ".*.js$"
    ]
 }

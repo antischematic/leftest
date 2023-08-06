@@ -6,8 +6,8 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {getNoKeysSpecifiedError, ModifierKeys} from '@antischematic/leftest';
-import {PERIOD} from '../keycodes';
+import { getNoKeysSpecifiedError, ModifierKeys } from "../test-element"
+import {PERIOD} from '../keycodes/keycodes';
 import {dispatchFakeEvent, dispatchKeyboardEvent} from './dispatch-events';
 import {triggerFocus} from './element-focus';
 

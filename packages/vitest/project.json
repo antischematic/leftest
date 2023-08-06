@@ -1,18 +1,18 @@
 {
-   "name": "vitest",
+   "name": "leftest-vitest",
    "$schema": "../../node_modules/nx/schemas/project-schema.json",
-   "sourceRoot": "packages/jest/src",
+   "sourceRoot": "packages/vitest/src",
    "projectType": "library",
    "targets": {
       "build": {
          "executor": "@nrwl/rollup:rollup",
          "outputs": ["{options.outputPath}"],
          "options": {
-            "outputPath": "dist/packages/jest",
-            "main": "packages/jest/src/index.ts",
-            "tsConfig": "packages/jest/tsconfig.lib.json",
+            "outputPath": "dist/packages/vitest",
+            "main": "packages/vitest/src/index.ts",
+            "tsConfig": "packages/vitest/tsconfig.lib.json",
             "assets": [],
-            "project": "packages/jest/package.json",
+            "project": "packages/vitest/package.json",
             "compiler": "swc"
          }
       },
@@ -20,7 +20,7 @@
          "executor": "@nrwl/linter:eslint",
          "outputs": ["{options.outputFile}"],
          "options": {
-            "lintFilePatterns": ["packages/jest/**/*.ts"]
+            "lintFilePatterns": ["packages/vitest/**/*.ts"]
          }
       },
       "test": {
