@@ -2,9 +2,9 @@ import {
    ComponentHarness,
    ComponentHarnessConstructor,
    HarnessEnvironment,
-   TestElement, TestElementInput,
+   TestElement,
 } from "@antischematic/leftest"
-import { ElementHandle, Locator, Page, expect } from "@playwright/test"
+import { ElementHandle, Locator, Page } from "@playwright/test"
 import { isLocator, PlaywrightElement } from "./element"
 
 /**
@@ -38,8 +38,12 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
       return new PlaywrightHarnessEnvironment(page)
    }
 
-   static harnessForPage<T extends ComponentHarness>(page: Page, harness: ComponentHarnessConstructor<T>) {
+   static getHarnessForPage<T extends ComponentHarness>(page: Page, harness: ComponentHarnessConstructor<T>) {
       return this.loader(page).getHarness(harness)
+   }
+
+   static getAllHarnessesForPage<T extends ComponentHarness>(page: Page, harness: ComponentHarnessConstructor<T>) {
+      return this.loader(page).getAllHarnesses(harness)
    }
 
    /**
@@ -255,12 +259,10 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
    }
 }
 
-export function getHarness<T extends ComponentHarness>(page: Page, harness: ComponentHarnessConstructor<T>) {
-   return PlaywrightHarnessEnvironment.harnessForPage(page, harness)
+export function getHarnessForPage<T extends ComponentHarness>(page: Page, harnessType: ComponentHarnessConstructor<T>): Promise<T> {
+   return PlaywrightHarnessEnvironment.getHarnessForPage(page, harnessType)
 }
 
-declare module "@antischematic/leftest" {
-   export interface DomInvoker {
-      getHandle(input: TestElementInput): Promise<Locator>
-   }
+export function getAllHarnessesForPage<T extends ComponentHarness>(page: Page, harnessType: ComponentHarnessConstructor<T>): Promise<T[]> {
+   return PlaywrightHarnessEnvironment.getAllHarnessesForPage(page, harnessType)
 }
