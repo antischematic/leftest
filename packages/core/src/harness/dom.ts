@@ -172,16 +172,16 @@ export interface DomInvoker {
    getHandle<T = any>(element: TestElementInput): Promise<T>
 }
 
-const dom: DomInvoker = Array.from(methodNames).reduce((acc, method) => {
+export const dom: DomInvoker = Array.from(methodNames).reduce((acc, method) => {
    acc[method] = async (handle: TestElementInput, ...args: any[]) => {
       const d: any = dom
       const h: any = handle
       if (typeof handle === "function") {
-         return d[method](handle())
+         return d[method](handle(), ...args)
       } else if (handle && "then" in handle) {
-         return handle.then((result) => d[method](result))
+         return handle.then((result) => d[method](result, ...args))
       } else if (handle && "host" in handle) {
-         return d[method](handle.host())
+         return d[method](handle.host(), ...args)
       } else {
          return h?.[method]?.(...args)
       }
