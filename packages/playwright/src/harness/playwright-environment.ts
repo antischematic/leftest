@@ -1,7 +1,7 @@
 import {
    ComponentHarness,
    ComponentHarnessConstructor,
-   HarnessEnvironment,
+   HarnessEnvironment, HarnessQuery,
    TestElement,
 } from "@antischematic/leftest"
 import { ElementHandle, Locator, Page } from "@playwright/test"
@@ -38,12 +38,19 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
       return new PlaywrightHarnessEnvironment(page)
    }
 
-   static getHarnessForPage<T extends ComponentHarness>(page: Page, harness: ComponentHarnessConstructor<T>) {
+   static getHarnessForPage<T extends ComponentHarness>(page: Page, harness: HarnessQuery<T>) {
       return this.loader(page).getHarness(harness)
    }
 
-   static getAllHarnessesForPage<T extends ComponentHarness>(page: Page, harness: ComponentHarnessConstructor<T>) {
+   static getAllHarnessesForPage<T extends ComponentHarness>(page: Page, harness: HarnessQuery<T>) {
       return this.loader(page).getAllHarnesses(harness)
+   }
+
+   static getLocator(element: TestElement): Locator {
+      if (element instanceof PlaywrightElement) {
+         return element.getHandle()
+      }
+      throw new Error('This TestElement was not created by the PlaywrightHarnessEnvironment')
    }
 
    /**
@@ -259,10 +266,14 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
    }
 }
 
-export function getHarnessForPage<T extends ComponentHarness>(page: Page, harnessType: ComponentHarnessConstructor<T>): Promise<T> {
+export function getHarnessForPage<T extends ComponentHarness>(page: Page, harnessType: HarnessQuery<T>): Promise<T> {
    return PlaywrightHarnessEnvironment.getHarnessForPage(page, harnessType)
 }
 
-export function getAllHarnessesForPage<T extends ComponentHarness>(page: Page, harnessType: ComponentHarnessConstructor<T>): Promise<T[]> {
+export function getAllHarnessesForPage<T extends ComponentHarness>(page: Page, harnessType: HarnessQuery<T>): Promise<T[]> {
    return PlaywrightHarnessEnvironment.getAllHarnessesForPage(page, harnessType)
+}
+
+export function getLocator(element: TestElement): Locator {
+   return PlaywrightHarnessEnvironment.getLocator(element)
 }

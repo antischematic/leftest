@@ -7,8 +7,8 @@
  */
 
 import { parallel } from "./change-detection"
-import { ElementDimensions } from "./element-dimensions"
-import { EventData, ModifierKeys, TestElement, TestKey, TextOptions } from "./test-element"
+import { withTestId } from "./selector"
+import { TestElement } from "./test-element"
 
 /** An async function that returns a promise when called. */
 export type AsyncFactoryFn<T> = () => Promise<T>
@@ -474,12 +474,18 @@ export interface ComponentHarnessConstructor<T extends ComponentHarness> {
    hostSelector: string
 }
 
+export type TextPredicate = (text: string) => boolean
+
 /** A set of criteria that can be used to filter a list of `ComponentHarness` instances. */
 export interface BaseHarnessFilters {
    /** Only find instances whose host element matches the given selector. */
    selector?: string
    /** Only find instances that are nested under an element with the given selector. */
    ancestor?: string
+   /** Only find instances whose host element matches the given testId. */
+   testId?: string
+   /** Only find instances whose host element matches the given text. */
+   text?: string | RegExp | TextPredicate
 }
 
 /**
@@ -640,6 +646,20 @@ export class HarnessPredicate<T extends ComponentHarness> {
             return (await item.host()).matchesSelector(selector)
          })
       }
+      const testId = options.testId
+      if (testId !== undefined) {
+         this.add(`host matches selector "[data-testid="${testId}"]"`, async (item) => {
+            return (await item.host()).matchesSelector(withTestId(testId))
+         })
+      }
+      const matchText = options.text
+      if (matchText !== undefined) {
+         this.add(`host matches text "${matchText}"`, async (harness) => {
+            const host = await harness.host()
+            const text = await host.text()
+            return typeof matchText === "function" ? matchText(text) : HarnessPredicate.stringMatches(text, matchText)
+         })
+      }
    }
 }
 
@@ -706,83 +726,4 @@ function _restoreSelector(selector: string, placeholders: string[]): string {
       /__cdkPlaceholder-(\d+)__/g,
       (_, index) => placeholders[+index],
    )
-}
-
-
-export interface ElementHarnessOptions extends BaseHarnessFilters {
-   text?: string | RegExp
-}
-
-export const methodNames = new Set<any>([
-   "blur",
-   "clear",
-   "click",
-   "rightClick",
-   "focus",
-   "getCssValue",
-   "hover",
-   "mouseAway",
-   "sendKeys",
-   "text",
-   "setContenteditableValue",
-   "getAttribute",
-   "hasClass",
-   "getDimensions",
-   "getProperty",
-   "matchesSelector",
-   "isFocused",
-   "setInputValue",
-   "selectOptions",
-   "dispatchEvent",
-   "getHandle"
-])
-
-export interface ElementHarness extends TestElement {}
-
-export class ElementHarness extends ComponentHarness {
-   static hostSelector = "unknown"
-
-   static with(options: ElementHarnessOptions) {
-      return new HarnessPredicate(this, options)
-         .addOption('with text', options.text, async (harness, matchText) => HarnessPredicate.stringMatches(harness.text(), matchText))
-   }
-
-   static filter(predicate: AsyncPredicate<ElementHarness>) {
-      return new HarnessPredicate(this, {})
-         .add('filter', predicate)
-   }
-
-   constructor(locatorFactory: LocatorFactory) {
-      super(locatorFactory)
-      return new Proxy(this, {
-         get(target: ElementHarness, p: string | symbol): any {
-            if (Reflect.has(target, p)) {
-               return Reflect.get(target, p)
-            }
-            if (methodNames.has(p)) {
-               return async function (...args: any[]) {
-                  const host: any = await target.host()
-                  return host[p](...args)
-               }
-            }
-         }
-      })
-   }
-}
-
-export function selector(selector: string): typeof ElementHarness
-export function selector(selector: string, options: ElementHarnessOptions): HarnessPredicate<ElementHarness>
-export function selector(selector: string, options?: ElementHarnessOptions): typeof ElementHarness | HarnessPredicate<ElementHarness> {
-   class SelectorHarness extends ElementHarness {
-      static override hostSelector = selector
-   }
-   return options ? SelectorHarness.with(options) : SelectorHarness
-}
-
-export function testId(id: string) {
-   return `[data-testid="${id}"]`
-}
-
-export function role(name: string) {
-   return `[role="${name}"]`
 }

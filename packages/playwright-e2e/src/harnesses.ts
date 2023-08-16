@@ -1,9 +1,9 @@
-import { ComponentHarness, click, selector } from "@antischematic/leftest"
+import { ComponentHarness, click, element } from "@antischematic/leftest"
 
 export class RootHarness extends ComponentHarness {
    static hostSelector = "body"
 
-   getStartedButton = this.locatorFor(selector('a', { text: /Get started/i }))
+   getStartedButton = this.locatorFor(element('a', { text: /Get started/i }))
 
    async getStarted() {
       await click(this.getStartedButton)

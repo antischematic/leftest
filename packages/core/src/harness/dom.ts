@@ -1,4 +1,4 @@
-import { ComponentHarness, methodNames } from "./component-harness"
+import { ComponentHarness } from "./component-harness"
 import { ElementDimensions } from "./element-dimensions"
 import {
    EventData,
@@ -7,6 +7,7 @@ import {
    TestKey,
    TextOptions,
 } from "./test-element"
+import { methodNames } from "./element-harness"
 
 export type TestElementInput =
    | ComponentHarness
@@ -18,16 +19,9 @@ export type TestElementInput =
    | Promise<null>
    | (() => TestElementInput)
 
+type NullInput = null | undefined | Promise<null> | Promise<undefined> | (() => NullInput)
 
-export type TestElementInputArray =
-   | ComponentHarness[]
-   | TestElement[]
-   | Promise<ComponentHarness[] | TestElement[]>
-   | undefined
-   | null
-   | Promise<undefined>
-   | Promise<null>
-   | (() => TestElementInputArray)
+export type TestElementOutput<T extends TestElementInput, U> = T extends NullInput ? Promise<null> : Promise<U>
 
 export interface DomInvoker {
    /** Blur the element. */
@@ -82,7 +76,7 @@ export interface DomInvoker {
    focus(element: TestElementInput): Promise<void>
 
    /** Get the computed value of the given CSS property for the element. */
-   getCssValue(element: TestElementInput, property: string): Promise<string>
+   getCssValue<T extends TestElementInput>(element: T, property: string): TestElementOutput<T, string>
 
    /** Hovers the mouse over the element. */
    hover(element: TestElementInput): Promise<void>
@@ -117,7 +111,7 @@ export interface DomInvoker {
     * @param element TestElement instance
     * @param options Options that affect what text is included.
     */
-   text(element: TestElementInput, options?: TextOptions): Promise<string>
+   text<T extends TestElementInput>(element: T, options?: TextOptions): TestElementOutput<T, string>
 
    /**
     * Sets the value of a `contenteditable` element.
@@ -131,10 +125,10 @@ export interface DomInvoker {
    ): Promise<void>
 
    /** Gets the value for the given attribute from the element. */
-   getAttribute(element: TestElementInput, name: string): Promise<string | null>
+   getAttribute<T extends TestElementInput>(element: T, name: string): TestElementOutput<T, string | null>
 
    /** Checks whether the element has the given class. */
-   hasClass(element: TestElementInput, name: string): Promise<boolean>
+   hasClass<T extends TestElementInput>(element: T, name: string): TestElementOutput<T, boolean>
 
    /** Gets the dimensions of the element. */
    getDimensions(): Promise<ElementDimensions>
@@ -143,13 +137,13 @@ export interface DomInvoker {
    getProperty<T = any>(element: TestElementInput, name: string): Promise<T>
 
    /** Checks whether this element matches the given selector. */
-   matchesSelector(
+   matchesSelector<T extends TestElementInput>(
       element: TestElementInput,
       selector: string,
-   ): Promise<boolean>
+   ): TestElementOutput<T, boolean>
 
    /** Checks whether the element is focused. */
-   isFocused(element: TestElementInput): Promise<boolean>
+   isFocused<T extends TestElementInput>(element: TestElementInput): TestElementOutput<T, boolean>
 
    /** Sets the value of a property of an input. */
    setInputValue(element: TestElementInput, value: string): Promise<void>
@@ -172,7 +166,7 @@ export interface DomInvoker {
    getHandle<T = any>(element: TestElementInput): Promise<T>
 }
 
-export const dom: DomInvoker = Array.from(methodNames).reduce((acc, method) => {
+const dom: DomInvoker = Array.from(methodNames).reduce((acc, method) => {
    acc[method] = async (handle: TestElementInput, ...args: any[]) => {
       const d: any = dom
       const h: any = handle
@@ -183,7 +177,7 @@ export const dom: DomInvoker = Array.from(methodNames).reduce((acc, method) => {
       } else if (handle && "host" in handle) {
          return d[method](handle.host(), ...args)
       } else {
-         return h?.[method]?.(...args)
+         return h?.[method]?.(...args) ?? null
       }
    }
    return acc
@@ -212,14 +206,3 @@ export const {
    clear,
    getHandle
 } = dom
-
-export async function getAllHandles<T = any>(input: TestElementInputArray): Promise<T[]> {
-   if (typeof input === "function") {
-      return getAllHandles(input())
-   } else if (input && "then" in input) {
-      return input.then(getAllHandles) as Promise<T[]>
-   } else if (Array.isArray(input)) {
-      return Promise.all(input.map(getHandle)) as Promise<T[]>
-   }
-   return [] as T[]
-}
