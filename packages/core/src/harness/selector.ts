@@ -1,6 +1,6 @@
 interface SelectorOptions {
    component?: string
-   role?: Roles | RolesWithFallback | string
+   role?: AriaRole | string
    testId?: string
 }
 
@@ -9,7 +9,7 @@ export function withTestId(id: string, options: SelectorOptions = {}) {
 }
 
 export function withRole(
-   name: Roles | RolesWithFallback | string,
+   name: AriaRole | string,
    options: SelectorOptions = {},
 ) {
    return selector(`[role="${name}"]`, options)
@@ -30,7 +30,7 @@ export function setComponentAttribute(name: string) {
    componentAttribute = name
 }
 
-export function selector(tag: string, options: SelectorOptions = {}) {
+export function selector(tag: keyof HTMLElementTagNameMap | '*' | string, options: SelectorOptions = {}) {
    let selector = ''
    if (options.component) {
       selector += withComponent(options.component)
@@ -44,9 +44,7 @@ export function selector(tag: string, options: SelectorOptions = {}) {
    return tag.split(/,\s*/).map(t => t + selector).join(', ')
 }
 
-type RolesWithFallback = `${Roles} ${string}`
-
-type Roles =
+type AriaRole =
    | "alert"
    | "alertdialog"
    | "application"

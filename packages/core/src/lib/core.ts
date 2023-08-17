@@ -1,3 +1,4 @@
+import { clearTestContext } from "./context"
 import type { Tag, TagFilter, TestSuite, TestSuiteAdapter, TestSuiteOptions } from "./types"
 import { Flag, ReadonlyScenario } from "./types"
 
@@ -179,6 +180,7 @@ function runScenario(
          runHooks(metadata.afterStep, scenario, context, (impl) => adapter.afterStep(impl, metadata))
       }
       runHooks(metadata.afterScenario, scenario, context, (impl) => adapter.afterScenario(impl, metadata))
+      clearTestContext()
    } finally {
       setContext(previousExample)
    }
@@ -208,6 +210,7 @@ async function runScenarioAsync(
          await runHooksAsync(metadata.afterStep, scenario, context,(impl) => adapter.afterStep(impl, metadata))
       }
       await runHooksAsync(metadata.afterScenario, scenario, context,(impl) => adapter.afterScenario(impl, metadata))
+      clearTestContext()
    } finally {
       setContext(previousExample)
    }
