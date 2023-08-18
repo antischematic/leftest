@@ -6,7 +6,7 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {ModifierKeys} from '@antischematic/leftest';
+import {ModifierKeys} from "../test-element";
 
 /** Used to generate unique IDs for events. */
 let uniqueIds = 0;

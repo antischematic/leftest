@@ -1,14 +1,10 @@
 import {
-   BaseHarnessFilters,
-   ComponentHarness, DomInvoker, HarnessPredicate,
+   AsyncPredicate, BaseHarnessFilters,
+   ComponentHarness, ComponentHarnessConstructor,
+   HarnessPredicate,
    LocatorFactory,
-   TestElement, TestElementInput,
-} from "@antischematic/leftest"
-
-
-export interface ElementHarnessOptions extends BaseHarnessFilters {
-   text?: string | RegExp
-}
+} from "./component-harness"
+import { TestElement } from "./test-element"
 
 export const methodNames = new Set<any>([
    "blur",
@@ -55,10 +51,26 @@ class TestElementProxy extends ComponentHarness {
    }
 }
 
-export function element(selector: string, options?: ElementHarnessOptions): HarnessPredicate<ElementHarness>
-export function element(selector: string, options: ElementHarnessOptions = {}): unknown {
-   class ElementHarness extends TestElementProxy {
+function getElementHarness(selector: string) {
+   return class ElementHarness extends TestElementProxy {
       static hostSelector = selector
    }
-   return new HarnessPredicate(ElementHarness, options)
+}
+
+export function query<T extends ComponentHarness>(harness: ComponentHarnessConstructor<T>, ...predicates: AsyncPredicate<T>[]): HarnessPredicate<T>
+export function query<T extends ComponentHarness>(harness: ComponentHarnessConstructor<T>, within: string, ...predicates: AsyncPredicate<T>[]): HarnessPredicate<T>
+export function query(selector: string, ...predicates: AsyncPredicate<ComponentHarness>[]): HarnessPredicate<ElementHarness>
+export function query(selector: string, within: string, ...predicates: AsyncPredicate<ComponentHarness>[]): HarnessPredicate<ElementHarness>
+export function query(selectorOrHarness: string | BaseHarnessFilters | ComponentHarnessConstructor<ComponentHarness>, ancestorOrPredicate: string | AsyncPredicate<any>, ...predicates: AsyncPredicate<ComponentHarness>[]): unknown {
+   const isHarness = typeof selectorOrHarness === "function"
+   const options = typeof ancestorOrPredicate === "string" ? { ancestor: ancestorOrPredicate } : {}
+   const selector = typeof selectorOrHarness === "string" ? selectorOrHarness : undefined
+   const query = new HarnessPredicate(isHarness ? selectorOrHarness : getElementHarness(selector ?? '*'), options)
+   if (typeof ancestorOrPredicate === "function") {
+      predicates = [ancestorOrPredicate, ...predicates]
+   }
+   for (const predicate of predicates) {
+      query.add(`matches query predicate "${predicate.name}"`, predicate)
+   }
+   return query
 }

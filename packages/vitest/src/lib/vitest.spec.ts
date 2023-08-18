@@ -2,10 +2,9 @@ import {
    ComponentHarness,
    createTestSuite,
    feature,
-   getHandle,
    scenario,
 } from "@antischematic/leftest"
-import { getHarness } from '@antischematic/leftest-vitest'
+import { getHarness, getNativeElement } from "@antischematic/leftest-vitest"
 
 class AppHarness extends ComponentHarness {
    static hostSelector = 'main'
@@ -17,7 +16,8 @@ const steps = {
    },
    'it should find the app harness': async () => {
       const app = await getHarness(AppHarness)
-      expect(await getHandle(app)).toBeInstanceOf(HTMLElement)
+      const host = await app.host()
+      expect(getNativeElement(host)).toBeInstanceOf(HTMLElement)
    }
 }
 

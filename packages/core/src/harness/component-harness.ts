@@ -7,7 +7,6 @@
  */
 
 import { parallel } from "./change-detection"
-import { withTestId } from "./selector"
 import { TestElement } from "./test-element"
 
 /** An async function that returns a promise when called. */
@@ -474,18 +473,12 @@ export interface ComponentHarnessConstructor<T extends ComponentHarness> {
    hostSelector: string
 }
 
-export type TextPredicate = (text: string) => boolean
-
 /** A set of criteria that can be used to filter a list of `ComponentHarness` instances. */
 export interface BaseHarnessFilters {
    /** Only find instances whose host element matches the given selector. */
    selector?: string
    /** Only find instances that are nested under an element with the given selector. */
    ancestor?: string
-   /** Only find instances whose host element matches the given testId. */
-   testId?: string
-   /** Only find instances whose host element matches the given text. */
-   text?: string | RegExp | TextPredicate
 }
 
 /**
@@ -644,20 +637,6 @@ export class HarnessPredicate<T extends ComponentHarness> {
       if (selector !== undefined) {
          this.add(`host matches selector "${selector}"`, async (item) => {
             return (await item.host()).matchesSelector(selector)
-         })
-      }
-      const testId = options.testId
-      if (testId !== undefined) {
-         this.add(`host matches selector "[data-testid="${testId}"]"`, async (item) => {
-            return (await item.host()).matchesSelector(withTestId(testId))
-         })
-      }
-      const matchText = options.text
-      if (matchText !== undefined) {
-         this.add(`host matches text "${matchText}"`, async (harness) => {
-            const host = await harness.host()
-            const text = await host.text()
-            return typeof matchText === "function" ? matchText(text) : HarnessPredicate.stringMatches(text, matchText)
          })
       }
    }

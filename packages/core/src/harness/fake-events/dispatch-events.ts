@@ -6,7 +6,7 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {ModifierKeys} from '@antischematic/leftest';
+import {ModifierKeys} from "../test-element";
 import {
    createFakeEvent,
    createKeyboardEvent,

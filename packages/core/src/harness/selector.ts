@@ -44,7 +44,7 @@ export function selector(tag: keyof HTMLElementTagNameMap | '*' | string, option
    return tag.split(/,\s*/).map(t => t + selector).join(', ')
 }
 
-type AriaRole =
+export type AriaRole =
    | "alert"
    | "alertdialog"
    | "application"
