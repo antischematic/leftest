@@ -9,7 +9,7 @@ export function byText(pattern: string | RegExp | TextPredicate) {
    }
 }
 
-export async function matchText(value: string | null | Promise<string> | Promise<null>, pattern: string | RegExp | TextPredicate) {
+export async function matchText(value: string | null | Promise<string | null>, pattern: string | RegExp | TextPredicate) {
    value = await value
    if (typeof pattern === "function") {
       return pattern(value)

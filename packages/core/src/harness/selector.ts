@@ -66,6 +66,8 @@ export type AriaRole =
    | "feed"
    | "figure"
    | "form"
+   | "generic"
+   | "graphics-document"
    | "grid"
    | "gridcell"
    | "group"

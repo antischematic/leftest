@@ -280,6 +280,12 @@ export interface LocatorFactory {
  * should be inherited when defining user's own harness.
  */
 export abstract class ComponentHarness {
+   static query<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, within: string, ...predicates: AsyncPredicate<T>[]): HarnessQuery<T>
+   static query<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, ...predicates: AsyncPredicate<T>[]): HarnessQuery<T>
+   static query<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, selectorOrPredicate: string | AsyncPredicate<T>, ...predicates: AsyncPredicate<T>[]): HarnessQuery<T> {
+      return query(this, selectorOrPredicate, ...predicates)
+   }
+
    constructor(protected readonly locatorFactory: LocatorFactory) {}
 
    /** Gets a `Promise` for the `TestElement` representing the host element of the component. */
@@ -705,4 +711,90 @@ function _restoreSelector(selector: string, placeholders: string[]): string {
       /__cdkPlaceholder-(\d+)__/g,
       (_, index) => placeholders[+index],
    )
+}
+
+
+export const methodNames = new Set<any>([
+   "blur",
+   "clear",
+   "click",
+   "rightClick",
+   "focus",
+   "getCssValue",
+   "hover",
+   "mouseAway",
+   "sendKeys",
+   "text",
+   "setContenteditableValue",
+   "getAttribute",
+   "hasClass",
+   "getDimensions",
+   "getProperty",
+   "matchesSelector",
+   "isFocused",
+   "setInputValue",
+   "selectOptions",
+   "dispatchEvent",
+   "getHandle"
+])
+
+export interface ElementHarness extends ComponentHarness, TestElement {}
+
+class TestElementProxy extends ComponentHarness {
+   constructor(locatorFactory: LocatorFactory) {
+      super(locatorFactory)
+      return new Proxy(this, {
+         get(target: TestElementProxy, p: string | symbol): any {
+            if (Reflect.has(target, p)) {
+               return Reflect.get(target, p)
+            }
+            if (methodNames.has(p)) {
+               return async function (...args: any[]) {
+                  const host: any = await target.host()
+                  return host[p](...args)
+               }
+            }
+         }
+      })
+   }
+}
+
+function getElementHarness(selector: string) {
+   class ElementHarness extends TestElementProxy {
+      static hostSelector = selector
+   }
+   return ElementHarness
+}
+
+function isComponentHarness(type: any): type is ComponentHarnessConstructor<any> {
+   return type?.isPrototypeOf?.(ComponentHarness) ?? false
+}
+
+export function query<T extends ComponentHarness>(harness: ComponentHarnessConstructor<T>, ...predicates: AsyncPredicate<T>[]): HarnessPredicate<T>
+export function query<T extends ComponentHarness>(harness: ComponentHarnessConstructor<T>, within: string | AsyncPredicate<T>, ...predicates: AsyncPredicate<T>[]): HarnessPredicate<T>
+export function query(selector: string, ...predicates: AsyncPredicate<ComponentHarness>[]): HarnessPredicate<ElementHarness>
+export function query(selector: string, within: string, ...predicates: AsyncPredicate<ComponentHarness>[]): HarnessPredicate<ElementHarness>
+export function query(...predicates: AsyncPredicate<ComponentHarness>[]): HarnessPredicate<ElementHarness>
+export function query(selectorOrHarness: string | ComponentHarnessConstructor<ComponentHarness> | AsyncPredicate<ComponentHarness>, ancestorOrPredicate: string | AsyncPredicate<any>, ...predicates: AsyncPredicate<ComponentHarness>[]): unknown {
+   const isHarness = isComponentHarness(selectorOrHarness)
+   const options = typeof ancestorOrPredicate === "string" ? { ancestor: ancestorOrPredicate } : {}
+   const selector = typeof selectorOrHarness === "string" ? selectorOrHarness : undefined
+   const query = new HarnessPredicate( isHarness ? selectorOrHarness : getElementHarness(selector ?? '*'), options)
+   if (typeof ancestorOrPredicate === "function") {
+      predicates = [ancestorOrPredicate, ...predicates]
+   }
+   if (typeof selectorOrHarness === "function" && !isHarness) {
+      predicates = [selectorOrHarness, ...predicates]
+   }
+   for (const predicate of predicates) {
+      query.add(predicate.name, predicate)
+   }
+   return query
+}
+
+export function predicate<T>(description: string, filter: AsyncPredicate<T>): AsyncPredicate<T> {
+   Object.defineProperty(filter, 'name', {
+      value: description
+   })
+   return filter
 }

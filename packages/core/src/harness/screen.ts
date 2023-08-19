@@ -1,4 +1,4 @@
-import { ComponentHarness } from "./component-harness"
+import { ComponentHarness, methodNames } from "./component-harness"
 import { ElementDimensions } from "./element-dimensions"
 import {
    EventData,
@@ -7,7 +7,6 @@ import {
    TestKey,
    TextOptions,
 } from "./test-element"
-import { methodNames } from "./element-harness"
 
 export type TestElementInput =
    | ComponentHarness
@@ -23,7 +22,7 @@ type NullInput = null | undefined | Promise<null> | Promise<undefined> | (() => 
 
 export type TestElementOutput<T extends TestElementInput, U> = T extends NullInput ? Promise<null> : Promise<U>
 
-export interface DomInvoker {
+export interface Screen {
    /** Blur the element. */
    blur(element: TestElementInput): Promise<void>
 
@@ -166,9 +165,9 @@ export interface DomInvoker {
    getHandle<T = any>(element: TestElementInput): Promise<T>
 }
 
-const dom: DomInvoker = Array.from(methodNames).reduce((acc, method) => {
+export const screen: Screen = Array.from(methodNames).reduce((acc, method) => {
    acc[method] = async (handle: TestElementInput, ...args: any[]) => {
-      const d: any = dom
+      const d: any = screen
       const h: any = handle
       if (typeof handle === "function") {
          return d[method](handle(), ...args)
@@ -182,27 +181,3 @@ const dom: DomInvoker = Array.from(methodNames).reduce((acc, method) => {
    }
    return acc
 }, {} as any)
-
-export const {
-   click,
-   dispatchEvent,
-   focus,
-   blur,
-   getAttribute,
-   getDimensions,
-   getProperty,
-   hasClass,
-   hover,
-   isFocused,
-   matchesSelector,
-   sendKeys,
-   setContenteditableValue,
-   getCssValue,
-   setInputValue,
-   mouseAway,
-   selectOptions,
-   text,
-   rightClick,
-   clear,
-   getHandle
-} = dom

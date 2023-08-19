@@ -1,4 +1,4 @@
-import { ComponentHarness, click, query, byText } from "@antischematic/leftest"
+import { ComponentHarness, screen, query, byText } from "@antischematic/leftest"
 
 export class RootHarness extends ComponentHarness {
    static hostSelector = "body"
@@ -6,6 +6,6 @@ export class RootHarness extends ComponentHarness {
    getStartedButton = this.locatorFor(query('a', byText(/Get started/i)))
 
    async getStarted() {
-      await click(this.getStartedButton)
+      await screen.click(this.getStartedButton)
    }
 }

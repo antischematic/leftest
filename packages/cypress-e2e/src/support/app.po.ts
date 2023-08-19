@@ -1,4 +1,4 @@
-import { ComponentHarness, query, selector, text } from "@antischematic/leftest"
+import { ComponentHarness, query, selector, screen } from "@antischematic/leftest"
 
 export class AppHarness extends ComponentHarness {
    static hostSelector = selector("main")
@@ -6,7 +6,7 @@ export class AppHarness extends ComponentHarness {
    greeting = this.locatorFor(query('h1'))
 
    getGreetingText() {
-      return text(this.greeting)
+      return screen.text(this.greeting)
    }
 
    getParagraphs = this.locatorForAll('p')
