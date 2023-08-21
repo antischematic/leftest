@@ -1,6 +1,6 @@
 import { ComponentHarness, HarnessPredicate } from "../component-harness"
 
-export type TextPredicate = (text: string | null) => boolean | Promise<boolean>
+export type TextPredicate = (text: string) => boolean | Promise<boolean>
 
 export function byText(pattern: string | RegExp | TextPredicate) {
    return async function byText(harness: ComponentHarness) {
@@ -12,7 +12,7 @@ export function byText(pattern: string | RegExp | TextPredicate) {
 export async function matchText(value: string | null | Promise<string | null>, pattern: string | RegExp | TextPredicate) {
    value = await value
    if (typeof pattern === "function") {
-      return pattern(value)
+      return value ? pattern(value) : false
    }
-   return HarnessPredicate.stringMatches(value, pattern.toString());
+   return HarnessPredicate.stringMatches(value, pattern);
 }

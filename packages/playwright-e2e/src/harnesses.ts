@@ -6,6 +6,6 @@ export class RootHarness extends ComponentHarness {
    getStartedButton = this.locatorFor(query('a', byText(/Get started/i)))
 
    async getStarted() {
-      await screen.click(this.getStartedButton)
+      await screen.click(this.getStartedButton())
    }
 }

@@ -1,59 +1,64 @@
-import { EventData, ModifierKeys, TestElement, TestKey, TextOptions } from "@antischematic/leftest"
-import { ElementHandle, expect, Locator, Page } from "@playwright/test"
+import {
+   EventData,
+   ModifierKeys,
+   TestElement,
+   TestKey,
+   TextOptions,
+} from "@antischematic/leftest"
+import { ElementHandle, Locator, Page } from "@playwright/test"
 
-/** @typedef {import('@angular/cdk/testing').ElementDimensions} ElementDimensions */
-/** @typedef {import('@angular/cdk/testing').EventData} EventData */
-/** @typedef {import('@angular/cdk/testing').ModifierKeys} ModifierKeys */
-/** @typedef {import('@angular/cdk/testing').TestElement} TestElement */
-/** @typedef {import('@angular/cdk/testing').TextOptions} TextOptions */
-/** @template [T=Node] @typedef {import('@playwright/test').ElementHandle<T>} ElementHandle */
-/** @typedef {import('@playwright/test').Locator} Locator */
-/** @typedef {import('@playwright/test').Page} Page */
-
-import * as contentScripts from './browser';
+/** @typedef {import("@angular/cdk/testing").ElementDimensions} ElementDimensions */
+/** @typedef {import("@angular/cdk/testing").EventData} EventData */
+/** @typedef {import("@angular/cdk/testing").ModifierKeys} ModifierKeys */
+/** @typedef {import("@angular/cdk/testing").TestElement} TestElement */
+/** @typedef {import("@angular/cdk/testing").TextOptions} TextOptions */
+/** @template [T=Node] @typedef {import("@playwright/test").ElementHandle<T>} ElementHandle */
+/** @typedef {import("@playwright/test").Locator} Locator */
+/** @typedef {import("@playwright/test").Page} Page */
+import * as contentScripts from "./browser"
 
 /**
  * @type {Map<TestKey, string>}
  */
 const keyMap = new Map([
-   [TestKey.ALT, 'Alt'],
-   [TestKey.BACKSPACE, 'Backspace'],
-   [TestKey.CONTROL, 'Control'],
-   [TestKey.DELETE, 'Delete'],
-   [TestKey.DOWN_ARROW, 'ArrowDown'],
-   [TestKey.END, 'End'],
-   [TestKey.ENTER, 'Enter'],
-   [TestKey.ESCAPE, 'Escape'],
-   [TestKey.F1, 'F1'],
-   [TestKey.F2, 'F2'],
-   [TestKey.F3, 'F3'],
-   [TestKey.F4, 'F4'],
-   [TestKey.F5, 'F5'],
-   [TestKey.F6, 'F6'],
-   [TestKey.F7, 'F7'],
-   [TestKey.F8, 'F8'],
-   [TestKey.F9, 'F9'],
-   [TestKey.F10, 'F10'],
-   [TestKey.F11, 'F11'],
-   [TestKey.F12, 'F12'],
-   [TestKey.HOME, 'Home'],
-   [TestKey.INSERT, 'Insert'],
-   [TestKey.LEFT_ARROW, 'ArrowLeft'],
-   [TestKey.META, 'Meta'],
-   [TestKey.PAGE_DOWN, 'PageDown'],
-   [TestKey.PAGE_UP, 'PageUp'],
-   [TestKey.RIGHT_ARROW, 'ArrowRight'],
-   [TestKey.SHIFT, 'Shift'],
-   [TestKey.TAB, 'Tab'],
-   [TestKey.UP_ARROW, 'ArrowUp'],
-]);
+   [TestKey.ALT, "Alt"],
+   [TestKey.BACKSPACE, "Backspace"],
+   [TestKey.CONTROL, "Control"],
+   [TestKey.DELETE, "Delete"],
+   [TestKey.DOWN_ARROW, "ArrowDown"],
+   [TestKey.END, "End"],
+   [TestKey.ENTER, "Enter"],
+   [TestKey.ESCAPE, "Escape"],
+   [TestKey.F1, "F1"],
+   [TestKey.F2, "F2"],
+   [TestKey.F3, "F3"],
+   [TestKey.F4, "F4"],
+   [TestKey.F5, "F5"],
+   [TestKey.F6, "F6"],
+   [TestKey.F7, "F7"],
+   [TestKey.F8, "F8"],
+   [TestKey.F9, "F9"],
+   [TestKey.F10, "F10"],
+   [TestKey.F11, "F11"],
+   [TestKey.F12, "F12"],
+   [TestKey.HOME, "Home"],
+   [TestKey.INSERT, "Insert"],
+   [TestKey.LEFT_ARROW, "ArrowLeft"],
+   [TestKey.META, "Meta"],
+   [TestKey.PAGE_DOWN, "PageDown"],
+   [TestKey.PAGE_UP, "PageUp"],
+   [TestKey.RIGHT_ARROW, "ArrowRight"],
+   [TestKey.SHIFT, "Shift"],
+   [TestKey.TAB, "Tab"],
+   [TestKey.UP_ARROW, "ArrowUp"],
+])
 
-const modifierMapping = /** @type {const} */ ([
-   ['alt', 'Alt'],
-   ['shift', 'Shift'],
-   ['meta', 'Meta'],
-   ['control', 'Control'],
-]) as const;
+const modifierMapping = /** @type {const} */ [
+   ["alt", "Alt"],
+   ["shift", "Shift"],
+   ["meta", "Meta"],
+   ["control", "Control"],
+] as const
 
 /**
  * @param {ModifierKeys} modifiers
@@ -61,7 +66,7 @@ const modifierMapping = /** @type {const} */ ([
 function getModifiers(modifiers: ModifierKeys) {
    return modifierMapping
       .filter(([modifier]) => modifiers[modifier])
-      .map(([, modifier]) => modifier);
+      .map(([, modifier]) => modifier)
 }
 
 /**
@@ -69,7 +74,7 @@ function getModifiers(modifiers: ModifierKeys) {
  * @returns {keys is [ModifierKeys, ...(string | TestKey)[]]}
  */
 function hasModifiers(keys: [ModifierKeys, ...(string | TestKey)[]]) {
-   return typeof keys[0] === 'object';
+   return typeof keys[0] === "object"
 }
 
 /**
@@ -78,7 +83,7 @@ function hasModifiers(keys: [ModifierKeys, ...(string | TestKey)[]]) {
  * @returns {args is T & ['center', ...unknown[]]}
  */
 function isCenterClick(args: ClickParameters) {
-   return args[0] === 'center';
+   return args[0] === "center"
 }
 
 /**
@@ -86,14 +91,17 @@ function isCenterClick(args: ClickParameters) {
  * @returns {args is [number, number, ModifierKeys?]}
  */
 function isPositionedClick(args: ClickParameters) {
-   return typeof args[0] === 'number';
+   return typeof args[0] === "number"
 }
 
 /**
  * @typedef {[ModifierKeys?] | ['center', ModifierKeys?] | [number, number, ModifierKeys?]} ClickParameters
  */
 
-type ClickParameters = [ModifierKeys?] | ['center', ModifierKeys?] | [number, number, ModifierKeys?]
+type ClickParameters =
+   | [ModifierKeys?]
+   | ["center", ModifierKeys?]
+   | [number, number, ModifierKeys?]
 
 /**
  *
@@ -101,7 +109,7 @@ type ClickParameters = [ModifierKeys?] | ['center', ModifierKeys?] | [number, nu
  * @returns {handleOrLocator is Locator}
  */
 export function isLocator(handleOrLocator: ElementHandle<unknown> | Locator) {
-   return !('$$' in handleOrLocator);
+   return !("$$" in handleOrLocator)
 }
 
 /**
@@ -117,7 +125,7 @@ export class PlaywrightElement implements TestElement {
     * @readonly
     * @type {() => Page}
     */
-   #page: () => Page;
+   #page: () => Page
 
    /**
     * Awaits for the angular app to become stable
@@ -127,7 +135,11 @@ export class PlaywrightElement implements TestElement {
     * @readonly
     * @type {<T>(fn: (handle: Locator | ElementHandle<HTMLElement | SVGElement>) => Promise<T>) => Promise<T>}
     */
-   #query: <T>(fn: (handle: Locator | ElementHandle<HTMLElement | SVGElement>) => Promise<T>) => Promise<T>;
+   #query: <T>(
+      fn: (
+         handle: Locator | ElementHandle<HTMLElement | SVGElement>,
+      ) => Promise<T>,
+   ) => Promise<T>
 
    /**
     * Awaits for the angular app to become stable
@@ -137,7 +149,11 @@ export class PlaywrightElement implements TestElement {
     * @readonly
     * @type {(fn: (handle: Locator | ElementHandle<HTMLElement | SVGElement>) => Promise<void>) => Promise<void>}
     */
-   #perform: (fn: (handle: Locator | ElementHandle<HTMLElement | SVGElement>) => Promise<void>) => Promise<void>;
+   #perform: (
+      fn: (
+         handle: Locator | ElementHandle<HTMLElement | SVGElement>,
+      ) => Promise<void>,
+   ) => Promise<void>
 
    /**
     * Execute the given script
@@ -145,32 +161,34 @@ export class PlaywrightElement implements TestElement {
     * @readonly
     * @type {Locator['evaluate']}
     */
-   #evaluate: Locator['evaluate'];
+   #evaluate: Locator["evaluate"]
 
    /**
     * @param {() => Page} page
-    * @param {ElementHandle<HTMLElement | SVGElement> | Locator} handleOrLocator
+    * @param {ElementHandle<HTMLElement | SVGElement> | Locator} locator
     * @param {() => Promise<void>} whenStable
     */
-   constructor(page: () => Page, private handleOrLocator: ElementHandle<HTMLElement | SVGElement> | Locator, whenStable: () => Promise<void>) {
-      this.#page = page;
+   constructor(
+      page: () => Page,
+      public locator: Locator,
+      whenStable: () => Promise<void>,
+   ) {
+      this.#page = page
 
       this.#query = async (fn: any) => {
-         await whenStable();
-         return fn(handleOrLocator);
-      };
+         await whenStable()
+         return fn(locator)
+      }
 
       this.#perform = async (fn: any) => {
          try {
-            return await fn(handleOrLocator);
+            return await fn(locator)
          } finally {
-            await whenStable();
+            await whenStable()
          }
-      };
+      }
 
-      this.#evaluate = /** @type {Locator} */ (handleOrLocator).evaluate.bind(
-         handleOrLocator,
-      );
+      this.#evaluate = /** @type {Locator} */ locator.evaluate.bind(locator)
    }
 
    /**
@@ -180,32 +198,32 @@ export class PlaywrightElement implements TestElement {
     */
    #toClickOptions = async (...args: ClickParameters) => {
       /** @type {Parameters<ElementHandle['click']>[0]} */
-      const clickOptions = {} as any;
+      const clickOptions = {} as any
       /** @type {ModifierKeys | undefined} */
-      let modifierKeys;
+      let modifierKeys
 
       if (isCenterClick(args)) {
-         const size = await this.getDimensions();
+         const size = await this.getDimensions()
 
          clickOptions.position = {
             x: size.width / 2,
             y: size.height / 2,
-         };
+         }
 
-         modifierKeys = args[1];
+         modifierKeys = args[1]
       } else if (isPositionedClick(args as any)) {
-         clickOptions.position = {x: args[0], y: args[1]};
-         modifierKeys = args[2];
+         clickOptions.position = { x: args[0], y: args[1] }
+         modifierKeys = args[2]
       } else {
-         modifierKeys = args[0];
+         modifierKeys = args[0]
       }
 
       if (modifierKeys) {
-         clickOptions.modifiers = getModifiers(modifierKeys as any);
+         clickOptions.modifiers = getModifiers(modifierKeys as any)
       }
 
-      return clickOptions;
-   };
+      return clickOptions
+   }
 
    /**
     * @returns {Promise<void>}
@@ -213,14 +231,14 @@ export class PlaywrightElement implements TestElement {
    blur() {
       // Playwright exposes a `focus` function but no `blur` function, so we have
       // to resort to executing a function ourselves.
-      return this.#perform(() => this.#evaluate(contentScripts.blur));
+      return this.#perform(() => this.#evaluate(contentScripts.blur))
    }
 
    /**
     * @returns {Promise<void>}
     */
    clear() {
-      return this.#perform(handle => handle.fill(''));
+      return this.#perform((handle) => handle.fill(""))
    }
 
    /**
@@ -228,9 +246,9 @@ export class PlaywrightElement implements TestElement {
     * @returns {Promise<void>}
     */
    click(...args: ClickParameters) {
-      return this.#perform(async handle =>
+      return this.#perform(async (handle) =>
          handle.click(await this.#toClickOptions(...args)),
-      );
+      )
    }
 
    /**
@@ -238,12 +256,12 @@ export class PlaywrightElement implements TestElement {
     * @returns {Promise<void>}
     */
    rightClick(...args: ClickParameters) {
-      return this.#perform(async handle =>
+      return this.#perform(async (handle) =>
          handle.click({
             ...(await this.#toClickOptions(...args)),
-            button: 'right',
+            button: "right",
          }),
-      );
+      )
    }
 
    /**
@@ -261,16 +279,16 @@ export class PlaywrightElement implements TestElement {
          // Cast to `any` needed because of infinite type instantiation
          this.#evaluate(
             contentScripts.dispatchEvent as any,
-            /** @type {[string, any]} */ ([name, data]),
+            /** @type {[string, any]} */ [name, data],
          ),
-      );
+      )
    }
 
    /**
     * @returns {Promise<void>}
     */
    focus() {
-      return this.#perform(handle => handle.focus());
+      return this.#perform((handle) => handle.focus())
    }
 
    /**
@@ -280,38 +298,38 @@ export class PlaywrightElement implements TestElement {
    async getCssValue(property: string): Promise<string> {
       return this.#query(() =>
          this.#evaluate(contentScripts.getStyleProperty, property),
-      );
+      )
    }
 
    /**
     * @returns {Promise<void>}
     */
    async hover() {
-      return this.#perform(handle => handle.hover());
+      return this.#perform((handle) => handle.hover())
    }
 
    /**
     * @returns {Promise<void>}
     */
    async mouseAway() {
-      const {left, top} = await this.#query(async (handle: any) => {
-         let {left, top} = await this.#evaluate(
+      const { left, top } = await this.#query(async (handle: any) => {
+         let { left, top } = await this.#evaluate(
             contentScripts.getBoundingClientRect,
-         );
+         )
 
          if (left < 0 && top < 0) {
-            await handle.scrollIntoViewIfNeeded();
-            ({left, top} = await this.#evaluate(
+            await handle.scrollIntoViewIfNeeded()
+            ;({ left, top } = await this.#evaluate(
                contentScripts.getBoundingClientRect,
-            ));
+            ))
          }
 
-         return {left, top};
-      });
+         return { left, top }
+      })
 
       return this.#perform(() =>
          this.#page().mouse.move(Math.max(0, left - 1), Math.max(0, top - 1)),
-      );
+      )
    }
 
    /**
@@ -324,14 +342,14 @@ export class PlaywrightElement implements TestElement {
       // but that triggers only one change event.
       // So we select options as if we're a user: one at a time
 
-      return this.#perform(async handle => {
+      return this.#perform(async (handle) => {
          /** @type {{index: number}[]} */
-         const selections = [];
+         const selections = []
          for (const index of optionIndexes) {
-            selections.push({index});
-            await handle.selectOption(selections);
+            selections.push({ index })
+            await handle.selectOption(selections)
          }
-      });
+      })
    }
 
    /**
@@ -339,50 +357,54 @@ export class PlaywrightElement implements TestElement {
     * @param  {(string | TestKey)[] | [ModifierKeys, ...(string | TestKey)[]]} input
     * @returns {Promise<void>}
     */
-   sendKeys(...input: (string | TestKey)[] | [ModifierKeys, ...(string | TestKey)[]]) {
-      return this.#perform(async handle => {
+   sendKeys(
+      ...input: (string | TestKey)[] | [ModifierKeys, ...(string | TestKey)[]]
+   ) {
+      return this.#perform(async (handle) => {
          /** @type {string | undefined} */
-         let modifiers;
-         let keys;
+         let modifiers
+         let keys
          if (hasModifiers(input as any)) {
             /** @type {ModifierKeys} */
-            let modifiersObject;
-            [modifiersObject, ...keys] = input;
+            let modifiersObject
+            ;[modifiersObject, ...keys] = input
 
-            modifiers = getModifiers(modifiersObject as any).join('+');
+            modifiers = getModifiers(modifiersObject as any).join("+")
          } else {
-            keys = input;
+            keys = input
          }
 
-         if (!keys.some(key => key !== '')) {
+         if (!keys.some((key) => key !== "")) {
             // throw getNoKeysSpecifiedError();
-            throw new Error('No keys specified')
+            throw new Error("No keys specified")
          }
 
-         await handle.focus();
+         await handle.focus()
 
-         const {keyboard} = this.#page();
+         const { keyboard } = this.#page()
 
          if (modifiers) {
-            await keyboard.down(modifiers);
+            await keyboard.down(modifiers)
          }
 
          try {
-            for (const key of /** @type {(string | TestKey)[]} */ (keys)) {
-               if (typeof key === 'string') {
-                  await keyboard.type(key);
+            for (const key of /** @type {(string | TestKey)[]} */ keys) {
+               if (typeof key === "string") {
+                  await keyboard.type(key)
                } else if (keyMap.has(key as any)) {
-                  await keyboard.press(/** @type {string} */ (keyMap.get(key as any)) as any);
+                  await keyboard.press(
+                     /** @type {string} */ keyMap.get(key as any) as any,
+                  )
                } else {
-                  throw new Error(`Unknown key: ${TestKey[key as any] ?? key}`);
+                  throw new Error(`Unknown key: ${TestKey[key as any] ?? key}`)
                }
             }
          } finally {
             if (modifiers) {
-               await keyboard.up(modifiers);
+               await keyboard.up(modifiers)
             }
          }
-      });
+      })
    }
 
    /**
@@ -390,7 +412,7 @@ export class PlaywrightElement implements TestElement {
     * @returns {Promise<void>}
     */
    setInputValue(value: string) {
-      return this.#perform(handle => handle.fill(value));
+      return this.#perform((handle) => handle.fill(value))
    }
 
    /**
@@ -398,16 +420,16 @@ export class PlaywrightElement implements TestElement {
     * @returns {Promise<string>}
     */
    text(options: TextOptions) {
-      return this.#query(handle => {
+      return this.#query((handle) => {
          if (options?.exclude) {
             return this.#evaluate(
                contentScripts.getTextWithExcludedElements,
                options.exclude,
-            );
+            )
          }
 
-         return handle.innerText();
-      });
+         return handle.innerText()
+      })
    }
 
    /**
@@ -417,7 +439,7 @@ export class PlaywrightElement implements TestElement {
    setContenteditableValue(value: string) {
       return this.#perform(() =>
          this.#evaluate(contentScripts.setContenteditableValue, value),
-      );
+      )
    }
 
    /**
@@ -425,7 +447,7 @@ export class PlaywrightElement implements TestElement {
     * @returns {Promise<string | null>}
     */
    getAttribute(name: string) {
-      return this.#query(handle => handle.getAttribute(name));
+      return this.#query((handle) => handle.getAttribute(name))
    }
 
    /**
@@ -434,11 +456,11 @@ export class PlaywrightElement implements TestElement {
     */
    async hasClass(name: string) {
       const classes =
-         (await this.#query(handle => handle.getAttribute('class')))?.split(
+         (await this.#query((handle) => handle.getAttribute("class")))?.split(
             /\s+/,
-         ) ?? [];
+         ) ?? []
 
-      return classes.includes(name);
+      return classes.includes(name)
    }
 
    /**
@@ -447,7 +469,7 @@ export class PlaywrightElement implements TestElement {
    async getDimensions() {
       return this.#query(() =>
          this.#evaluate(contentScripts.getBoundingClientRect),
-      );
+      )
    }
 
    /**
@@ -457,16 +479,16 @@ export class PlaywrightElement implements TestElement {
    async getProperty(name: string) {
       const property = await this.#query(async (handle: any) => {
          if (isLocator(handle)) {
-            return handle.evaluateHandle(contentScripts.getProperty, name);
+            return handle.evaluateHandle(contentScripts.getProperty, name)
          } else {
-            return handle.getProperty(name);
+            return handle.getProperty(name)
          }
-      });
+      })
 
       try {
-         return await property.jsonValue();
+         return await property.jsonValue()
       } finally {
-         await property.dispose();
+         await property.dispose()
       }
    }
 
@@ -475,17 +497,13 @@ export class PlaywrightElement implements TestElement {
     * @returns {Promise<boolean>}
     */
    async matchesSelector(selector: string) {
-      return this.#query(() => this.#evaluate(contentScripts.matches, selector));
+      return this.#query(() => this.#evaluate(contentScripts.matches, selector))
    }
 
    /**
     * @returns {Promise<boolean>}
     */
    async isFocused() {
-      return this.matchesSelector(':focus');
-   }
-
-   getHandle<T = ElementHandle>(): T {
-      return this.handleOrLocator as T
+      return this.matchesSelector(":focus")
    }
 }

@@ -21,9 +21,16 @@ export class UnitTestHarnessEnvironment extends HarnessEnvironment<Element> {
       return new UnitTestHarnessEnvironment(element).getAllHarnesses(harnessType)
    }
 
-   static getNativeElement<T extends Element>(element: TestElement): T {
+   static getRootHarnessLoader() {
+      return new UnitTestHarnessEnvironment(document.body).rootHarnessLoader()
+   }
+
+   static getNativeElement<T extends Element>(element: TestElement | ComponentHarness): T {
       if (element instanceof UnitTestElement) {
          return element.element as T
+      }
+      if (element instanceof ComponentHarness) {
+         return this.getNativeElement(element.host())
       }
       throw new Error("This TestElement was not created by the UnitTestHarnessEnvironment")
    }

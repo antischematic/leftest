@@ -1,4 +1,4 @@
-import { ComponentHarness, methodNames } from "./component-harness"
+import { ComponentHarness } from "./component-harness"
 import { ElementDimensions } from "./element-dimensions"
 import {
    EventData,
@@ -14,9 +14,8 @@ export type TestElementInput =
    | Promise<ComponentHarness | TestElement>
    | undefined
    | null
-   | Promise<void>
+   | Promise<undefined>
    | Promise<null>
-   | (() => TestElementInput)
 
 type NullInput = null | undefined | Promise<null> | Promise<undefined> | (() => NullInput)
 
@@ -161,22 +160,37 @@ export interface Screen {
     * @param data
     */
    dispatchEvent(element: TestElementInput, name: string, data?: Record<string, EventData>): Promise<void>
-
-   getHandle<T = any>(element: TestElementInput): Promise<T>
 }
+
+export const methodNames = new Set<keyof TestElement>([
+   "blur",
+   "clear",
+   "click",
+   "rightClick",
+   "focus",
+   "getCssValue",
+   "hover",
+   "mouseAway",
+   "sendKeys",
+   "text",
+   "setContenteditableValue",
+   "getAttribute",
+   "hasClass",
+   "getDimensions",
+   "getProperty",
+   "matchesSelector",
+   "isFocused",
+   "setInputValue",
+   "selectOptions",
+   "dispatchEvent",
+])
 
 export const screen: Screen = Array.from(methodNames).reduce((acc, method) => {
    acc[method] = async (handle: TestElementInput, ...args: any[]) => {
-      const d: any = screen
-      const h: any = handle
-      if (typeof handle === "function") {
-         return d[method](handle(), ...args)
-      } else if (handle && "then" in handle) {
-         return handle.then((result) => d[method](result, ...args))
-      } else if (handle && "host" in handle) {
-         return d[method](handle.host(), ...args)
-      } else {
-         return h?.[method]?.(...args) ?? null
+      handle = await handle
+      if (handle instanceof ComponentHarness) {
+         const host = await handle.host() as any
+         return host[method]?.(...args)
       }
    }
    return acc

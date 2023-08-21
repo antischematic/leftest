@@ -21,7 +21,7 @@ export function byRole(role: AriaRole | string, options: RoleOptions = {}) {
    return predicate(
       description,
       async function byRole(harness: ComponentHarness) {
-         const host = await harness.host()
+         const host = harness.host()
          const matchesRole = await host.matchesSelector(withRole(role))
          let [tagName, innerText, textContent, attributes, children, document] = await parallel(() => [host.getProperty('tagName'), host.getProperty('innerText'), host.getProperty('textContent'), host.getProperty('attributes'), host.getProperty('children'), host.getProperty('ownerDocument')])
          if (innerText === undefined) {

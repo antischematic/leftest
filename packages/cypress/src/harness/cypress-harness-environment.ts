@@ -17,6 +17,13 @@ export class CypressHarnessEnvironment extends HarnessEnvironment<Element> {
       this._documentRoot = documentRoot;
    }
 
+   static getNativeElement(element: TestElement) {
+      if (element instanceof UnitTestElement) {
+         return element.element
+      }
+      throw new Error("This TestElement was not created by the CypressHarnessEnvironment")
+   }
+
    async forceStabilize(): Promise<void> {
       console.warn(
          '`HarnessEnvironment#forceStabilize()` was called but it is a noop in Cypress environment.'

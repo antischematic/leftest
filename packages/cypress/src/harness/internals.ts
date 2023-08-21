@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ComponentHarness, getHandle } from "@antischematic/leftest"
+import {
+   ComponentHarness,
+   TestElementInput,
+   UnitTestHarnessEnvironment,
+} from "@antischematic/leftest"
 import { CypressHarnessEnvironment } from './cypress-harness-environment';
 
 export type ChainableHarness<HARNESS> = Cypress.Chainable<HARNESS> & {
@@ -18,6 +22,15 @@ export type ChainableHarness<HARNESS> = Cypress.Chainable<HARNESS> & {
       HARNESS[K];
 };
 
+async function getNativeElement(handle: TestElementInput): Promise<Element | null> {
+      if (handle && "then" in handle && typeof handle.then === 'function') {
+         return getNativeElement(await handle)
+      } else if (handle instanceof ComponentHarness) {
+         return UnitTestHarnessEnvironment.getNativeElement(await handle.host())
+      }
+      return null
+}
+
 /**
  * Adds harness methods to chainer.
  *
@@ -35,7 +48,7 @@ export function addHarnessMethodsToChainer<HARNESS extends ComponentHarness>(
                /* Don't wrap cypress methods like `invoke`, `should` etc.... */
                if (prop in chainableTarget) {
                   return chainableTarget.then(async (target: any) => {
-                     return (Array.isArray(target) ? Promise.all(target.map(t => getHandle(t) ?? t)) : typeof target === "object" ? getHandle(target) ?? target : target)
+                     return (Array.isArray(target) ? Promise.all(target.map(t => CypressHarnessEnvironment.getNativeElement(t) ?? t)) : typeof target === "object" ? (await getNativeElement(target)) ?? target : target)
                   })[prop](...args);
                }
 

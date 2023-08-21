@@ -1,10 +1,9 @@
-
-import { parallel, RoleOptions } from "@antischematic/leftest"
+import { RoleOptions } from "@antischematic/leftest"
+import { beforeAll, describe } from "vitest"
+import { query } from "../component-harness"
+import { AriaRole } from "../selector"
 import { UnitTestHarnessEnvironment } from "../unit-test-harness-environment"
 import { byRole } from "./by-role"
-import { AriaRole } from "../selector"
-import { ContentContainerComponentHarness, query } from "../component-harness"
-import { beforeAll, describe } from "vitest"
 
 const html = `
    <main>
@@ -31,40 +30,28 @@ function render() {
    document.body.innerHTML = html
 }
 
-class TestHarness extends ContentContainerComponentHarness {
-   static hostSelector = "main"
-
-   async getByRole(role: AriaRole | string, options?: RoleOptions) {
-      const harness = await this.getHarness(query(byRole(role, options)))
-      return harness.host()
-   }
-
-   async getAllByRole(role: AriaRole | string) {
-      const harnesses = await this.getAllHarnesses(query(byRole(role)))
-      return parallel(() => harnesses.map(harness => harness.host()))
-   }
-}
-
 async function getByRole(role: AriaRole, options?: RoleOptions) {
-   const harness = await UnitTestHarnessEnvironment.getHarness(TestHarness)
-   const testElement = await harness.getByRole(role, options)
+   const loader = await UnitTestHarnessEnvironment.getRootHarnessLoader()
+   const testElement = await loader.getHarness(query(byRole(role, options)))
    return UnitTestHarnessEnvironment.getNativeElement(testElement)
 }
 
 async function getAllByRole(role: AriaRole) {
-   const harness = await UnitTestHarnessEnvironment.getHarness(TestHarness)
-   const testElements = await harness.getAllByRole(role)
-   return testElements.map(testElement => UnitTestHarnessEnvironment.getNativeElement(testElement))
+   const loader = await UnitTestHarnessEnvironment.getRootHarnessLoader()
+   const testElements = await loader.getAllHarnesses(query(byRole(role)))
+   return testElements.map((testElement) =>
+      UnitTestHarnessEnvironment.getNativeElement(testElement),
+   )
 }
 
-describe('byRole', () => {
+describe("byRole", () => {
    beforeAll(render)
 
-   it('should find implicit roles', async () => {
+   it("should find implicit roles", async () => {
       const button = await getByRole("button")
       const link = await getByRole("link")
       const generic = await getByRole("generic")
-      const svg = await getByRole('graphics-document')
+      const svg = await getByRole("graphics-document")
 
       expect(button.textContent).toMatch("Button")
       expect(link.textContent).toMatch("Link")
@@ -72,20 +59,23 @@ describe('byRole', () => {
       expect(svg.textContent).toMatch("SVG")
    })
 
-   it('should find explicit roles', async () => {
+   it("should find explicit roles", async () => {
       const list = await getByRole("list")
       const listItems = await getAllByRole("listitem")
 
       expect(list.textContent).toMatch("List")
-      expect(listItems.map(listItem => listItem.textContent)).toMatchObject(['List Item 1', 'List Item 2', 'List Item 3'])
+      expect(listItems.map((listItem) => listItem.textContent)).toMatchObject([
+         "List Item 1",
+         "List Item 2",
+         "List Item 3",
+      ])
    })
 
-   it('should find by accessible name', async () => {
-      const button = await getByRole("button", { name: 'Button' })
-      const svg = await getByRole("graphics-document", { name: 'SVG' })
+   it("should find by accessible name", async () => {
+      const button = await getByRole("button", { name: "Button" })
+      const svg = await getByRole("graphics-document", { name: "SVG" })
 
       expect(button).toBeTruthy()
       expect(svg).toBeTruthy()
    })
 })
-

@@ -7,7 +7,8 @@
  */
 
 import { parallel } from "./change-detection"
-import { TestElement } from "./test-element"
+import { ElementDimensions } from "./element-dimensions"
+import { EventData, ModifierKeys, TestElement, TestKey, TextOptions } from "./test-element"
 
 /** An async function that returns a promise when called. */
 export type AsyncFactoryFn<T> = () => Promise<T>
@@ -289,7 +290,7 @@ export abstract class ComponentHarness {
    constructor(protected readonly locatorFactory: LocatorFactory) {}
 
    /** Gets a `Promise` for the `TestElement` representing the host element of the component. */
-   async host(): Promise<TestElement> {
+   host(): TestElement {
       return this.locatorFactory.rootElement
    }
 
@@ -713,54 +714,115 @@ function _restoreSelector(selector: string, placeholders: string[]): string {
    )
 }
 
-
-export const methodNames = new Set<any>([
-   "blur",
-   "clear",
-   "click",
-   "rightClick",
-   "focus",
-   "getCssValue",
-   "hover",
-   "mouseAway",
-   "sendKeys",
-   "text",
-   "setContenteditableValue",
-   "getAttribute",
-   "hasClass",
-   "getDimensions",
-   "getProperty",
-   "matchesSelector",
-   "isFocused",
-   "setInputValue",
-   "selectOptions",
-   "dispatchEvent",
-   "getHandle"
-])
-
-export interface ElementHarness extends ComponentHarness, TestElement {}
-
-class TestElementProxy extends ComponentHarness {
-   constructor(locatorFactory: LocatorFactory) {
-      super(locatorFactory)
-      return new Proxy(this, {
-         get(target: TestElementProxy, p: string | symbol): any {
-            if (Reflect.has(target, p)) {
-               return Reflect.get(target, p)
-            }
-            if (methodNames.has(p)) {
-               return async function (...args: any[]) {
-                  const host: any = await target.host()
-                  return host[p](...args)
-               }
-            }
-         }
-      })
+class TestElementHarness extends ComponentHarness implements TestElement {
+   async blur(): Promise<void> {
+      const host = this.host()
+      return host.blur()
    }
+
+   clear(): Promise<void> {
+      return Promise.resolve(undefined)
+   }
+
+   async click(modifiers?: ModifierKeys): Promise<void>
+   async click(location: "center", modifiers?: ModifierKeys): Promise<void>
+   async click(relativeX: number, relativeY: number, modifiers?: ModifierKeys): Promise<void>
+   async click(...args: any[]): Promise<void> {
+      const host = this.host()
+      return host.click(...args)
+   }
+
+   async dispatchEvent(name: string, data?: Record<string, EventData>): Promise<void> {
+      const host = this.host()
+      return host.dispatchEvent(name, data)
+   }
+
+   async focus(): Promise<void> {
+      const host = this.host()
+      return host.focus()
+   }
+
+   async getAttribute(name: string): Promise<string | null> {
+      const host = this.host()
+      return host.getAttribute(name)
+   }
+
+   async getCssValue(property: string): Promise<string> {
+      const host = this.host()
+      return host.getCssValue(property)
+   }
+
+   async getDimensions(): Promise<ElementDimensions> {
+      const host = this.host()
+      return host.getDimensions()
+   }
+
+   async getProperty<T = any>(name: string): Promise<T> {
+      const host = this.host()
+      return host.getProperty(name)
+   }
+
+   async hasClass(name: string): Promise<boolean> {
+      const host = this.host()
+      return host.hasClass(name)
+   }
+
+   async hover(): Promise<void> {
+      const host = this.host()
+      return host.hover()
+   }
+
+   async isFocused(): Promise<boolean> {
+      const host = this.host()
+      return host.isFocused()
+   }
+
+   async matchesSelector(selector: string): Promise<boolean> {
+      const host = this.host()
+      return host.matchesSelector(selector)
+   }
+
+   async mouseAway(): Promise<void> {
+      const host = this.host()
+      return host.mouseAway()
+   }
+
+   async rightClick(relativeX: number, relativeY: number, modifiers?: ModifierKeys): Promise<void> {
+      const host = this.host()
+      return host.rightClick(relativeX, relativeY, modifiers)
+   }
+
+   async selectOptions(...optionIndexes: number[]): Promise<void> {
+      const host = this.host()
+      return host.selectOptions(...optionIndexes)
+   }
+
+   async sendKeys(...keys: (string | TestKey)[]): Promise<void>
+   async sendKeys(modifiers: ModifierKeys, ...keys: (string | TestKey)[]): Promise<void>
+   async sendKeys(...keys: any[]): Promise<void> {
+      const host = this.host()
+      return host.sendKeys(...keys)
+   }
+
+   async setContenteditableValue(value: string): Promise<void> {
+      const host = this.host()
+      return host.setContenteditableValue?.(value)
+   }
+
+   async setInputValue(value: string): Promise<void> {
+      const host = this.host()
+      return host.setInputValue(value)
+   }
+
+   async text(options?: TextOptions): Promise<string> {
+      const host = this.host()
+      return host.text(options)
+   }
+
 }
 
 function getElementHarness(selector: string) {
-   class ElementHarness extends TestElementProxy {
+   class ElementHarness extends TestElementHarness {
       static hostSelector = selector
    }
    return ElementHarness
@@ -772,9 +834,9 @@ function isComponentHarness(type: any): type is ComponentHarnessConstructor<any>
 
 export function query<T extends ComponentHarness>(harness: ComponentHarnessConstructor<T>, ...predicates: AsyncPredicate<T>[]): HarnessPredicate<T>
 export function query<T extends ComponentHarness>(harness: ComponentHarnessConstructor<T>, within: string | AsyncPredicate<T>, ...predicates: AsyncPredicate<T>[]): HarnessPredicate<T>
-export function query(selector: string, ...predicates: AsyncPredicate<ComponentHarness>[]): HarnessPredicate<ElementHarness>
-export function query(selector: string, within: string, ...predicates: AsyncPredicate<ComponentHarness>[]): HarnessPredicate<ElementHarness>
-export function query(...predicates: AsyncPredicate<ComponentHarness>[]): HarnessPredicate<ElementHarness>
+export function query(selector: string, ...predicates: AsyncPredicate<ComponentHarness>[]): HarnessPredicate<TestElementHarness>
+export function query(selector: string, within: string, ...predicates: AsyncPredicate<ComponentHarness>[]): HarnessPredicate<TestElementHarness>
+export function query(...predicates: AsyncPredicate<ComponentHarness>[]): HarnessPredicate<TestElementHarness>
 export function query(selectorOrHarness: string | ComponentHarnessConstructor<ComponentHarness> | AsyncPredicate<ComponentHarness>, ancestorOrPredicate: string | AsyncPredicate<any>, ...predicates: AsyncPredicate<ComponentHarness>[]): unknown {
    const isHarness = isComponentHarness(selectorOrHarness)
    const options = typeof ancestorOrPredicate === "string" ? { ancestor: ancestorOrPredicate } : {}

@@ -1,7 +1,8 @@
 import {
    ComponentHarness,
-   ComponentHarnessConstructor,
-   HarnessEnvironment, HarnessQuery,
+   HarnessEnvironment,
+   HarnessLoader,
+   HarnessQuery,
    TestElement,
 } from "@antischematic/leftest"
 import { ElementHandle, Locator, Page } from "@playwright/test"
@@ -10,7 +11,7 @@ import { isLocator, PlaywrightElement } from "./element"
 /**
  * @type {WeakMap<import('@angular/cdk/testing').TestElement, import('@playwright/test').ElementHandle<HTMLElement | SVGElement> | import('@playwright/test').Locator>}
  */
-const elementHandles = new WeakMap();
+const elementHandles = new WeakMap()
 
 /**
  * @internal
@@ -20,37 +21,52 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
     * @readonly
     * @type {import('@playwright/test').Page}
     */
-   #page: Page;
+   #page: Page
 
    /**
     * @readonly
     * @type {import('@playwright/test').Locator}
     */
-   #documentRoot: Locator;
+   #documentRoot: Locator
 
    /**
     * @readonly
     * @type {Required<import('./abstract-environment.js').PlaywrightHarnessEnvironmentOptions>}
     */
-   #opts: any;
+   #opts: any
 
    static loader(page: Page) {
       return new PlaywrightHarnessEnvironment(page)
    }
 
-   static getHarnessForPage<T extends ComponentHarness>(page: Page, harness: HarnessQuery<T>) {
+   static getHarnessForPage<T extends ComponentHarness>(
+      page: Page,
+      harness: HarnessQuery<T>,
+   ) {
       return this.loader(page).getHarness(harness)
    }
 
-   static getAllHarnessesForPage<T extends ComponentHarness>(page: Page, harness: HarnessQuery<T>) {
+   static getAllHarnessesForPage<T extends ComponentHarness>(
+      page: Page,
+      harness: HarnessQuery<T>,
+   ) {
       return this.loader(page).getAllHarnesses(harness)
    }
 
-   static getLocator(element: TestElement): Locator {
+   static getRootHarnessLoader(page: Page) {
+      return new PlaywrightHarnessEnvironment(page).rootHarnessLoader()
+   }
+
+   static getLocator(element: TestElement | ComponentHarness): Locator {
       if (element instanceof PlaywrightElement) {
-         return element.getHandle()
+         return element.locator
       }
-      throw new Error('This TestElement was not created by the PlaywrightHarnessEnvironment')
+      if (element instanceof ComponentHarness) {
+         return this.getLocator(element.host())
+      }
+      throw new Error(
+         "This TestElement was not created by the PlaywrightHarnessEnvironment",
+      )
    }
 
    /**
@@ -62,18 +78,18 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
     */
    constructor(
       page: Page,
-      {respectShadowBoundaries = false, useLocators = true} = {},
-      documentRoot = page.locator(':root'),
+      { respectShadowBoundaries = false, useLocators = true } = {},
+      documentRoot = page.locator(":root"),
       element = documentRoot,
    ) {
-      super(element);
+      super(element)
 
-      this.#page = page;
-      this.#documentRoot = documentRoot;
+      this.#page = page
+      this.#documentRoot = documentRoot
       this.#opts = {
          respectShadowBoundaries,
          useLocators,
-      };
+      }
    }
 
    /**
@@ -81,7 +97,7 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
     * @override
     */
    get respectShadowBoundaries() {
-      return this.#opts.respectShadowBoundaries;
+      return this.#opts.respectShadowBoundaries
    }
 
    /**
@@ -125,22 +141,20 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
     * @override
     */
    async getPlaywrightHandle(element: TestElement) {
-      const handleOrLocator = elementHandles.get(element);
+      const handleOrLocator = elementHandles.get(element)
 
       if (handleOrLocator == null) {
          throw new Error(
-            'The given TestElement was not created by PlaywrightHarnessEnvironment',
-         );
+            "The given TestElement was not created by PlaywrightHarnessEnvironment",
+         )
       }
 
       if (isLocator(handleOrLocator)) {
          // Only one case where we are passed a Locator: the root element of the page, which is always
          // present -> we can safely ignore the null return type
-         return /** @type {import('@playwright/test').ElementHandle<HTMLElement | SVGElement>} */ (
-            await handleOrLocator.elementHandle()
-         );
+         return /** @type {import('@playwright/test').ElementHandle<HTMLElement | SVGElement>} */ await handleOrLocator.elementHandle()
       } else {
-         return handleOrLocator;
+         return handleOrLocator
       }
    }
 
@@ -150,21 +164,21 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
     * @override
     */
    getPlaywrightLocator(element: TestElement) {
-      const handleOrLocator = elementHandles.get(element);
+      const handleOrLocator = elementHandles.get(element)
 
       if (handleOrLocator == null) {
          throw new Error(
-            'The given TestElement was not created by PlaywrightHarnessEnvironment',
-         );
+            "The given TestElement was not created by PlaywrightHarnessEnvironment",
+         )
       }
 
       if (!isLocator(handleOrLocator)) {
          throw new Error(
-            'This PlaywrightHarnessEnvironment is not configured to use locators',
-         );
+            "This PlaywrightHarnessEnvironment is not configured to use locators",
+         )
       }
 
-      return handleOrLocator;
+      return handleOrLocator
    }
 
    /**
@@ -181,7 +195,7 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
          },
          this.#documentRoot,
          this.rawRootElement,
-      );
+      )
    }
 
    /**
@@ -191,7 +205,7 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
     * @protected
     */
    getDocumentRoot() {
-      return this.#documentRoot;
+      return this.#documentRoot
    }
 
    /**
@@ -200,7 +214,7 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
     * @override
     * @protected
     */
-   createTestElement(handle: ElementHandle<HTMLElement | SVGElement> | Locator): TestElement {
+   createTestElement(handle: Locator): TestElement {
       // This function is called in the HarnessEnvironment constructor, so we
       // can't directly use private properties here due to the polyfill in tslib
       const element = new PlaywrightElement(
@@ -211,11 +225,11 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
             //    await this.forceStabilize();
             // }
          },
-      );
+      )
 
-      elementHandles.set(element, handle);
+      elementHandles.set(element, handle)
 
-      return element;
+      return element
    }
 
    /**
@@ -230,7 +244,7 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
          this.#opts,
          this.#documentRoot,
          element,
-      );
+      )
    }
 
    /**
@@ -245,33 +259,41 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
             this.respectShadowBoundaries
                ? `css:light=${selector}`
                : `css=${selector}`,
-         );
+         )
       } else {
          const locator = this.rawRootElement.locator(
             this.respectShadowBoundaries
                ? `css:light=${selector}`
                : `css=${selector}`,
-         );
+         )
 
          if (this.#opts.useLocators) {
-            return Array.from({length: await locator.count()}, (_, i) =>
+            return Array.from({ length: await locator.count() }, (_, i) =>
                locator.nth(i),
-            );
+            )
          }
 
-         return /** @type {import('@playwright/test').ElementHandle<HTMLElement | SVGElement>[]} */ (
-            await locator.elementHandles()
-         );
+         return /** @type {import('@playwright/test').ElementHandle<HTMLElement | SVGElement>[]} */ await locator.elementHandles()
       }
    }
 }
 
-export function getHarnessForPage<T extends ComponentHarness>(page: Page, harnessType: HarnessQuery<T>): Promise<T> {
+export function getHarnessForPage<T extends ComponentHarness>(
+   page: Page,
+   harnessType: HarnessQuery<T>,
+): Promise<T> {
    return PlaywrightHarnessEnvironment.getHarnessForPage(page, harnessType)
 }
 
-export function getAllHarnessesForPage<T extends ComponentHarness>(page: Page, harnessType: HarnessQuery<T>): Promise<T[]> {
+export function getAllHarnessesForPage<T extends ComponentHarness>(
+   page: Page,
+   harnessType: HarnessQuery<T>,
+): Promise<T[]> {
    return PlaywrightHarnessEnvironment.getAllHarnessesForPage(page, harnessType)
+}
+
+export function getRootHarnessLoader(page: Page): Promise<HarnessLoader> {
+   return PlaywrightHarnessEnvironment.getRootHarnessLoader(page)
 }
 
 export function getLocator(element: TestElement): Locator {

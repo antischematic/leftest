@@ -1,8 +1,7 @@
-import { getHandle } from "@antischematic/leftest"
 import {
    afterScenario,
    createSteps,
-   getHarnessForPage,
+   getHarnessForPage, getLocator,
    TestFixtures,
 } from "@antischematic/leftest-playwright"
 import { expect } from "@playwright/test"
@@ -19,7 +18,8 @@ const steps = {
 
    "I click the get started link": async ({ page }: TestFixtures) => {
       const harness = await getHarnessForPage(page, RootHarness)
-      await expect(await getHandle(harness.getStartedButton)).toBeInViewport()
+      const button = await harness.getStartedButton()
+      await expect(getLocator(button)).toBeInViewport()
       await harness.getStarted()
    },
 

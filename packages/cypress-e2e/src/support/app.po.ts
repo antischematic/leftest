@@ -6,7 +6,7 @@ export class AppHarness extends ComponentHarness {
    greeting = this.locatorFor(query('h1'))
 
    getGreetingText() {
-      return screen.text(this.greeting)
+      return screen.text(this.greeting())
    }
 
    getParagraphs = this.locatorForAll('p')
