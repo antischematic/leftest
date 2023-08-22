@@ -1,4 +1,4 @@
-import { afterScenario, getHarness } from "@antischematic/leftest-playwright"
+import { afterScenario, getHarnessForPage } from "@antischematic/leftest-playwright"
 import { expect } from "@playwright/test"
 import { createSteps } from "./ct-support"
 import { RootHarness } from "../harnesses"
@@ -13,7 +13,7 @@ export default createSteps({
    },
 
    "I click the get started link": async ({ page }) => {
-      const harness = await getHarness(page, RootHarness)
+      const harness = await getHarnessForPage(page, RootHarness)
       await harness.getStarted()
    },
 

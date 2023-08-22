@@ -16,8 +16,7 @@ const steps = {
    },
    'it should find the app harness': async () => {
       const app = await getHarness(AppHarness)
-      const host = await app.host()
-      expect(getNativeElement(host)).toBeInstanceOf(HTMLElement)
+      expect(getNativeElement(app)).toBeInstanceOf(HTMLElement)
    }
 }
 

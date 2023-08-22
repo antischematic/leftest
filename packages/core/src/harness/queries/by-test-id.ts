@@ -1,8 +1,11 @@
 import { withTestId } from "../selector"
-import { ComponentHarness } from "../component-harness"
+import { ComponentHarness, predicate } from "../component-harness"
 
 export function byTestId(pattern: string) {
-   return async function byTestId(harness: ComponentHarness) {
-      return (await harness.host()).matchesSelector(withTestId(pattern))
-   }
+   return predicate(
+      `with testId matching pattern: ${pattern}`,
+      async function byTestId(harness: ComponentHarness) {
+         return harness.host().matchesSelector(withTestId(pattern))
+      }
+   )
 }

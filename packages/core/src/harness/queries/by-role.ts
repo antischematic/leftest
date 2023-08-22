@@ -344,8 +344,40 @@ function getImplicitRole(tagName: string | null, attributes: NamedNodeMap, paren
       case "TIME": {
          return "time"
       }
-      // TH could also be a columnheader or rowheader, but the spec isn't clear how this is determined.
-      case "TH":
+      case "TH": {
+         const scope = attributes.getNamedItem('scope')?.value
+         if (isDescendantOf(parentElement, ['table'])) {
+            switch (scope) {
+               case "row":
+               case "rowheader": {
+                  return "rowgroup"
+               }
+               case "col":
+               case "columnheader": {
+                  return "columnheader"
+               }
+               default: {
+                  return 'cell'
+               }
+            }
+         } else if (isDescendantOf(parentElement, ['grid', 'treegrid'])) {
+            switch (scope) {
+               case "row":
+               case "rowheader": {
+                  return "rowgroup"
+               }
+               case "col":
+               case "columnheader": {
+                  return "columnheader"
+               }
+               default: {
+                  return 'gridcell'
+               }
+            }
+         } else {
+            return null
+         }
+      }
       case "TD": {
          if (isDescendantOf(parentElement, ['table'])) {
             return 'cell'

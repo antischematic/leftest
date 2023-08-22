@@ -36,7 +36,7 @@ export function getAllHarnessesForContainer<T extends ComponentHarness>(
    )
 }
 
-export function getNativeElement<T extends Element>(element: TestElement): T {
+export function getNativeElement<T extends Element>(element: TestElement | ComponentHarness): T {
    return VitestHarnessEnvironment.getNativeElement<T>(element)
 }
 
