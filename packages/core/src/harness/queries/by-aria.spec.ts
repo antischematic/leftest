@@ -1,9 +1,8 @@
-import { RoleOptions } from "@antischematic/leftest"
+import { AriaOptions, AriaRole, withRole } from "@antischematic/leftest"
 import { beforeAll, describe } from "vitest"
 import { query } from "../component-harness"
-import { AriaRole } from "../selector"
 import { UnitTestHarnessEnvironment } from "../unit-test-harness-environment"
-import { byRole } from "./by-role"
+import { byAria } from "./by-aria"
 
 const html = `
    <main>
@@ -21,8 +20,9 @@ const html = `
          <div role="tab" aria-label="Tab"></div>
       </div>
       <svg>
-         <desc>SVG</desc>
+         <title>SVG</title>
       </svg>
+      <span aria-hidden="true">Hidden</span>
    </main>
 `
 
@@ -30,15 +30,15 @@ function render() {
    document.body.innerHTML = html
 }
 
-async function getByRole(role: AriaRole, options?: RoleOptions) {
+async function getByRole(role: AriaRole, options?: AriaOptions) {
    const loader = await UnitTestHarnessEnvironment.getRootHarnessLoader()
-   const testElement = await loader.getHarness(query(byRole(role, options)))
+   const testElement = await loader.getHarness(query(withRole(role), byAria(options)))
    return UnitTestHarnessEnvironment.getNativeElement(testElement)
 }
 
-async function getAllByRole(role: AriaRole) {
+async function getAllByRole(role: AriaRole, options?: AriaOptions) {
    const loader = await UnitTestHarnessEnvironment.getRootHarnessLoader()
-   const testElements = await loader.getAllHarnesses(query(byRole(role)))
+   const testElements = await loader.getAllHarnesses(query(withRole(role), byAria(options)))
    return testElements.map((testElement) =>
       UnitTestHarnessEnvironment.getNativeElement(testElement),
    )
@@ -77,5 +77,11 @@ describe("byRole", () => {
 
       expect(button).toBeTruthy()
       expect(svg).toBeTruthy()
+   })
+
+   it("should find hidden elements", async () => {
+      const hidden = await getByRole("generic", { hidden: true })
+
+      expect(hidden.textContent).toBe('Hidden')
    })
 })

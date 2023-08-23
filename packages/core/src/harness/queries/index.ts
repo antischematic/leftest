@@ -1,6 +1,6 @@
 export * from "./by-text"
 export * from "./by-test-id"
-export * from "./by-role"
+export * from "./by-aria"
 export * from "./by-label-text"
 export * from "./by-display-value"
 export * from "./by-alt-text"

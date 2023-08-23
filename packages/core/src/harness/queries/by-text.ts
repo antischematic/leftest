@@ -4,12 +4,12 @@ export type TextPredicate = (text: string) => boolean | Promise<boolean>
 
 export function byText(pattern: string | RegExp | TextPredicate) {
    return async function byText(harness: ComponentHarness) {
-      const textContent = await (await harness.host()).text()
+      const textContent = await harness.host().text()
       return matchText(textContent, pattern)
    }
 }
 
-export async function matchText(value: string | null | Promise<string | null>, pattern: string | RegExp | TextPredicate) {
+export async function matchText(value: string | null | Promise<string | null>, pattern: string | null | RegExp | TextPredicate) {
    value = await value
    if (typeof pattern === "function") {
       return value ? pattern(value) : false

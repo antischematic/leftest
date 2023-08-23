@@ -1,6 +1,9 @@
+import { ARIARoleDefinitionKey, roleElements } from "aria-query"
+
 interface SelectorOptions {
+   ancestor?: string
    component?: string
-   role?: AriaRole | string
+   role?: AriaRole
    testId?: string
 }
 
@@ -9,10 +12,25 @@ export function withTestId(id: string, options: SelectorOptions = {}) {
 }
 
 export function withRole(
-   name: AriaRole | string,
+   name: AriaRole,
    options: SelectorOptions = {},
 ) {
-   return selector(`[role="${name}"]`, options)
+   const roleRelations = roleElements.get(name as ARIARoleDefinitionKey)
+   const selectorsWithAttributes = roleRelations ? Array.from(roleRelations).map(relation => {
+      let roleSelector = relation.name
+      relation.attributes?.forEach(attribute => {
+         roleSelector += attribute.value === undefined ? `[${attribute.name}]` : `[${attribute.name}="${attribute.value}"]`
+      })
+      return roleSelector
+   }) : []
+   switch (name) {
+      case "graphics-document": {
+         selectorsWithAttributes.push('svg')
+      }
+   }
+   selectorsWithAttributes.push(`[role="${name}"]`)
+   const roleSelector = selectorsWithAttributes.join(',')
+   return selector(roleSelector, options)
 }
 
 export function withComponent(name: string, options: SelectorOptions = {}) {
@@ -41,89 +59,12 @@ export function selector(tag: keyof HTMLElementTagNameMap | '*' | string, option
    if (options.testId) {
       selector += withTestId(options.testId)
    }
-   return tag.split(/,\s*/).map(t => t + selector).join(', ')
+   return tag.split(/,\s*/).map(t => `${options.ancestor ?? ''} ${t}${selector}`.trim()).join(', ')
 }
 
-export type AriaRole =
-   | "alert"
-   | "alertdialog"
-   | "application"
-   | "article"
-   | "banner"
-   | "button"
-   | "cell"
-   | "checkbox"
-   | "columnheader"
-   | "combobox"
-   | "command"
-   | "complementary"
-   | "composite"
-   | "contentinfo"
-   | "definition"
-   | "dialog"
-   | "directory"
-   | "document"
-   | "feed"
-   | "figure"
-   | "form"
-   | "generic"
-   | "graphics-document"
-   | "grid"
-   | "gridcell"
-   | "group"
-   | "heading"
-   | "img"
-   | "input"
-   | "landmark"
-   | "link"
-   | "list"
-   | "listbox"
-   | "listitem"
-   | "log"
-   | "main"
-   | "marquee"
-   | "math"
-   | "menu"
-   | "menubar"
-   | "menuitem"
-   | "menuitemcheckbox"
-   | "menuitemradio"
-   | "navigation"
-   | "note"
-   | "option"
-   | "presentation"
-   | "progressbar"
-   | "radio"
-   | "radiogroup"
-   | "range"
-   | "region"
-   | "roletype"
-   | "row"
-   | "rowgroup"
-   | "rowheader"
-   | "scrollbar"
-   | "search"
-   | "searchbox"
-   | "section"
-   | "sectionhead"
-   | "select"
-   | "separator"
-   | "slider"
-   | "spinbutton"
-   | "status"
-   | "structure"
-   | "tab"
-   | "table"
-   | "tablist"
-   | "tabpanel"
-   | "term"
-   | "textbox"
-   | "timer"
-   | "toolbar"
-   | "tooltip"
-   | "tree"
-   | "treegrid"
-   | "treeitem"
-   | "widget"
-   | "window"
-   | "none"
+type ARIAGraphicsRole =
+   | 'graphics-document'
+   | 'graphics-object'
+   | 'graphics-symbol';
+
+export type AriaRole = ARIARoleDefinitionKey | ARIAGraphicsRole

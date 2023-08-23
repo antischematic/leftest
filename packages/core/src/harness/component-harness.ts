@@ -281,10 +281,17 @@ export interface LocatorFactory {
  * should be inherited when defining user's own harness.
  */
 export abstract class ComponentHarness {
-   static query<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, within: string, ...predicates: AsyncPredicate<T>[]): HarnessQuery<T>
+   static query<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, options: BaseHarnessFilters, ...predicates: AsyncPredicate<T>[]): HarnessQuery<T>
    static query<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, ...predicates: AsyncPredicate<T>[]): HarnessQuery<T>
-   static query<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, selectorOrPredicate: string | AsyncPredicate<T>, ...predicates: AsyncPredicate<T>[]): HarnessQuery<T> {
-      return query(this, selectorOrPredicate, ...predicates)
+   static query(this: ComponentHarnessConstructor<any>, optionsOrPredicate: BaseHarnessFilters | AsyncPredicate<ComponentHarness>, ...predicates: AsyncPredicate<ComponentHarness>[]): HarnessQuery<ComponentHarness> {
+      const query = new HarnessPredicate(this, typeof optionsOrPredicate === "object" ? optionsOrPredicate : {})
+      if (typeof optionsOrPredicate === "function") {
+         predicates = [optionsOrPredicate, ...predicates]
+      }
+      for (const predicate of predicates) {
+         query.add(predicate.name, predicate)
+      }
+      return query
    }
 
    constructor(protected readonly locatorFactory: LocatorFactory) {}
@@ -515,10 +522,10 @@ export class HarnessPredicate<T extends ComponentHarness> {
     */
    static async stringMatches(
       value: string | null | Promise<string | null>,
-      pattern: string | RegExp | null,
+      pattern: string | RegExp | null | undefined,
    ): Promise<boolean> {
       value = await value
-      if (pattern === null) {
+      if (pattern == null) {
          return value === null
       } else if (value === null) {
          return false
@@ -828,24 +835,12 @@ function getElementHarness(selector: string) {
    return ElementHarness
 }
 
-function isComponentHarness(type: any): type is ComponentHarnessConstructor<any> {
-   return type?.isPrototypeOf?.(ComponentHarness) ?? false
-}
-
-export function query<T extends ComponentHarness>(harness: ComponentHarnessConstructor<T>, ...predicates: AsyncPredicate<T>[]): HarnessPredicate<T>
-export function query<T extends ComponentHarness>(harness: ComponentHarnessConstructor<T>, within: string | AsyncPredicate<T>, ...predicates: AsyncPredicate<T>[]): HarnessPredicate<T>
 export function query(selector: string, ...predicates: AsyncPredicate<ComponentHarness>[]): HarnessPredicate<TestElementHarness>
-export function query(selector: string, within: string, ...predicates: AsyncPredicate<ComponentHarness>[]): HarnessPredicate<TestElementHarness>
 export function query(...predicates: AsyncPredicate<ComponentHarness>[]): HarnessPredicate<TestElementHarness>
-export function query(selectorOrHarness: string | ComponentHarnessConstructor<ComponentHarness> | AsyncPredicate<ComponentHarness>, ancestorOrPredicate: string | AsyncPredicate<any>, ...predicates: AsyncPredicate<ComponentHarness>[]): unknown {
-   const isHarness = isComponentHarness(selectorOrHarness)
-   const options = typeof ancestorOrPredicate === "string" ? { ancestor: ancestorOrPredicate } : {}
+export function query(selectorOrHarness: string | AsyncPredicate<ComponentHarness>, ...predicates: AsyncPredicate<ComponentHarness>[]): unknown {
    const selector = typeof selectorOrHarness === "string" ? selectorOrHarness : undefined
-   const query = new HarnessPredicate( isHarness ? selectorOrHarness : getElementHarness(selector ?? '*'), options)
-   if (typeof ancestorOrPredicate === "function") {
-      predicates = [ancestorOrPredicate, ...predicates]
-   }
-   if (typeof selectorOrHarness === "function" && !isHarness) {
+   const query = new HarnessPredicate(getElementHarness(selector ?? '*'), {})
+   if (typeof selectorOrHarness === "function") {
       predicates = [selectorOrHarness, ...predicates]
    }
    for (const predicate of predicates) {
