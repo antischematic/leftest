@@ -1,7 +1,7 @@
 import { ComponentHarness, predicate } from "../component-harness"
-import { matchText, TextPredicate } from "./by-text"
+import { matchText, TextPattern } from "./by-text"
 
-export function byDisplayValue(pattern: string | RegExp | TextPredicate) {
+export function byDisplayValue(pattern: TextPattern) {
    return predicate(
       `match display value\n\twith options:\n\t\tpattern: ${pattern}\n`,
       async function byDisplayValue(harness: ComponentHarness) {

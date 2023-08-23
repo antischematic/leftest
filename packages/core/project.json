@@ -17,7 +17,8 @@
              "output": "."
            }],
             "project": "packages/core/package.json",
-            "compiler": "tsc"
+            "compiler": "tsc",
+            "external": ["dom-accessibility-api", "aria-query"]
          }
       },
       "lint": {

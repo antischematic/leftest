@@ -3,38 +3,41 @@ import { ARIARoleDefinitionKey, roleElements } from "aria-query"
 interface SelectorOptions {
    ancestor?: string
    component?: string
-   role?: AriaRole
    testId?: string
 }
 
-export function withTestId(id: string, options: SelectorOptions = {}) {
-   return selector(`[${testIdAttribute}="${id}"]`, options)
+export function forTestId(id: string) {
+   return `[${testIdAttribute}="${id}"]`
 }
 
-export function withRole(
+export function forRole(
    name: AriaRole,
-   options: SelectorOptions = {},
+   options: SelectorOptions = {}
 ) {
+   const attributes = selector('', options)
    const roleRelations = roleElements.get(name as ARIARoleDefinitionKey)
-   const selectorsWithAttributes = roleRelations ? Array.from(roleRelations).map(relation => {
-      let roleSelector = relation.name
-      relation.attributes?.forEach(attribute => {
-         roleSelector += attribute.value === undefined ? `[${attribute.name}]` : `[${attribute.name}="${attribute.value}"]`
-      })
-      return roleSelector
-   }) : []
+   const selectorsWithAttributes = roleRelations ? Array.from(roleRelations)
+      .map(relation => {
+         let roleSelector = relation.name
+         relation.attributes?.forEach(attribute => {
+            roleSelector += attribute.value === undefined ? `[${attribute.name}]` : `[${attribute.name}="${attribute.value}"]`
+         })
+         return roleSelector
+      }) : []
    switch (name) {
       case "graphics-document": {
          selectorsWithAttributes.push('svg')
       }
    }
+   if (selectorsWithAttributes.length === 0) {
+      throw new Error(`No roles found matching "${name}"`)
+   }
    selectorsWithAttributes.push(`[role="${name}"]`)
-   const roleSelector = selectorsWithAttributes.join(',')
-   return selector(roleSelector, options)
+   return selectorsWithAttributes.map(selector => `${selector}${attributes}`).join(', ')
 }
 
-export function withComponent(name: string, options: SelectorOptions = {}) {
-   return selector(`[${componentAttribute}="${name}"]`, options)
+function forComponent(name: string) {
+   return `[${componentAttribute}="${name}"]`
 }
 
 let componentAttribute = 'data-component-name'
@@ -49,17 +52,14 @@ export function setComponentAttribute(name: string) {
 }
 
 export function selector(tag: keyof HTMLElementTagNameMap | '*' | string, options: SelectorOptions = {}) {
-   let selector = ''
+   let attributes: string = ''
    if (options.component) {
-      selector += withComponent(options.component)
-   }
-   if (options.role) {
-      selector += withRole(options.role)
+      attributes += forComponent(options.component)
    }
    if (options.testId) {
-      selector += withTestId(options.testId)
+      attributes += forTestId(options.testId)
    }
-   return tag.split(/,\s*/).map(t => `${options.ancestor ?? ''} ${t}${selector}`.trim()).join(', ')
+   return attributes.split(/,\s*/).map(attribute => `${options.ancestor ?? ''} ${tag}${attribute}`.trim()).join(', ')
 }
 
 type ARIAGraphicsRole =

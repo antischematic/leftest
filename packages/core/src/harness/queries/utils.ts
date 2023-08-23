@@ -17,7 +17,10 @@ function getWindowObject(element: Element) {
  * can be used to return cached results from previous isSubtreeInaccessible calls
  * @returns true if excluded, otherwise false
  */
-export function isInaccessible(element: Element) {
+export function isInaccessible(element: Element, options: { isSubtreeInaccessible?: typeof isSubtreeInaccessible } = {}) {
+   const {
+      isSubtreeInaccessible: isSubtreeInaccessibleImpl = isSubtreeInaccessible,
+   } = options
    const window = getWindowObject(element)
    // since visibility is inherited we can exit early
    if (window.getComputedStyle(element).visibility === 'hidden') {
@@ -26,7 +29,7 @@ export function isInaccessible(element: Element) {
 
    let currentElement: Element | null = element
    while (currentElement) {
-      if (isSubtreeInaccessible(currentElement)) {
+      if (isSubtreeInaccessibleImpl(currentElement)) {
          return true
       }
 

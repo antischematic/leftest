@@ -2,7 +2,9 @@ import { ComponentHarness, HarnessPredicate } from "../component-harness"
 
 export type TextPredicate = (text: string) => boolean | Promise<boolean>
 
-export function byText(pattern: string | RegExp | TextPredicate) {
+export type TextPattern = string | RegExp | TextPredicate
+
+export function byText(pattern: TextPattern) {
    return async function byText(harness: ComponentHarness) {
       const textContent = await harness.host().text()
       return matchText(textContent, pattern)

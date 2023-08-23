@@ -289,7 +289,7 @@ export abstract class ComponentHarness {
          predicates = [optionsOrPredicate, ...predicates]
       }
       for (const predicate of predicates) {
-         query.add(predicate.name, predicate)
+         query.addOption(predicate.name, query.cache, predicate)
       }
       return query
    }
@@ -504,6 +504,8 @@ export class HarnessPredicate<T extends ComponentHarness> {
    private _descriptions: string[] = []
    private _ancestor!: string
 
+   cache = new WeakMap()
+
    constructor(
       public harnessType: ComponentHarnessConstructor<T>,
       options: BaseHarnessFilters,
@@ -574,13 +576,17 @@ export class HarnessPredicate<T extends ComponentHarness> {
     * @return A list of harnesses that satisfy this predicate.
     */
    async filter(harnesses: T[]): Promise<T[]> {
-      if (harnesses.length === 0) {
-         return []
+      try {
+         if (harnesses.length === 0) {
+            return []
+         }
+         const results = await parallel(() =>
+            harnesses.map((h) => this.evaluate(h)),
+         )
+         return harnesses.filter((_, i) => results[i])
+      } finally {
+         this.cache = new WeakMap()
       }
-      const results = await parallel(() =>
-         harnesses.map((h) => this.evaluate(h)),
-      )
-      return harnesses.filter((_, i) => results[i])
    }
 
    /**
@@ -721,7 +727,7 @@ function _restoreSelector(selector: string, placeholders: string[]): string {
    )
 }
 
-class TestElementHarness extends ComponentHarness implements TestElement {
+export class TestElementHarness extends ContentContainerComponentHarness implements TestElement {
    async blur(): Promise<void> {
       const host = this.host()
       return host.blur()
@@ -835,23 +841,23 @@ function getElementHarness(selector: string) {
    return ElementHarness
 }
 
-export function query(selector: string, ...predicates: AsyncPredicate<ComponentHarness>[]): HarnessPredicate<TestElementHarness>
+export function query(selector: string | undefined, ...predicates: AsyncPredicate<ComponentHarness>[]): HarnessPredicate<TestElementHarness>
 export function query(...predicates: AsyncPredicate<ComponentHarness>[]): HarnessPredicate<TestElementHarness>
-export function query(selectorOrHarness: string | AsyncPredicate<ComponentHarness>, ...predicates: AsyncPredicate<ComponentHarness>[]): unknown {
+export function query(selectorOrHarness: undefined | string | AsyncPredicate<ComponentHarness>, ...predicates: AsyncPredicate<ComponentHarness>[]): unknown {
    const selector = typeof selectorOrHarness === "string" ? selectorOrHarness : undefined
    const query = new HarnessPredicate(getElementHarness(selector ?? '*'), {})
    if (typeof selectorOrHarness === "function") {
       predicates = [selectorOrHarness, ...predicates]
    }
    for (const predicate of predicates) {
-      query.add(predicate.name, predicate)
+      query.addOption(predicate.name, query.cache, predicate)
    }
    return query
 }
 
-export function predicate<T>(description: string, filter: AsyncPredicate<T>): AsyncPredicate<T> {
+export function predicate<T>(description: string, filter: AsyncOptionPredicate<T, WeakMap<any, any>>): AsyncPredicate<T> {
    Object.defineProperty(filter, 'name', {
       value: description
    })
-   return filter
+   return filter as AsyncPredicate<T>
 }

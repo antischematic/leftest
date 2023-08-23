@@ -2,14 +2,19 @@
 import { parallel } from "../change-detection"
 import { AsyncPredicate, ComponentHarness, predicate } from "../component-harness"
 import { TestElement } from "../test-element"
-import { matchText, TextPredicate } from "./by-text"
+import { matchText, TextPattern } from "./by-text"
 import { isInaccessible } from "./utils"
-import { computeAccessibleDescription, computeAccessibleName } from "dom-accessibility-api"
+import {
+   computeAccessibleDescription,
+   computeAccessibleName,
+   isSubtreeInaccessible,
+} from "dom-accessibility-api"
 
 export interface AriaOptions {
-   name?: string | RegExp | TextPredicate
-   description?: string | RegExp | TextPredicate
+   name?: TextPattern
+   description?: TextPattern
    hidden?: boolean
+   visible?: boolean
 }
 
 function prettyOptions(obj: any) {
@@ -43,10 +48,10 @@ async function getElement(element: TestElement): Promise<Element | null> {
 }
 
 export function byAria(options: AriaOptions = {}): AsyncPredicate<ComponentHarness> {
-   const { hidden = false, name, description } = options
+   const { visible, hidden = false, name, description } = options
    return predicate(
       `matching accessible element${Object.keys(options).length ? `\n\twith options:\n${prettyOptions(options)}` : ''}`,
-      async function byAria(harness: ComponentHarness) {
+      async function byAria(harness: ComponentHarness, cache: WeakMap<any, any>) {
          const host = harness.host()
          const element = await getElement(host)
          if (!element) {
@@ -56,7 +61,22 @@ export function byAria(options: AriaOptions = {}): AsyncPredicate<ComponentHarne
          } else if (description && !await matchText(computeAccessibleDescription(element), description)) {
             return false
          }
-         return isInaccessible(element) === hidden
+         if (hidden && visible === true) {
+            return true
+         }
+         if (!hidden && visible === false) {
+            return false
+         }
+
+         function cachedIsSubtreeInaccessible(element: Element) {
+            if (!cache.has(element)) {
+               cache.set(element, isSubtreeInaccessible(element))
+            }
+
+            return cache.get(element) as boolean
+         }
+
+         return isInaccessible(element, { isSubtreeInaccessible: cachedIsSubtreeInaccessible }) === hidden
       }
    )
 }

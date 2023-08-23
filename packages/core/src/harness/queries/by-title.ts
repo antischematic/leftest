@@ -1,5 +1,6 @@
 import { parallel } from "../change-detection"
-import { ComponentHarness, HarnessPredicate, predicate } from "../component-harness"
+import { ComponentHarness, predicate } from "../component-harness"
+import { matchText, TextPattern } from "./by-text"
 
 function getSvgTitleText(tagName: string, children: HTMLCollection) {
    if (tagName !== "svg") {
@@ -9,13 +10,13 @@ function getSvgTitleText(tagName: string, children: HTMLCollection) {
    return titleNode?.textContent ?? null
 }
 
-export function byTitle(pattern: string) {
+export function byTitle(pattern: TextPattern) {
    return predicate(
       `with title text matching pattern: ${pattern}`,
       async function byTestId(harness: ComponentHarness) {
          const host = harness.host()
          const [title, children, tagName] = await parallel(() => [host.getAttribute('title'), host.getProperty<HTMLCollection>('children'), host.getProperty<string>('tagName')])
-         return HarnessPredicate.stringMatches(title || getSvgTitleText(tagName, children), pattern)
+         return matchText(title || getSvgTitleText(tagName, children), pattern)
       }
    )
 }

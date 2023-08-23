@@ -1,4 +1,4 @@
-import { AriaOptions, AriaRole, withRole } from "@antischematic/leftest"
+import { AriaOptions, AriaRole, forRole } from "@antischematic/leftest"
 import { beforeAll, describe } from "vitest"
 import { query } from "../component-harness"
 import { UnitTestHarnessEnvironment } from "../unit-test-harness-environment"
@@ -32,13 +32,13 @@ function render() {
 
 async function getByRole(role: AriaRole, options?: AriaOptions) {
    const loader = await UnitTestHarnessEnvironment.getRootHarnessLoader()
-   const testElement = await loader.getHarness(query(withRole(role), byAria(options)))
+   const testElement = await loader.getHarness(query(forRole(role), byAria(options)))
    return UnitTestHarnessEnvironment.getNativeElement(testElement)
 }
 
 async function getAllByRole(role: AriaRole, options?: AriaOptions) {
    const loader = await UnitTestHarnessEnvironment.getRootHarnessLoader()
-   const testElements = await loader.getAllHarnesses(query(withRole(role), byAria(options)))
+   const testElements = await loader.getAllHarnesses(query(forRole(role), byAria(options)))
    return testElements.map((testElement) =>
       UnitTestHarnessEnvironment.getNativeElement(testElement),
    )
