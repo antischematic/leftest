@@ -174,12 +174,15 @@ function runScenario(
    })
    try {
       runHooks(metadata.beforeScenario, scenario, context, (impl) => adapter.beforeScenario(impl, metadata))
-      for (const step of combinedSteps) {
-         runHooks(metadata.beforeStep, scenario, context, (impl) => adapter.beforeStep(impl, metadata))
-         step(context)
-         runHooks(metadata.afterStep, scenario, context, (impl) => adapter.afterStep(impl, metadata))
+      try {
+         for (const step of combinedSteps) {
+            runHooks(metadata.beforeStep, scenario, context, (impl) => adapter.beforeStep(impl, metadata))
+            step(context)
+            runHooks(metadata.afterStep, scenario, context, (impl) => adapter.afterStep(impl, metadata))
+         }
+      } finally {
+         runHooks(metadata.afterScenario, scenario, context, (impl) => adapter.afterScenario(impl, metadata))
       }
-      runHooks(metadata.afterScenario, scenario, context, (impl) => adapter.afterScenario(impl, metadata))
       clearTestContext()
    } finally {
       setContext(previousExample)
@@ -204,12 +207,15 @@ async function runScenarioAsync(
    const metadata = { steps: combinedSteps.map((step) => step(GET_IMPL)), ...getAllEffectiveHooks(scenario.getEffectiveTags()) }
    try {
       await runHooksAsync(metadata.beforeScenario, scenario, context,(impl) => adapter.beforeScenario(impl, metadata))
-      for (const step of combinedSteps) {
-         await runHooksAsync(metadata.beforeStep, scenario, context,(impl) => adapter.beforeStep(impl, metadata))
-         await step(context)
-         await runHooksAsync(metadata.afterStep, scenario, context,(impl) => adapter.afterStep(impl, metadata))
+      try {
+         for (const step of combinedSteps) {
+            await runHooksAsync(metadata.beforeStep, scenario, context,(impl) => adapter.beforeStep(impl, metadata))
+            await step(context)
+            await runHooksAsync(metadata.afterStep, scenario, context,(impl) => adapter.afterStep(impl, metadata))
+         }
+      } finally {
+         await runHooksAsync(metadata.afterScenario, scenario, context, (impl) => adapter.afterScenario(impl, metadata))
       }
-      await runHooksAsync(metadata.afterScenario, scenario, context,(impl) => adapter.afterScenario(impl, metadata))
       clearTestContext()
    } finally {
       setContext(previousExample)

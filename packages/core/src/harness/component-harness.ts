@@ -276,9 +276,12 @@ export interface LocatorFactory {
  * should be inherited when defining user's own harness.
  */
 export abstract class ComponentHarness {
-   static query<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, filter: undefined | string | BaseHarnessFilters = {}, ...predicates: AsyncPredicate<T>[]): HarnessPredicate<T> {
-      filter = typeof filter === "object" ? filter : { selector: filter }
+   static query<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, filter: BaseHarnessFilters | AsyncPredicate<T[]>, ...predicates: AsyncPredicate<T>[]): HarnessPredicate<T> {
+      filter = typeof filter === "object" ? filter : {}
       const query = new HarnessPredicate<T>(this, filter)
+      if (typeof filter === "function") {
+         predicates = [filter, ...predicates]
+      }
       for (const predicate of predicates) {
          query.addOption(predicate.name, query.cache, predicate)
       }
@@ -286,35 +289,35 @@ export abstract class ComponentHarness {
    }
 
    static queryByRole<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, role: AriaRole, options: AriaFilters = {}): HarnessPredicate<T> {
-      return this.query(forRole(role), byAria(options))
+      return this.query({ selector: forRole(role) }, byAria(options))
    }
 
-   static queryByText<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, selector?: string | BaseHarnessFilters): HarnessPredicate<T> {
-      return this.query(selector, byText(text))
+   static queryByText<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, filters: BaseHarnessFilters = {}): HarnessPredicate<T> {
+      return this.query(filters, byText(text))
    }
 
-   static queryByLabelText<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, selector?: string | BaseHarnessFilters): HarnessPredicate<T> {
-      return this.query(selector, byLabelText(text))
+   static queryByLabelText<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, filters: BaseHarnessFilters = {}): HarnessPredicate<T> {
+      return this.query(filters, byLabelText(text))
    }
 
-   static queryByPlaceholderText<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, selector?: string | BaseHarnessFilters): HarnessPredicate<T> {
-      return this.query(selector, byPlaceholderText(text))
+   static queryByPlaceholderText<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, filters: BaseHarnessFilters = {}): HarnessPredicate<T> {
+      return this.query(filters, byPlaceholderText(text))
    }
 
    static queryByTestId<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, testId: string): HarnessPredicate<T> {
-      return this.query(forTestId(testId))
+      return this.query({ selector: forTestId(testId) })
    }
 
-   static queryByTitle<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, selector?: string | BaseHarnessFilters): HarnessPredicate<T> {
-      return this.query(selector, byTitle(text))
+   static queryByTitle<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, filters: BaseHarnessFilters = {}): HarnessPredicate<T> {
+      return this.query(filters, byTitle(text))
    }
 
-   static queryByDisplayValue<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, selector?: string | BaseHarnessFilters): HarnessPredicate<T> {
-      return this.query(selector, byDisplayValue(text))
+   static queryByDisplayValue<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, filters: BaseHarnessFilters = {}): HarnessPredicate<T> {
+      return this.query(filters, byDisplayValue(text))
    }
 
-   static queryByAltText<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, selector?: string | BaseHarnessFilters): HarnessPredicate<T> {
-      return this.query(selector, byAltText(text))
+   static queryByAltText<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, filters: BaseHarnessFilters): HarnessPredicate<T> {
+      return this.query(filters, byAltText(text))
    }
 
    static queryBy<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, options: QueryFilters): HarnessPredicate<T> {
@@ -513,7 +516,7 @@ export interface ComponentHarnessConstructor<T extends ComponentHarness> {
     */
    hostSelector: string
 
-   query(filter: undefined | string | BaseHarnessFilters, ...predicates: AsyncPredicate<T>[]): HarnessPredicate<T>
+   query(filter: BaseHarnessFilters, ...predicates: AsyncPredicate<T>[]): HarnessPredicate<T>
 }
 
 export class TestElementHarness extends ContentContainerComponentHarness implements TestElement {

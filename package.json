@@ -13,6 +13,7 @@
       "@nrwl/linter": "15.9.2",
       "@nrwl/rollup": "15.9.4",
       "@nrwl/vite": "15.9.2",
+      "@nrwl/cypress": "15.9.2",
       "@playwright/experimental-ct-react": "^1.36.1",
       "@playwright/test": "^1.36.1",
       "@pollyjs/adapter-fetch": "^6.0.5",
@@ -23,6 +24,7 @@
       "@pollyjs/persister-local-storage": "^6.0.5",
       "@swc/cli": "~0.1.55",
       "@swc/core": "^1.2.173",
+      "@swc/helpers": "~0.5.0",
       "@types/node": "18.7.1",
       "@typescript-eslint/eslint-plugin": "^5.36.1",
       "@typescript-eslint/parser": "^5.36.1",
@@ -51,8 +53,6 @@
       "packages/*"
    ],
    "dependencies": {
-      "@nx/cypress": "^16.0.1",
-      "@swc/helpers": "~0.5.0",
       "aria-query": "^5.3.0",
       "dom-accessibility-api": "^0.6.1"
    }

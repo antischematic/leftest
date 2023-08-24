@@ -57,22 +57,26 @@ export class VitestAdapter implements TestSuiteAdapter {
 
    beforeScenario(impl: () => void): void {
       console.log('before scenario')
+      impl()
    }
 
    afterScenario(impl: () => void): void {
       console.log('after scenario')
+      impl()
    }
 
    beforeStep(impl: () => void): void {
       console.log('before step')
+      impl()
    }
 
    afterStep(impl: () => void): void {
       console.log('after step')
+      impl()
    }
 }
 
-setAdapter(new CustomAdapter())
+setAdapter(new VitestAdapter())
 ```
 
 Then import the support file into your test suite.
@@ -83,3 +87,71 @@ Then import the support file into your test suite.
 
 This library exports a type-compatible API based on the same concepts, without any
  dependencies. It is intended to be used with other web libraries such as React.
+
+### Queries
+
+Additional query helpers are available
+
+- `query`
+- `queryBy`
+- `queryByRole`
+- `queryByText`
+- `queryByTitle`
+- `queryByLabelText`
+- `queryByDisplayValue`
+- `queryByTestId`
+- `queryByAltText`
+- `queryByPlaceholder`
+
+Given the following component
+
+```tsx
+function Button({ children }) {
+   return <button>
+      <i data-testid="button-icon" />
+      <span>{ children }</span>
+   </button>
+}
+```
+
+We can locate the icon using a query
+
+```ts
+export class ButtonHarness extends ComponentHarness {
+   static hostSelector = forRole('button')
+
+   getIcon = this.locatorFor(queryByTestId('button-icon'))
+}
+```
+
+Component harnesses also expose similar query methods
+
+```ts
+export class ButtonHarness extends ComponentHarness {
+   static hostSelector = forRole('button')
+
+   getIcon = this.locatorFor(IconHarness.queryByTestId('button-icon'))
+}
+```
+
+Custom filters can also extend the `Query` class to inherit these filters.
+
+```ts
+interface ButtonFilters extends QueryFilters {}
+
+export class ButtonHarness extends ComponentHarness {
+   static hostSelector = forRole('button')
+
+   getIcon = this.locatorFor(IconHarness.queryByTestId('button-icon'))
+   
+   async hasIcon(name: string) {
+      const icon = await this.getIcon()
+      return icon.matchesSelector(`[data-name="${name}"]`)
+   }
+   
+   static with(filter: ButtonFilters) {
+      return new Query(this, filter)
+         .addOption('with icon', filter.icon, (harness, icon) => harness.hasIcon(icon))
+   }
+}
+```
