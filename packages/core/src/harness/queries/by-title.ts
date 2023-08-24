@@ -1,5 +1,6 @@
 import { parallel } from "../change-detection"
-import { ComponentHarness, predicate } from "../component-harness"
+import { ComponentHarness } from "../component-harness"
+import { predicate } from "../harness-predicate"
 import { matchText, TextPattern } from "./by-text"
 
 function getSvgTitleText(tagName: string, children: HTMLCollection) {

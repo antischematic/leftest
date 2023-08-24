@@ -1,16 +1,17 @@
 
 import { parallel } from "../change-detection"
-import { AsyncPredicate, ComponentHarness, predicate } from "../component-harness"
+import { ComponentHarness } from "../component-harness"
+import { AsyncPredicate, predicate } from "../harness-predicate"
 import { TestElement } from "../test-element"
 import { matchText, TextPattern } from "./by-text"
-import { isInaccessible } from "./utils"
 import {
    computeAccessibleDescription,
    computeAccessibleName,
    isSubtreeInaccessible,
+   isInaccessible
 } from "dom-accessibility-api"
 
-export interface AriaOptions {
+export interface AriaFilters {
    name?: TextPattern
    description?: TextPattern
    hidden?: boolean
@@ -47,7 +48,7 @@ async function getElement(element: TestElement): Promise<Element | null> {
    return null
 }
 
-export function byAria(options: AriaOptions = {}): AsyncPredicate<ComponentHarness> {
+export function byAria(options: AriaFilters = {}): AsyncPredicate<ComponentHarness> {
    const { visible, hidden = false, name, description } = options
    return predicate(
       `matching accessible element${Object.keys(options).length ? `\n\twith options:\n${prettyOptions(options)}` : ''}`,

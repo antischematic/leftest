@@ -1,4 +1,4 @@
-import { ComponentHarness, query, selector, screen } from "@antischematic/leftest"
+import { ComponentHarness, selector, screen, query } from "@antischematic/leftest"
 
 export class AppHarness extends ComponentHarness {
    static hostSelector = selector("main")

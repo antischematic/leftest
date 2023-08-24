@@ -1,7 +1,6 @@
 import {
    byDisplayValue,
-   byLabelText,
-   query,
+   queryByLabelText,
    UnitTestHarnessEnvironment,
 } from "@antischematic/leftest"
 import { beforeAll } from "vitest"
@@ -32,10 +31,10 @@ describe('byDisplayValue', () => {
 
    it("should get by display value", async () => {
       const loader = await UnitTestHarnessEnvironment.getRootHarnessLoader()
-      const test1 = await loader.getHarness(query(byLabelText('Label 1')))
-      const test2 = await loader.getHarness(query(byLabelText(/Label 2/)))
-      const test3 = await loader.getHarness(query(byLabelText('Label 3')))
-      const test4 = await loader.getHarness(query(byLabelText(text => text.includes('Label 4'))))
+      const test1 = await loader.getHarness(queryByLabelText('Label 1'))
+      const test2 = await loader.getHarness(queryByLabelText(/Label 2/))
+      const test3 = await loader.getHarness(queryByLabelText('Label 3'))
+      const test4 = await loader.getHarness(queryByLabelText(text => text.includes('Label 4')))
 
       expect(await test1.getProperty('value')).toBe('Test 1')
       expect(await test2.getProperty('value')).toBe('Test 2')

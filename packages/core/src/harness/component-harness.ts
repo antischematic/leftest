@@ -6,29 +6,24 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import { parallel } from "./change-detection"
 import { ElementDimensions } from "./element-dimensions"
+import {
+   AsyncFactoryFn,
+   AsyncPredicate,
+   BaseHarnessFilters,
+   HarnessPredicate,
+   HarnessQuery,
+} from "./harness-predicate"
+import { byAltText } from "./queries/by-alt-text"
+import { byDisplayValue } from "./queries/by-display-value"
+import { byTitle } from "./queries/by-title"
+import { byPlaceholderText } from "./queries/by-placeholder-text"
+import { byLabelText } from "./queries/by-label-text"
+import { byText, TextPattern } from "./queries/by-text"
+import { AriaFilters, byAria } from "./queries/by-aria"
+import { QueryFilters, TestElementHarness as ITestElementHarness } from "./queries/types"
+import { AriaRole, forRole, forTestId } from "./selector"
 import { EventData, ModifierKeys, TestElement, TestKey, TextOptions } from "./test-element"
-
-/** An async function that returns a promise when called. */
-export type AsyncFactoryFn<T> = () => Promise<T>
-
-/** An async function that takes an item and returns a boolean promise */
-export type AsyncPredicate<T> = (item: T) => Promise<boolean>
-
-/** An async function that takes an item and an option value and returns a boolean promise. */
-export type AsyncOptionPredicate<T, O> = (
-   item: T,
-   option: O,
-) => Promise<boolean>
-
-/**
- * A query for a `ComponentHarness`, which is expressed as either a `ComponentHarnessConstructor` or
- * a `HarnessPredicate`.
- */
-export type HarnessQuery<T extends ComponentHarness> =
-   | ComponentHarnessConstructor<T>
-   | HarnessPredicate<T>
 
 /**
  * The result type obtained when searching using a particular list of queries. This type depends on
@@ -281,17 +276,49 @@ export interface LocatorFactory {
  * should be inherited when defining user's own harness.
  */
 export abstract class ComponentHarness {
-   static query<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, options: BaseHarnessFilters, ...predicates: AsyncPredicate<T>[]): HarnessQuery<T>
-   static query<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, ...predicates: AsyncPredicate<T>[]): HarnessQuery<T>
-   static query(this: ComponentHarnessConstructor<any>, optionsOrPredicate: BaseHarnessFilters | AsyncPredicate<ComponentHarness>, ...predicates: AsyncPredicate<ComponentHarness>[]): HarnessQuery<ComponentHarness> {
-      const query = new HarnessPredicate(this, typeof optionsOrPredicate === "object" ? optionsOrPredicate : {})
-      if (typeof optionsOrPredicate === "function") {
-         predicates = [optionsOrPredicate, ...predicates]
-      }
+   static query<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, filter: undefined | string | BaseHarnessFilters = {}, ...predicates: AsyncPredicate<T>[]): HarnessPredicate<T> {
+      filter = typeof filter === "object" ? filter : { selector: filter }
+      const query = new HarnessPredicate<T>(this, filter)
       for (const predicate of predicates) {
          query.addOption(predicate.name, query.cache, predicate)
       }
       return query
+   }
+
+   static queryByRole<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, role: AriaRole, options: AriaFilters = {}): HarnessPredicate<T> {
+      return this.query(forRole(role), byAria(options))
+   }
+
+   static queryByText<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, selector?: string | BaseHarnessFilters): HarnessPredicate<T> {
+      return this.query(selector, byText(text))
+   }
+
+   static queryByLabelText<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, selector?: string | BaseHarnessFilters): HarnessPredicate<T> {
+      return this.query(selector, byLabelText(text))
+   }
+
+   static queryByPlaceholderText<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, selector?: string | BaseHarnessFilters): HarnessPredicate<T> {
+      return this.query(selector, byPlaceholderText(text))
+   }
+
+   static queryByTestId<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, testId: string): HarnessPredicate<T> {
+      return this.query(forTestId(testId))
+   }
+
+   static queryByTitle<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, selector?: string | BaseHarnessFilters): HarnessPredicate<T> {
+      return this.query(selector, byTitle(text))
+   }
+
+   static queryByDisplayValue<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, selector?: string | BaseHarnessFilters): HarnessPredicate<T> {
+      return this.query(selector, byDisplayValue(text))
+   }
+
+   static queryByAltText<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, selector?: string | BaseHarnessFilters): HarnessPredicate<T> {
+      return this.query(selector, byAltText(text))
+   }
+
+   static queryBy<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, options: QueryFilters): HarnessPredicate<T> {
+      return new Query(this, options)
    }
 
    constructor(protected readonly locatorFactory: LocatorFactory) {}
@@ -485,246 +512,8 @@ export interface ComponentHarnessConstructor<T extends ComponentHarness> {
     * for the Angular component.
     */
    hostSelector: string
-}
 
-/** A set of criteria that can be used to filter a list of `ComponentHarness` instances. */
-export interface BaseHarnessFilters {
-   /** Only find instances whose host element matches the given selector. */
-   selector?: string
-   /** Only find instances that are nested under an element with the given selector. */
-   ancestor?: string
-}
-
-/**
- * A class used to associate a ComponentHarness class with predicates functions that can be used to
- * filter instances of the class.
- */
-export class HarnessPredicate<T extends ComponentHarness> {
-   private _predicates: AsyncPredicate<T>[] = []
-   private _descriptions: string[] = []
-   private _ancestor!: string
-
-   cache = new WeakMap()
-
-   constructor(
-      public harnessType: ComponentHarnessConstructor<T>,
-      options: BaseHarnessFilters,
-   ) {
-      this._addBaseOptions(options)
-   }
-
-   /**
-    * Checks if the specified nullable string value matches the given pattern.
-    * @param value The nullable string value to check, or a Promise resolving to the
-    *   nullable string value.
-    * @param pattern The pattern the value is expected to match. If `pattern` is a string,
-    *   `value` is expected to match exactly. If `pattern` is a regex, a partial match is
-    *   allowed. If `pattern` is `null`, the value is expected to be `null`.
-    * @return Whether the value matches the pattern.
-    */
-   static async stringMatches(
-      value: string | null | Promise<string | null>,
-      pattern: string | RegExp | null | undefined,
-   ): Promise<boolean> {
-      value = await value
-      if (pattern == null) {
-         return value === null
-      } else if (value === null) {
-         return false
-      }
-      return typeof pattern === "string"
-         ? value === pattern
-         : pattern.test(value)
-   }
-
-   /**
-    * Adds a predicate function to be run against candidate harnesses.
-    * @param description A description of this predicate that may be used in error messages.
-    * @param predicate An async predicate function.
-    * @return this (for method chaining).
-    */
-   add(description: string, predicate: AsyncPredicate<T>) {
-      this._descriptions.push(description)
-      this._predicates.push(predicate)
-      return this
-   }
-
-   /**
-    * Adds a predicate function that depends on an option value to be run against candidate
-    * harnesses. If the option value is undefined, the predicate will be ignored.
-    * @param name The name of the option (may be used in error messages).
-    * @param option The option value.
-    * @param predicate The predicate function to run if the option value is not undefined.
-    * @return this (for method chaining).
-    */
-   addOption<O>(
-      name: string,
-      option: O | undefined,
-      predicate: AsyncOptionPredicate<T, O>,
-   ) {
-      if (option !== undefined) {
-         this.add(`${name} = ${_valueAsString(option)}`, (item) =>
-            predicate(item, option),
-         )
-      }
-      return this
-   }
-
-   /**
-    * Filters a list of harnesses on this predicate.
-    * @param harnesses The list of harnesses to filter.
-    * @return A list of harnesses that satisfy this predicate.
-    */
-   async filter(harnesses: T[]): Promise<T[]> {
-      try {
-         if (harnesses.length === 0) {
-            return []
-         }
-         const results = await parallel(() =>
-            harnesses.map((h) => this.evaluate(h)),
-         )
-         return harnesses.filter((_, i) => results[i])
-      } finally {
-         this.cache = new WeakMap()
-      }
-   }
-
-   /**
-    * Evaluates whether the given harness satisfies this predicate.
-    * @param harness The harness to check
-    * @return A promise that resolves to true if the harness satisfies this predicate,
-    *   and resolves to false otherwise.
-    */
-   async evaluate(harness: T): Promise<boolean> {
-      const results = await parallel(() =>
-         this._predicates.map((p) => p(harness)),
-      )
-      return results.reduce(
-         (combined: any, current: any) => combined && current,
-         true,
-      )
-   }
-
-   /** Gets a description of this predicate for use in error messages. */
-   getDescription() {
-      return this._descriptions.join(", ")
-   }
-
-   /** Gets the selector used to find candidate elements. */
-   getSelector() {
-      // We don't have to go through the extra trouble if there are no ancestors.
-      if (!this._ancestor) {
-         return (this.harnessType.hostSelector || "").trim()
-      }
-
-      const [ancestors, ancestorPlaceholders] = _splitAndEscapeSelector(
-         this._ancestor,
-      )
-      const [selectors, selectorPlaceholders] = _splitAndEscapeSelector(
-         this.harnessType.hostSelector || "",
-      )
-      const result: string[] = []
-
-      // We have to add the ancestor to each part of the host compound selector, otherwise we can get
-      // incorrect results. E.g. `.ancestor .a, .ancestor .b` vs `.ancestor .a, .b`.
-      ancestors.forEach((escapedAncestor) => {
-         const ancestor = _restoreSelector(
-            escapedAncestor,
-            ancestorPlaceholders,
-         )
-         return selectors.forEach((escapedSelector) =>
-            result.push(
-               `${ancestor} ${_restoreSelector(
-                  escapedSelector,
-                  selectorPlaceholders,
-               )}`,
-            ),
-         )
-      })
-
-      return result.join(", ")
-   }
-
-   /** Adds base options common to all harness types. */
-   private _addBaseOptions(options: BaseHarnessFilters) {
-      this._ancestor = options.ancestor || ""
-      if (this._ancestor) {
-         this._descriptions.push(
-            `has ancestor matching selector "${this._ancestor}"`,
-         )
-      }
-      const selector = options.selector
-      if (selector !== undefined) {
-         this.add(`host matches selector "${selector}"`, async (item) => {
-            return (await item.host()).matchesSelector(selector)
-         })
-      }
-   }
-}
-
-/** Represent a value as a string for the purpose of logging. */
-function _valueAsString(value: unknown) {
-   if (value === undefined) {
-      return "undefined"
-   }
-   try {
-      // `JSON.stringify` doesn't handle RegExp properly, so we need a custom replacer.
-      // Use a character that is unlikely to appear in real strings to denote the start and end of
-      // the regex. This allows us to strip out the extra quotes around the value added by
-      // `JSON.stringify`. Also do custom escaping on `"` characters to prevent `JSON.stringify`
-      // from escaping them as if they were part of a string.
-      const stringifiedValue = JSON.stringify(value, (_, v) =>
-         v instanceof RegExp
-            ? `◬MAT_RE_ESCAPE◬${v
-                 .toString()
-                 .replace(/"/g, "◬MAT_RE_ESCAPE◬")}◬MAT_RE_ESCAPE◬`
-            : v,
-      )
-      // Strip out the extra quotes around regexes and put back the manually escaped `"` characters.
-      return stringifiedValue
-         .replace(/"◬MAT_RE_ESCAPE◬|◬MAT_RE_ESCAPE◬"/g, "")
-         .replace(/◬MAT_RE_ESCAPE◬/g, '"')
-   } catch {
-      // `JSON.stringify` will throw if the object is cyclical,
-      // in this case the best we can do is report the value as `{...}`.
-      return "{...}"
-   }
-}
-
-/**
- * Splits up a compound selector into its parts and escapes any quoted content. The quoted content
- * has to be escaped, because it can contain commas which will throw throw us off when trying to
- * split it.
- * @param selector Selector to be split.
- * @returns The escaped string where any quoted content is replaced with a placeholder. E.g.
- * `[foo="bar"]` turns into `[foo=__cdkPlaceholder-0__]`. Use `_restoreSelector` to restore
- * the placeholders.
- */
-function _splitAndEscapeSelector(
-   selector: string,
-): [parts: string[], placeholders: string[]] {
-   const placeholders: string[] = []
-
-   // Note that the regex doesn't account for nested quotes so something like `"ab'cd'e"` will be
-   // considered as two blocks. It's a bit of an edge case, but if we find that it's a problem,
-   // we can make it a bit smarter using a loop. Use this for now since it's more readable and
-   // compact. More complete implementation:
-   // https://github.com/angular/angular/blob/bd34bc9e89f18a/packages/compiler/src/shadow_css.ts#L655
-   const result = selector.replace(/(["'][^["']*["'])/g, (_, keep) => {
-      const replaceBy = `__cdkPlaceholder-${placeholders.length}__`
-      placeholders.push(keep)
-      return replaceBy
-   })
-
-   return [result.split(",").map((part) => part.trim()), placeholders]
-}
-
-/** Restores a selector whose content was escaped in `_splitAndEscapeSelector`. */
-function _restoreSelector(selector: string, placeholders: string[]): string {
-   return selector.replace(
-      /__cdkPlaceholder-(\d+)__/g,
-      (_, index) => placeholders[+index],
-   )
+   query(filter: undefined | string | BaseHarnessFilters, ...predicates: AsyncPredicate<T>[]): HarnessPredicate<T>
 }
 
 export class TestElementHarness extends ContentContainerComponentHarness implements TestElement {
@@ -834,30 +623,59 @@ export class TestElementHarness extends ContentContainerComponentHarness impleme
 
 }
 
-function getElementHarness(selector: string) {
+export function getElementHarness(selector: string): ComponentHarnessConstructor<ITestElementHarness> {
    class ElementHarness extends TestElementHarness {
       static hostSelector = selector
    }
+
    return ElementHarness
 }
 
-export function query(selector: string | undefined, ...predicates: AsyncPredicate<ComponentHarness>[]): HarnessPredicate<TestElementHarness>
-export function query(...predicates: AsyncPredicate<ComponentHarness>[]): HarnessPredicate<TestElementHarness>
-export function query(selectorOrHarness: undefined | string | AsyncPredicate<ComponentHarness>, ...predicates: AsyncPredicate<ComponentHarness>[]): unknown {
-   const selector = typeof selectorOrHarness === "string" ? selectorOrHarness : undefined
-   const query = new HarnessPredicate(getElementHarness(selector ?? '*'), {})
-   if (typeof selectorOrHarness === "function") {
-      predicates = [selectorOrHarness, ...predicates]
-   }
+export function query(filter: BaseHarnessFilters | string | undefined, ...predicates: AsyncPredicate<ComponentHarness>[]): HarnessPredicate<ITestElementHarness> {
+   const selector = typeof filter === "string" ? filter : filter?.selector
+   const ancestor = typeof filter === "object" ? filter?.ancestor : undefined
+   const query = new HarnessPredicate(getElementHarness(selector ?? "*"), { ancestor })
    for (const predicate of predicates) {
       query.addOption(predicate.name, query.cache, predicate)
    }
    return query
 }
 
-export function predicate<T>(description: string, filter: AsyncOptionPredicate<T, WeakMap<any, any>>): AsyncPredicate<T> {
-   Object.defineProperty(filter, 'name', {
-      value: description
-   })
-   return filter as AsyncPredicate<T>
+export function addQueries(predicate: HarnessPredicate<any>, options: QueryFilters) {
+   if (options.altText) {
+      const filter = byAltText(options.altText)
+      predicate.add(filter.name, filter)
+   }
+   if (options.displayValue) {
+      const filter = byDisplayValue(options.displayValue)
+      predicate.add(filter.name, filter)
+   }
+   if (options.labelText) {
+      const filter = byDisplayValue(options.labelText)
+      predicate.add(filter.name, filter)
+   }
+   if (options.placeholderText) {
+      const filter = byDisplayValue(options.placeholderText)
+      predicate.add(filter.name, filter)
+   }
+   if (options.text) {
+      const filter = byText(options.text)
+      predicate.add(filter.name, filter)
+   }
+   const hasAria = options.name || options.description || options.visible || options.hidden
+   if (hasAria) {
+      const filter = byAria(options)
+      predicate.add(filter.name, filter)
+   }
+}
+
+export class Query<T extends ComponentHarness> extends HarnessPredicate<T> {
+   constructor(harness: ComponentHarnessConstructor<T>, options: QueryFilters) {
+      super(harness, options)
+      this._addQueryOptions(options)
+   }
+
+   private _addQueryOptions(options: QueryFilters) {
+      addQueries(this, options)
+   }
 }

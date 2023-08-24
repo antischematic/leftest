@@ -1,4 +1,5 @@
-import { ComponentHarness, HarnessPredicate } from "../component-harness"
+import { ComponentHarness } from "../component-harness"
+import { HarnessPredicate } from "../harness-predicate"
 
 export type TextPredicate = (text: string) => boolean | Promise<boolean>
 

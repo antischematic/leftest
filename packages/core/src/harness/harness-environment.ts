@@ -8,15 +8,13 @@
 
 import {parallel} from './change-detection';
 import {
-    AsyncFactoryFn,
     ComponentHarness,
     ComponentHarnessConstructor,
     HarnessLoader,
-    HarnessPredicate,
-    HarnessQuery,
     LocatorFactory,
     LocatorFnResult,
 } from './component-harness';
+import { AsyncFactoryFn, HarnessPredicate, HarnessQuery } from "./harness-predicate"
 import {TestElement} from './test-element';
 
 /** Parsed form of the queries passed to the `locatorFor*` methods. */

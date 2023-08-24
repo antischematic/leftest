@@ -1,6 +1,8 @@
+
 import {
    byDisplayValue,
    query,
+   queryByDisplayValue,
    UnitTestHarnessEnvironment,
 } from "@antischematic/leftest"
 import { beforeAll } from "vitest"
@@ -32,16 +34,16 @@ describe("byDisplayValue", () => {
 
    it("should get by display value", async () => {
       const loader = await UnitTestHarnessEnvironment.getRootHarnessLoader()
-      const test1 = await loader.getHarness(query(byDisplayValue("Test 1")))
+      const test1 = await loader.getHarness(queryByDisplayValue("Test 1"))
       const test1Name = await test1.getAttribute("name")
-      const test2 = await loader.getHarness(query(byDisplayValue("checked")))
+      const test2 = await loader.getHarness(queryByDisplayValue("checked"))
       const test2Name = await test2.getAttribute("name")
-      const test3 = await loader.getHarness(query(byDisplayValue(/Option 2/)))
+      const test3 = await loader.getHarness(queryByDisplayValue(/Option 2/))
       const test3Name = await test3.getAttribute("name")
-      const test4 = await loader.getHarness(query(byDisplayValue("Option 3")))
+      const test4 = await loader.getHarness(queryByDisplayValue("Option 3"))
       const test4Name = await test4.getAttribute("name")
       const test5 = await loader.getHarness(
-         query(byDisplayValue((text) => text.includes("Test 5"))),
+            queryByDisplayValue((text) => text.includes("Test 5")),
       )
       const test5Name = await test5.getAttribute("name")
 

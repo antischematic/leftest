@@ -1,5 +1,6 @@
-import { ComponentHarness, HarnessQuery } from "./component-harness"
+import { ComponentHarness } from "./component-harness"
 import { HarnessEnvironment } from "./harness-environment"
+import { HarnessQuery } from "./harness-predicate"
 import { TestElement } from "./test-element"
 import { UnitTestElement } from "./unit-test-element"
 
