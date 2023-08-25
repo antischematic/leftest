@@ -37,7 +37,7 @@ export class UnitTestHarnessEnvironment extends HarnessEnvironment<Element> {
    }
 
    async forceStabilize(): Promise<void> {
-      throw new Error('Method not implemented.');
+      await new Promise(requestAnimationFrame)
    }
 
    waitForTasksOutsideAngular(): Promise<void> {

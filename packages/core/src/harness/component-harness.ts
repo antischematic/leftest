@@ -682,3 +682,23 @@ export class Query<T extends ComponentHarness> extends HarnessPredicate<T> {
       addQueries(this, options)
    }
 }
+
+/**
+ * Evaluates an expression on each animation frame until it returns a truthy result. A value is considered
+ * stable if it doesn't change for two consecutive frames. Values are compared with strict equality for primitives and
+ * JSON.stringify for objects.
+ *
+ * @param expr
+ * @returns The first stable truthy result
+ */
+export async function waitForStable<T>(expr: () => T): Promise<Awaited<T>> {
+   let previous
+   while (true) {
+      const result = await expr()
+      if (previous && (result === previous || JSON.stringify(result) === JSON.stringify(previous))) {
+         return result
+      }
+      previous = result
+      await new Promise(requestAnimationFrame)
+   }
+}

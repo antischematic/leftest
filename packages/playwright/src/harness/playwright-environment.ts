@@ -123,7 +123,7 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
     */
    async forceStabilize() {
       // await this.#page.evaluate(waitUntilAngularStable);
-      await Promise.resolve()
+      await new Promise(requestAnimationFrame)
    }
 
    /**

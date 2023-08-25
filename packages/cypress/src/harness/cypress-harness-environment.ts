@@ -25,9 +25,7 @@ export class CypressHarnessEnvironment extends HarnessEnvironment<Element> {
    }
 
    async forceStabilize(): Promise<void> {
-      console.warn(
-         '`HarnessEnvironment#forceStabilize()` was called but it is a noop in Cypress environment.'
-      );
+      await new Promise(requestAnimationFrame)
    }
 
    waitForTasksOutsideAngular(): Promise<void> {
