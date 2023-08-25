@@ -140,7 +140,7 @@ Custom filters can also extend the `Query` class to inherit these filters.
 interface ButtonFilters extends QueryFilters {}
 
 export class ButtonHarness extends ComponentHarness {
-   static hostSelector = forRole('button')
+   static hostSelector = withRole('button')
 
    getIcon = this.locatorFor(IconHarness.queryByTestId('button-icon'))
    

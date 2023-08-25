@@ -1,7 +1,7 @@
 import {
    AriaFilters,
    AriaRole,
-   byAria, forRole,
+   byAria, withRole,
    query, queryByRole,
    UnitTestHarnessEnvironment,
 } from "@antischematic/leftest"

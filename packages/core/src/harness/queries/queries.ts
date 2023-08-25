@@ -5,7 +5,7 @@ import {
    query,
 } from "../component-harness"
 import { BaseHarnessFilters, HarnessPredicate } from "../harness-predicate"
-import { AriaRole, forRole, forTestId } from "../selector"
+import { AriaRole, withRole, withTestId } from "../selector"
 import { byAltText } from "./by-alt-text"
 import { AriaFilters, byAria } from "./by-aria"
 import { byDisplayValue } from "./by-display-value"
@@ -16,7 +16,7 @@ import { byTitle } from "./by-title"
 import { QueryFilters, TestElementHarness } from "./types"
 
 export function queryByRole(role: AriaRole, options: AriaFilters = {}): HarnessPredicate<TestElementHarness> {
-   return query(forRole(role), byAria(options))
+   return query(withRole(role), byAria(options))
 }
 
 export function queryByText(text: TextPattern, selector?: string | BaseHarnessFilters): HarnessPredicate<TestElementHarness> {
@@ -32,7 +32,7 @@ export function queryByPlaceholderText(text: TextPattern, selector?: string | Ba
 }
 
 export function queryByTestId(testId: string): HarnessPredicate<TestElementHarness> {
-   return query(forTestId(testId))
+   return query(withTestId(testId))
 }
 
 export function queryByTitle(text: TextPattern, selector?: string | BaseHarnessFilters): HarnessPredicate<TestElementHarness> {

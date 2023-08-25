@@ -22,7 +22,7 @@ import { byLabelText } from "./queries/by-label-text"
 import { byText, TextPattern } from "./queries/by-text"
 import { AriaFilters, byAria } from "./queries/by-aria"
 import { QueryFilters, TestElementHarness as ITestElementHarness } from "./queries/types"
-import { AriaRole, forRole, forTestId } from "./selector"
+import { AriaRole, withRole, withTestId } from "./selector"
 import { EventData, ModifierKeys, TestElement, TestKey, TextOptions } from "./test-element"
 
 /**
@@ -289,7 +289,7 @@ export abstract class ComponentHarness {
    }
 
    static queryByRole<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, role: AriaRole, options: AriaFilters = {}): HarnessPredicate<T> {
-      return this.query({ selector: forRole(role) }, byAria(options))
+      return this.query({ selector: withRole(role) }, byAria(options))
    }
 
    static queryByText<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, filters: BaseHarnessFilters = {}): HarnessPredicate<T> {
@@ -305,7 +305,7 @@ export abstract class ComponentHarness {
    }
 
    static queryByTestId<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, testId: string): HarnessPredicate<T> {
-      return this.query({ selector: forTestId(testId) })
+      return this.query({ selector: withTestId(testId) })
    }
 
    static queryByTitle<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, filters: BaseHarnessFilters = {}): HarnessPredicate<T> {
