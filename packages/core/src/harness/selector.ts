@@ -29,9 +29,6 @@ export function forRole(
          selectorsWithAttributes.push('svg')
       }
    }
-   if (selectorsWithAttributes.length === 0) {
-      throw new Error(`No roles found matching "${name}"`)
-   }
    selectorsWithAttributes.push(`[role="${name}"]`)
    return selectorsWithAttributes.map(selector => `${selector}${attributes}`).join(', ')
 }

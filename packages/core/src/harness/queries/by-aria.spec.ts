@@ -2,7 +2,7 @@ import {
    AriaFilters,
    AriaRole,
    byAria, forRole,
-   query,
+   query, queryByRole,
    UnitTestHarnessEnvironment,
 } from "@antischematic/leftest"
 
@@ -18,7 +18,7 @@ const html = `
          <div role="listitem">List Item 2</div>
          <div role="listitem">List Item 3</div>
       </div>
-      <span>TabList</span>
+      <span id="tablist-label">TabList</span>
       <div role="tablist" aria-labelledby="tablist-label">
          <div role="tab" aria-label="Tab"></div>
       </div>
@@ -35,13 +35,13 @@ function render() {
 
 async function getByRole(role: AriaRole, options?: AriaFilters) {
    const loader = await UnitTestHarnessEnvironment.getRootHarnessLoader()
-   const testElement = await loader.getHarness(query(forRole(role), byAria(options)))
+   const testElement = await loader.getHarness(queryByRole(role, options))
    return UnitTestHarnessEnvironment.getNativeElement(testElement)
 }
 
 async function getAllByRole(role: AriaRole, options?: AriaFilters) {
    const loader = await UnitTestHarnessEnvironment.getRootHarnessLoader()
-   const testElements = await loader.getAllHarnesses(query(forRole(role), byAria(options)))
+   const testElements = await loader.getAllHarnesses(queryByRole(role, options))
    return testElements.map((testElement) =>
       UnitTestHarnessEnvironment.getNativeElement(testElement),
    )
@@ -77,9 +77,11 @@ describe("byRole", () => {
    it("should find by accessible name", async () => {
       const button = await getByRole("button", { name: "Button" })
       const svg = await getByRole("graphics-document", { name: "SVG" })
+      const tablist = await getByRole("tablist", { name: "TabList" })
 
       expect(button).toBeTruthy()
       expect(svg).toBeTruthy()
+      expect(tablist).toBeTruthy()
    })
 
    it("should find hidden elements", async () => {
