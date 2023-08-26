@@ -118,7 +118,7 @@ We can locate the icon using a query
 
 ```ts
 export class ButtonHarness extends ComponentHarness {
-   static hostSelector = forRole('button')
+   static hostSelector = withRole('button')
 
    getIcon = this.locatorFor(queryByTestId('button-icon'))
 }
@@ -128,7 +128,7 @@ Component harnesses also expose similar query methods
 
 ```ts
 export class ButtonHarness extends ComponentHarness {
-   static hostSelector = forRole('button')
+   static hostSelector = withRole('button')
 
    getIcon = this.locatorFor(IconHarness.queryByTestId('button-icon'))
 }
