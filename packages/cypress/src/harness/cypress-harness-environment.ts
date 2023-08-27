@@ -1,4 +1,9 @@
-import { HarnessEnvironment, TestElement, UnitTestElement } from '@antischematic/leftest';
+import {
+   HarnessEnvironment,
+   StableResult,
+   TestElement,
+   UnitTestElement,
+} from "@antischematic/leftest"
 
 export class CypressHarnessEnvironment extends HarnessEnvironment<Element> {
    /**
@@ -25,7 +30,12 @@ export class CypressHarnessEnvironment extends HarnessEnvironment<Element> {
    }
 
    async forceStabilize(): Promise<void> {
-      await new Promise(requestAnimationFrame)
+      const window = this._documentRoot.ownerDocument.defaultView
+      if (window) {
+         await new Promise(window.requestAnimationFrame)
+      } else {
+         throw new Error('Could not get window object')
+      }
    }
 
    waitForTasksOutsideAngular(): Promise<void> {
@@ -48,5 +58,18 @@ export class CypressHarnessEnvironment extends HarnessEnvironment<Element> {
 
    protected async getAllRawElements(selector: string): Promise<Element[]> {
       return Array.from(this.rawRootElement.querySelectorAll(selector));
+   }
+
+   // noinspection DuplicatedCode
+   async waitForStable<T extends () => unknown>(expr: T): StableResult<T> {
+      let previous
+      while (true) {
+         const result = await expr()
+         if (previous && (result === previous || JSON.stringify(result) === JSON.stringify(previous))) {
+            return previous as StableResult<T>
+         }
+         previous = result
+         await this.forceStabilize()
+      }
    }
 }

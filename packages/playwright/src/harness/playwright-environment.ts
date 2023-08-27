@@ -2,7 +2,7 @@ import {
    ComponentHarness,
    HarnessEnvironment,
    HarnessLoader,
-   HarnessQuery,
+   HarnessQuery, StableResult,
    TestElement,
 } from "@antischematic/leftest"
 import { ElementHandle, Locator, Page } from "@playwright/test"
@@ -123,7 +123,9 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
     */
    async forceStabilize() {
       // await this.#page.evaluate(waitUntilAngularStable);
-      await new Promise(requestAnimationFrame)
+      await this.#page.evaluate(() => {
+         return new Promise(window.requestAnimationFrame)
+      })
    }
 
    /**
@@ -131,8 +133,7 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
     * @override
     */
    async waitForTasksOutsideAngular() {
-      // await this.#page.evaluate(waitUntilRootZoneStable);
-      await Promise.resolve()
+      throw new Error("Not implemented")
    }
 
    /**
@@ -274,6 +275,19 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
          }
 
          return /** @type {import('@playwright/test').ElementHandle<HTMLElement | SVGElement>[]} */ await locator.elementHandles()
+      }
+   }
+
+   // noinspection DuplicatedCode
+   async waitForStable<T extends () => unknown>(expr: T): StableResult<T> {
+      let previous
+      while (true) {
+         const result = await expr()
+         if (previous && (result === previous || JSON.stringify(result) === JSON.stringify(previous))) {
+            return previous as StableResult<T>
+         }
+         previous = result
+         await this.forceStabilize()
       }
    }
 }

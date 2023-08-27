@@ -8,12 +8,12 @@
 
 import {parallel} from './change-detection';
 import {
-    ComponentHarness,
-    ComponentHarnessConstructor,
-    HarnessLoader,
-    LocatorFactory,
-    LocatorFnResult,
-} from './component-harness';
+   ComponentHarness,
+   ComponentHarnessConstructor,
+   HarnessLoader,
+   LocatorFactory,
+   LocatorFnResult, StableResult,
+} from "./component-harness"
 import { AsyncFactoryFn, HarnessPredicate, HarnessQuery } from "./harness-predicate"
 import {TestElement} from './test-element';
 
@@ -238,6 +238,8 @@ export abstract class HarnessEnvironment<E> implements HarnessLoader, LocatorFac
         }
         return null;
     }
+
+    abstract waitForStable<T extends () => unknown>(expr: T): StableResult<T>
 }
 
 /**

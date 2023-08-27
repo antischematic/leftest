@@ -1,4 +1,4 @@
-import { ComponentHarness } from "./component-harness"
+import { ComponentHarness, StableResult } from "./component-harness"
 import { HarnessEnvironment } from "./harness-environment"
 import { HarnessQuery } from "./harness-predicate"
 import { TestElement } from "./test-element"
@@ -58,5 +58,25 @@ export class UnitTestHarnessEnvironment extends HarnessEnvironment<Element> {
 
    protected async getAllRawElements(selector: string): Promise<Element[]> {
       return Array.from(this.rawRootElement.querySelectorAll(selector));
+   }
+
+   /**
+    * Evaluates an expression on each animation frame until it returns a truthy result. A value is considered
+    * stable if it doesn't change for two consecutive frames. Values are compared with strict equality for primitives and
+    * JSON.stringify for objects.
+    *
+    * @param expr
+    * @returns The first stable truthy result
+    */
+   async waitForStable<T extends () => unknown>(expr: T): StableResult<T> {
+      let previous
+      while (true) {
+         const result = await expr()
+         if (previous && (result === previous || JSON.stringify(result) === JSON.stringify(previous))) {
+            return previous as StableResult<T>
+         }
+         previous = result
+         await new Promise(requestAnimationFrame)
+      }
    }
 }

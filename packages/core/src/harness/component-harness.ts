@@ -268,7 +268,20 @@ export interface LocatorFactory {
     * authors to wait for async tasks outside of the Angular zone.
     */
    waitForTasksOutsideAngular(): Promise<void>
+
+   /**
+    * Repeatedly evaluate and resolve an expression until it returns a truthy result. A value is considered
+    * stable if it doesn't change for two consecutive frames.
+    *
+    * @param expr The expression to be evaluated
+    * @return The first stable truthy result
+    */
+   waitForStable<T extends () => any>(expr: T): StableResult<T>
 }
+type ThisConstructor<
+   T extends { prototype: unknown } = { prototype: unknown },
+> = T;
+type This<T extends ThisConstructor> = T['prototype'];
 
 /**
  * Base class for component harnesses that all component harness authors should extend. This base
@@ -276,9 +289,9 @@ export interface LocatorFactory {
  * should be inherited when defining user's own harness.
  */
 export abstract class ComponentHarness {
-   static query<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, filter: BaseHarnessFilters | AsyncPredicate<T[]>, ...predicates: AsyncPredicate<T>[]): HarnessPredicate<T> {
+   static query<T extends ThisConstructor<ComponentHarnessConstructor<ComponentHarness>>>(this: T, filter: BaseHarnessFilters | AsyncPredicate<This<T>>, ...predicates: AsyncPredicate<This<T>>[]): HarnessPredicate<This<T>> {
       filter = typeof filter === "object" ? filter : {}
-      const query = new HarnessPredicate<T>(this, filter)
+      const query = new HarnessPredicate(this, filter)
       if (typeof filter === "function") {
          predicates = [filter, ...predicates]
       }
@@ -288,39 +301,39 @@ export abstract class ComponentHarness {
       return query
    }
 
-   static queryByRole<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, role: AriaRole, options: AriaFilters = {}): HarnessPredicate<T> {
+   static queryByRole<T extends ThisConstructor<ComponentHarnessConstructor<ComponentHarness>>>(this: T, role: AriaRole, options: AriaFilters = {}): HarnessPredicate<This<T>> {
       return this.query({ selector: withRole(role) }, byAria(options))
    }
 
-   static queryByText<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, filters: BaseHarnessFilters = {}): HarnessPredicate<T> {
+   static queryByText<T extends ThisConstructor<ComponentHarnessConstructor<ComponentHarness>>>(this: T, text: TextPattern, filters: BaseHarnessFilters = {}): HarnessPredicate<This<T>> {
       return this.query(filters, byText(text))
    }
 
-   static queryByLabelText<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, filters: BaseHarnessFilters = {}): HarnessPredicate<T> {
+   static queryByLabelText<T extends ThisConstructor<ComponentHarnessConstructor<ComponentHarness>>>(this: T, text: TextPattern, filters: BaseHarnessFilters = {}): HarnessPredicate<This<T>> {
       return this.query(filters, byLabelText(text))
    }
 
-   static queryByPlaceholderText<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, filters: BaseHarnessFilters = {}): HarnessPredicate<T> {
+   static queryByPlaceholderText<T extends ThisConstructor<ComponentHarnessConstructor<ComponentHarness>>>(this: T, text: TextPattern, filters: BaseHarnessFilters = {}): HarnessPredicate<This<T>> {
       return this.query(filters, byPlaceholderText(text))
    }
 
-   static queryByTestId<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, testId: string): HarnessPredicate<T> {
+   static queryByTestId<T extends ThisConstructor<ComponentHarnessConstructor<ComponentHarness>>>(this: T, testId: string): HarnessPredicate<This<T>> {
       return this.query({ selector: withTestId(testId) })
    }
 
-   static queryByTitle<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, filters: BaseHarnessFilters = {}): HarnessPredicate<T> {
+   static queryByTitle<T extends ThisConstructor<ComponentHarnessConstructor<ComponentHarness>>>(this: T, text: TextPattern, filters: BaseHarnessFilters = {}): HarnessPredicate<This<T>> {
       return this.query(filters, byTitle(text))
    }
 
-   static queryByDisplayValue<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, filters: BaseHarnessFilters = {}): HarnessPredicate<T> {
+   static queryByDisplayValue<T extends ThisConstructor<ComponentHarnessConstructor<ComponentHarness>>>(this: T, text: TextPattern, filters: BaseHarnessFilters = {}): HarnessPredicate<This<T>> {
       return this.query(filters, byDisplayValue(text))
    }
 
-   static queryByAltText<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, text: TextPattern, filters: BaseHarnessFilters): HarnessPredicate<T> {
+   static queryByAltText<T extends ThisConstructor<ComponentHarnessConstructor<ComponentHarness>>>(this: T, text: TextPattern, filters: BaseHarnessFilters): HarnessPredicate<This<T>> {
       return this.query(filters, byAltText(text))
    }
 
-   static queryBy<T extends ComponentHarness>(this: ComponentHarnessConstructor<T>, options: QueryFilters): HarnessPredicate<T> {
+   static queryBy<T extends ThisConstructor<ComponentHarnessConstructor<ComponentHarness>>>(this: T, options: QueryFilters): HarnessPredicate<This<T>> {
       return new Query(this, options)
    }
 
@@ -452,6 +465,17 @@ export abstract class ComponentHarness {
    protected async waitForTasksOutsideAngular() {
       return this.locatorFactory.waitForTasksOutsideAngular()
    }
+
+   /**
+    * Repeatedly evaluate and resolve an expression until it returns a truthy result. A value is considered
+    * stable if it doesn't change for two consecutive frames.
+    *
+    * @param expr The expression to be evaluated
+    * @return The first stable truthy result
+    */
+   protected async waitForStable<T extends (harness: this) => any>(expr: T): StableResult<T> {
+      return this.locatorFactory.waitForStable(() => expr(this))
+   }
 }
 
 /**
@@ -516,7 +540,7 @@ export interface ComponentHarnessConstructor<T extends ComponentHarness> {
     */
    hostSelector: string
 
-   query(filter: BaseHarnessFilters, ...predicates: AsyncPredicate<T>[]): HarnessPredicate<T>
+   query<T extends ThisConstructor<ComponentHarnessConstructor<ComponentHarness>>>(filter: BaseHarnessFilters, ...predicates: AsyncPredicate<This<T>>[]): HarnessPredicate<This<T>>
 }
 
 export class TestElementHarness extends ContentContainerComponentHarness implements TestElement {
@@ -683,22 +707,4 @@ export class Query<T extends ComponentHarness> extends HarnessPredicate<T> {
    }
 }
 
-/**
- * Evaluates an expression on each animation frame until it returns a truthy result. A value is considered
- * stable if it doesn't change for two consecutive frames. Values are compared with strict equality for primitives and
- * JSON.stringify for objects.
- *
- * @param expr
- * @returns The first stable truthy result
- */
-export async function waitForStable<T>(expr: () => T): Promise<Awaited<T>> {
-   let previous
-   while (true) {
-      const result = await expr()
-      if (previous && (result === previous || JSON.stringify(result) === JSON.stringify(previous))) {
-         return result
-      }
-      previous = result
-      await new Promise(requestAnimationFrame)
-   }
-}
+export type StableResult<T extends (...args: any[]) => unknown> = Promise<Exclude<Awaited<ReturnType<T>>, null | undefined | 0 | ''>>
