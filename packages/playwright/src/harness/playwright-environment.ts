@@ -1,5 +1,5 @@
 import {
-   ComponentHarness,
+   ComponentHarness, ExtraOptions,
    HarnessEnvironment,
    HarnessLoader,
    HarnessQuery, StableResult,
@@ -250,11 +250,12 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
 
    /**
     * @param {string} selector
+    * @param options
     * @returns {Promise<(import('@playwright/test').ElementHandle<HTMLElement | SVGElement> | import('@playwright/test').Locator)[]>}
     * @override
     * @protected
     */
-   async getAllRawElements(selector: string) {
+   async getAllRawElements(selector: string, options?: ExtraOptions) {
       if (!isLocator(this.rawRootElement)) {
          return await this.rawRootElement.$$(
             this.respectShadowBoundaries
@@ -262,13 +263,18 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
                : `css=${selector}`,
          )
       } else {
-         const locator = this.rawRootElement.locator(
+         const locator: Locator = this.rawRootElement.locator(
             this.respectShadowBoundaries
                ? `css:light=${selector}`
                : `css=${selector}`,
          )
 
          if (this.#opts.useLocators) {
+            if (options?.wait) {
+               await locator.waitFor({ state: 'attached' })
+            } else if (options?.wait === null) {
+               await locator.waitFor({ state: 'detached' })
+            }
             return Array.from({ length: await locator.count() }, (_, i) =>
                locator.nth(i),
             )
@@ -278,18 +284,39 @@ export class PlaywrightHarnessEnvironment extends HarnessEnvironment<any> {
       }
    }
 
+   async waitForStable<T>(expr: (skip: () => never) => T): Promise<Awaited<T>>
+   async waitForStable<T>(expr: () => T): StableResult<T>
    // noinspection DuplicatedCode
-   async waitForStable<T extends () => unknown>(expr: T): StableResult<T> {
-      let previous
+   async waitForStable<T>(expr:  (skip: () => never) => T): Promise<T> {
+      let previous: T | undefined
+      let comparePrevious = expr.length === 0
       while (true) {
-         const result = await expr()
-         if (previous && (result === previous || JSON.stringify(result) === JSON.stringify(previous))) {
+         let result: T | undefined
+         try {
+            result = await expr(skip)
+         } catch (e) {
+            if (e !== SKIP) {
+               throw e
+            }
+            await this.forceStabilize()
+            continue
+         }
+         if (!comparePrevious) {
+            return result as T
+         }
+         if (previous !== undefined && (result === previous || JSON.stringify(result) === JSON.stringify(previous))) {
             return previous as StableResult<T>
          }
          previous = result
          await this.forceStabilize()
       }
    }
+}
+
+const SKIP = Symbol("SKIP")
+
+function skip(): never {
+   throw SKIP
 }
 
 export function getHarnessForPage<T extends ComponentHarness>(

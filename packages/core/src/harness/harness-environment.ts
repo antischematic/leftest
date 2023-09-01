@@ -9,7 +9,7 @@
 import {parallel} from './change-detection';
 import {
    ComponentHarness,
-   ComponentHarnessConstructor,
+   ComponentHarnessConstructor, ExtraOptions,
    HarnessLoader,
    LocatorFactory,
    LocatorFnResult, StableResult,
@@ -63,9 +63,9 @@ export abstract class HarnessEnvironment<E> implements HarnessLoader, LocatorFac
     locatorFor<T extends (HarnessQuery<any> | string)[]>(
         ...queries: T
     ): AsyncFactoryFn<LocatorFnResult<T>> {
-        return () =>
+        return (options) =>
             _assertResultFound(
-                this._getAllHarnessesAndTestElements(queries),
+                this._getAllHarnessesAndTestElements(queries, options),
                 _getDescriptionForLocatorForQueries(queries),
             );
     }
@@ -73,15 +73,15 @@ export abstract class HarnessEnvironment<E> implements HarnessLoader, LocatorFac
     // Implemented as part of the `LocatorFactory` interface.
     locatorForOptional<T extends (HarnessQuery<any> | string)[]>(
         ...queries: T
-    ): AsyncFactoryFn<LocatorFnResult<T> | null> {
-        return async () => (await this._getAllHarnessesAndTestElements(queries))[0] || null;
+    ): AsyncFactoryFn<LocatorFnResult<T> | null, boolean | null> {
+        return async (options) => (await this._getAllHarnessesAndTestElements(queries, options))[0] || null;
     }
 
     // Implemented as part of the `LocatorFactory` interface.
     locatorForAll<T extends (HarnessQuery<any> | string)[]>(
         ...queries: T
     ): AsyncFactoryFn<LocatorFnResult<T>[]> {
-        return () => this._getAllHarnessesAndTestElements(queries);
+        return (options) => this._getAllHarnessesAndTestElements(queries, options);
     }
 
     // Implemented as part of the `LocatorFactory` interface.
@@ -90,39 +90,39 @@ export abstract class HarnessEnvironment<E> implements HarnessLoader, LocatorFac
     }
 
     // Implemented as part of the `LocatorFactory` interface.
-    async harnessLoaderFor(selector: string): Promise<HarnessLoader> {
+    async harnessLoaderFor(selector: string, options?: ExtraOptions): Promise<HarnessLoader> {
         return this.createEnvironment(
-            await _assertResultFound(this.getAllRawElements(selector), [
+            await _assertResultFound(this.getAllRawElements(selector, options), [
                 _getDescriptionForHarnessLoaderQuery(selector),
             ]),
         );
     }
 
     // Implemented as part of the `LocatorFactory` interface.
-    async harnessLoaderForOptional(selector: string): Promise<HarnessLoader | null> {
-        const elements = await this.getAllRawElements(selector);
+    async harnessLoaderForOptional(selector: string, options?: ExtraOptions<boolean | null>): Promise<HarnessLoader | null> {
+        const elements = await this.getAllRawElements(selector, options);
         return elements[0] ? this.createEnvironment(elements[0]) : null;
     }
 
     // Implemented as part of the `LocatorFactory` interface.
-    async harnessLoaderForAll(selector: string): Promise<HarnessLoader[]> {
-        const elements = await this.getAllRawElements(selector);
+    async harnessLoaderForAll(selector: string, options?: ExtraOptions): Promise<HarnessLoader[]> {
+        const elements = await this.getAllRawElements(selector, options);
         return elements.map(element => this.createEnvironment(element));
     }
 
     // Implemented as part of the `HarnessLoader` interface.
-    getHarness<T extends ComponentHarness>(query: HarnessQuery<T>): Promise<T> {
-        return this.locatorFor(query)();
+    getHarness<T extends ComponentHarness>(query: HarnessQuery<T>, options?: ExtraOptions): Promise<T> {
+        return this.locatorFor(query)(options);
     }
 
     // Implemented as part of the `HarnessLoader` interface.
-    getHarnessOrNull<T extends ComponentHarness>(query: HarnessQuery<T>): Promise<T | null> {
-        return this.locatorForOptional(query)();
+    getHarnessOrNull<T extends ComponentHarness>(query: HarnessQuery<T>, options?: ExtraOptions<boolean | null>): Promise<T | null> {
+        return this.locatorForOptional(query)(options);
     }
 
     // Implemented as part of the `HarnessLoader` interface.
-    getAllHarnesses<T extends ComponentHarness>(query: HarnessQuery<T>): Promise<T[]> {
-        return this.locatorForAll(query)();
+    getAllHarnesses<T extends ComponentHarness>(query: HarnessQuery<T>, options?: ExtraOptions): Promise<T[]> {
+        return this.locatorForAll(query)(options);
     }
 
     // Implemented as part of the `HarnessLoader` interface.
@@ -131,17 +131,17 @@ export abstract class HarnessEnvironment<E> implements HarnessLoader, LocatorFac
     }
 
     // Implemented as part of the `HarnessLoader` interface.
-    async getChildLoader(selector: string): Promise<HarnessLoader> {
+    async getChildLoader(selector: string, options?: ExtraOptions): Promise<HarnessLoader> {
         return this.createEnvironment(
-            await _assertResultFound(this.getAllRawElements(selector), [
+            await _assertResultFound(this.getAllRawElements(selector, options), [
                 _getDescriptionForHarnessLoaderQuery(selector),
             ]),
         );
     }
 
     // Implemented as part of the `HarnessLoader` interface.
-    async getAllChildLoaders(selector: string): Promise<HarnessLoader[]> {
-        return (await this.getAllRawElements(selector)).map(e => this.createEnvironment(e));
+    async getAllChildLoaders(selector: string, options?: ExtraOptions): Promise<HarnessLoader[]> {
+        return (await this.getAllRawElements(selector, options)).map(e => this.createEnvironment(e));
     }
 
     /** Creates a `ComponentHarness` for the given harness type with the given raw host element. */
@@ -170,7 +170,7 @@ export abstract class HarnessEnvironment<E> implements HarnessLoader, LocatorFac
     /**
      * Gets a list of all elements matching the given selector under this environment's root element.
      */
-    protected abstract getAllRawElements(selector: string): Promise<E[]>;
+    protected abstract getAllRawElements(selector: string, options?: ExtraOptions<boolean | null>): Promise<E[]>;
 
     /**
      * Matches the given raw elements with the given list of element and harness queries to produce a
@@ -178,6 +178,7 @@ export abstract class HarnessEnvironment<E> implements HarnessLoader, LocatorFac
      */
     private async _getAllHarnessesAndTestElements<T extends (HarnessQuery<any> | string)[]>(
         queries: T,
+        options?: ExtraOptions<boolean | null>
     ): Promise<LocatorFnResult<T>[]> {
         if (!queries.length) {
             throw Error('CDK Component harness query must contain at least one element.');
@@ -189,6 +190,7 @@ export abstract class HarnessEnvironment<E> implements HarnessLoader, LocatorFac
         // elements matching any of the individual queries.
         const rawElements = await this.getAllRawElements(
             [...elementQueries, ...harnessQueries.map(predicate => predicate.getSelector())].join(','),
+           options
         );
 
         // If every query is searching for the same harness subclass, we know every result corresponds
@@ -239,7 +241,8 @@ export abstract class HarnessEnvironment<E> implements HarnessLoader, LocatorFac
         return null;
     }
 
-    abstract waitForStable<T extends () => unknown>(expr: T): StableResult<T>
+    abstract waitForStable<T>(expr: T): Promise<Awaited<T>>
+    abstract waitForStable<T>(expr: (skip: () => never) => T): StableResult<T>
 }
 
 /**

@@ -1,8 +1,8 @@
 import { parallel } from "./change-detection"
-import { ComponentHarness, ComponentHarnessConstructor } from "./component-harness"
+import { ComponentHarness, ComponentHarnessConstructor, ExtraOptions } from "./component-harness"
 
 /** An async function that returns a promise when called. */
-export type AsyncFactoryFn<T> = () => Promise<T>
+export type AsyncFactoryFn<T, U extends boolean | null = boolean> = (options?: ExtraOptions<U>) => Promise<T>
 /** An async function that takes an item and returns a boolean promise */
 export type AsyncPredicate<T> = (item: T) => Promise<boolean>
 /** An async function that takes an item and an option value and returns a boolean promise. */
@@ -187,7 +187,7 @@ export class HarnessPredicate<T extends ComponentHarness> {
       const selector = options.selector
       if (selector !== undefined) {
          this.add(`host matches selector "${selector}"`, async (item) => {
-            return (await item.host()).matchesSelector(selector)
+            return item.host().matchesSelector(selector)
          })
       }
    }

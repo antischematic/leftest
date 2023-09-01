@@ -70,19 +70,21 @@ export interface HarnessLoader {
     * and returns a `HarnessLoader` rooted at the matching element. If multiple elements match the
     * selector, the first is used. If no elements match, an error is thrown.
     * @param selector The selector for the root element of the new `HarnessLoader`
+    * @param options
     * @return A `HarnessLoader` rooted at the element matching the given selector.
     * @throws If a matching element can't be found.
     */
-   getChildLoader(selector: string): Promise<HarnessLoader>
+   getChildLoader(selector: string, options?: ExtraOptions): Promise<HarnessLoader>
 
    /**
     * Searches for all elements with the given selector under the current instances's root element,
     * and returns an array of `HarnessLoader`s, one for each matching element, rooted at that
     * element.
     * @param selector The selector for the root element of the new `HarnessLoader`
+    * @param options
     * @return A list of `HarnessLoader`s, one for each matching element, rooted at that element.
     */
-   getAllChildLoaders(selector: string): Promise<HarnessLoader[]>
+   getAllChildLoaders(selector: string, options?: ExtraOptions): Promise<HarnessLoader[]>
 
    /**
     * Searches for an instance of the component corresponding to the given harness type under the
@@ -90,10 +92,11 @@ export interface HarnessLoader {
     * matching components are found, a harness for the first one is returned. If no matching
     * component is found, an error is thrown.
     * @param query A query for a harness to create
+    * @param options Extra options
     * @return An instance of the given harness type
     * @throws If a matching component instance can't be found.
     */
-   getHarness<T extends ComponentHarness>(query: HarnessQuery<T>): Promise<T>
+   getHarness<T extends ComponentHarness>(query: HarnessQuery<T>, options?: ExtraOptions): Promise<T>
 
    /**
     * Searches for an instance of the component corresponding to the given harness type under the
@@ -101,20 +104,24 @@ export interface HarnessLoader {
     * matching components are found, a harness for the first one is returned. If no matching
     * component is found, null is returned.
     * @param query A query for a harness to create
+    * @param options
     * @return An instance of the given harness type (or null if not found).
     */
    getHarnessOrNull<T extends ComponentHarness>(
       query: HarnessQuery<T>,
+      options?: ExtraOptions<boolean | null>
    ): Promise<T | null>
 
    /**
     * Searches for all instances of the component corresponding to the given harness type under the
     * `HarnessLoader`'s root element, and returns a list `ComponentHarness` for each instance.
     * @param query A query for a harness to create
+    * @param options
     * @return A list instances of the given harness type.
     */
    getAllHarnesses<T extends ComponentHarness>(
       query: HarnessQuery<T>,
+      options?: ExtraOptions
    ): Promise<T[]>
 
    /**
@@ -270,13 +277,14 @@ export interface LocatorFactory {
    waitForTasksOutsideAngular(): Promise<void>
 
    /**
-    * Repeatedly evaluate and resolve an expression until it returns a truthy result. A value is considered
+    * Repeatedly evaluate and resolve an expression until it returns a result. A value is considered
     * stable if it doesn't change for two consecutive frames.
     *
-    * @param expr The expression to be evaluated
+    * @param expr The expression to be evaluated. If skip argument is specified, waitForStable
+    * returns the first non-skipped result without comparing values
     * @return The first stable truthy result
     */
-   waitForStable<T extends () => any>(expr: T): StableResult<T>
+   waitForStable<T>(expr: (skip: () => never) => T): StableResult<T>
 }
 type ThisConstructor<
    T extends { prototype: unknown } = { prototype: unknown },
@@ -473,8 +481,8 @@ export abstract class ComponentHarness {
     * @param expr The expression to be evaluated
     * @return The first stable truthy result
     */
-   protected async waitForStable<T extends (harness: this) => any>(expr: T): StableResult<T> {
-      return this.locatorFactory.waitForStable(() => expr(this))
+   protected async waitForStable<T>(expr: (harness: this, skip: Function) => T): StableResult<T> {
+      return this.locatorFactory.waitForStable((skip) => expr(this, skip))
    }
 }
 
@@ -488,30 +496,45 @@ export abstract class ContentContainerComponentHarness<
    extends ComponentHarness
    implements HarnessLoader
 {
-   async getChildLoader(selector: S): Promise<HarnessLoader> {
-      return (await this.getRootHarnessLoader()).getChildLoader(selector)
+   async getChildLoader(selector: S, options?: ExtraOptions): Promise<HarnessLoader> {
+      return (await this.getRootHarnessLoader()).getChildLoader(selector, options)
    }
 
-   async getAllChildLoaders(selector: S): Promise<HarnessLoader[]> {
-      return (await this.getRootHarnessLoader()).getAllChildLoaders(selector)
+   async getAllChildLoaders(selector: S, options?: ExtraOptions): Promise<HarnessLoader[]> {
+      return (await this.getRootHarnessLoader()).getAllChildLoaders(selector, options)
    }
 
    async getHarness<T extends ComponentHarness>(
       query: HarnessQuery<T>,
+      options?: ExtraOptions
    ): Promise<T> {
-      return (await this.getRootHarnessLoader()).getHarness(query)
+      return (await this.getRootHarnessLoader()).getHarness(query, options)
    }
 
    async getHarnessOrNull<T extends ComponentHarness>(
       query: HarnessQuery<T>,
+      options: ExtraOptions<true>
+   ): Promise<T>
+   async getHarnessOrNull<T extends ComponentHarness>(
+      query: HarnessQuery<T>,
+      options: ExtraOptions<null>
+   ): Promise<null>
+   async getHarnessOrNull<T extends ComponentHarness>(
+      query: HarnessQuery<T>,
+      options?: ExtraOptions
+   ): Promise<T | null>
+   async getHarnessOrNull<T extends ComponentHarness>(
+      query: HarnessQuery<T>,
+      options?: ExtraOptions<boolean | null>
    ): Promise<T | null> {
-      return (await this.getRootHarnessLoader()).getHarnessOrNull(query)
+      return (await this.getRootHarnessLoader()).getHarnessOrNull(query, options)
    }
 
    async getAllHarnesses<T extends ComponentHarness>(
       query: HarnessQuery<T>,
+      options?: ExtraOptions
    ): Promise<T[]> {
-      return (await this.getRootHarnessLoader()).getAllHarnesses(query)
+      return (await this.getRootHarnessLoader()).getAllHarnesses(query, options)
    }
 
    async hasHarness<T extends ComponentHarness>(
@@ -707,4 +730,8 @@ export class Query<T extends ComponentHarness> extends HarnessPredicate<T> {
    }
 }
 
-export type StableResult<T extends (...args: any[]) => unknown> = Promise<Exclude<Awaited<ReturnType<T>>, null | undefined | 0 | ''>>
+export type StableResult<T> = Promise<Exclude<Awaited<T>, null | undefined | 0 | ''>>
+
+export interface ExtraOptions<TWait extends boolean | null = boolean> {
+   wait?: TWait
+}
