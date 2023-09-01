@@ -155,3 +155,38 @@ export class ButtonHarness extends ComponentHarness {
    }
 }
 ```
+
+### Automatic waiting
+
+By default, locators expect the harness element to already be on the page. In supported environments, harness locators can
+be instructed to automatically wait for harnesses instead.
+
+```ts
+const button = await UnitTestHarnessEnvironment.getHarness(ButtonHarness, { wait: true })
+```
+
+Locators for optional harnesses can also wait for a particular harness to be removed from the page
+
+```ts
+const button = await UnitTestHarnessEnvironment.getHarnessOrNull(ButtonHarness, { wait: null })
+```
+
+Waiting behaviour can vary between each environment. If an environment does not support waiting, this option is ignored.
+
+### Manual waiting
+
+Harnesses can also manually wait until an expression evaluates to a truthy value
+
+```ts
+const button = await UnitTestHarnessEnvironment.getHarness(ButtonHarness, { wait: true })
+
+await button.waitForStable(async () => await button.getAttribute("aria-busy") === "false")
+```
+
+The value is considered stable when it evaluates to a truthy value for two consecutive frames.
+
+### Staleness
+
+Some environments, such as the `UnitTestHarnessEnvironment`, produce component harnesses that can become stale after the
+DOM is changed. If you are testing the presence of an element on the page after performing an action, don't rely on
+stale queries as they might have become detached from the page.

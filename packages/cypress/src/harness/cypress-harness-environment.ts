@@ -1,4 +1,5 @@
 import {
+   ComponentHarness,
    HarnessEnvironment,
    StableResult,
    TestElement,
@@ -22,9 +23,12 @@ export class CypressHarnessEnvironment extends HarnessEnvironment<Element> {
       this._documentRoot = documentRoot;
    }
 
-   static getNativeElement(element: TestElement) {
+   static getNativeElement(element: TestElement | ComponentHarness): Element {
       if (element instanceof UnitTestElement) {
          return element.element
+      }
+      if (element instanceof ComponentHarness) {
+         return this.getNativeElement(element.host())
       }
       throw new Error("This TestElement was not created by the CypressHarnessEnvironment")
    }
