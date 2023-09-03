@@ -4,7 +4,7 @@ import { matchText, TextPattern } from "./by-text"
 
 export function byPlaceholderText(pattern: TextPattern) {
    return predicate(
-      `with placeholder text matching pattern: ${pattern}`,
+      `match placeholder text\n\twith options:\n\t\tpattern: ${pattern}\n`,
       async function byTestId(harness: ComponentHarness) {
          return matchText(harness.host().getAttribute('placeholder'), pattern)
       }

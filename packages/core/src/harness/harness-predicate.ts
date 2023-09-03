@@ -2,7 +2,7 @@ import { parallel } from "./change-detection"
 import { ComponentHarness, ComponentHarnessConstructor, ExtraOptions } from "./component-harness"
 
 /** An async function that returns a promise when called. */
-export type AsyncFactoryFn<T, U extends boolean | null = boolean> = (options?: ExtraOptions<U>) => Promise<T>
+export type AsyncFactoryFn<T, U extends boolean | null = boolean> = (options?: ExtraOptions) => Promise<T>
 /** An async function that takes an item and returns a boolean promise */
 export type AsyncPredicate<T> = (item: T) => Promise<boolean>
 /** An async function that takes an item and an option value and returns a boolean promise. */

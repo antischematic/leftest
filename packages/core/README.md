@@ -168,10 +168,11 @@ const button = await UnitTestHarnessEnvironment.getHarness(ButtonHarness, { wait
 Locators for optional harnesses can also wait for a particular harness to be removed from the page
 
 ```ts
-const button = await UnitTestHarnessEnvironment.getHarnessOrNull(ButtonHarness, { wait: null })
+const button = await UnitTestHarnessEnvironment.getHarnessOrNull(ButtonHarness, { wait: true, count: 0 })
 ```
 
-Waiting behaviour can vary between each environment. If an environment does not support waiting, this option is ignored.
+The `wait` option can also be passed a duration in milliseconds. The default duration for automatic waiting is 4 seconds.
+An error is thrown if the query is not satisfied within the wait duration.
 
 ### Manual waiting
 

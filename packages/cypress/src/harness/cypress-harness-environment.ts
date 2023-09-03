@@ -1,7 +1,6 @@
 import {
    ComponentHarness,
    HarnessEnvironment,
-   StableResult,
    TestElement,
    UnitTestElement,
 } from "@antischematic/leftest"
@@ -63,38 +62,4 @@ export class CypressHarnessEnvironment extends HarnessEnvironment<Element> {
    protected async getAllRawElements(selector: string): Promise<Element[]> {
       return Array.from(this.rawRootElement.querySelectorAll(selector));
    }
-
-   async waitForStable<T>(expr: (skip: () => never) => T): Promise<Awaited<T>>
-   async waitForStable<T>(expr: () => T): StableResult<T>
-   // noinspection DuplicatedCode
-   async waitForStable<T>(expr:  (skip: () => never) => T): Promise<T> {
-      let previous: T | undefined
-      let comparePrevious = expr.length === 0
-      while (true) {
-         let result: T | undefined
-         try {
-            result = await expr(skip)
-         } catch (e) {
-            if (e !== SKIP) {
-               throw e
-            }
-            await this.forceStabilize()
-            continue
-         }
-         if (!comparePrevious) {
-            return result as T
-         }
-         if (previous !== undefined && (result === previous || JSON.stringify(result) === JSON.stringify(previous))) {
-            return previous as StableResult<T>
-         }
-         previous = result
-         await this.forceStabilize()
-      }
-   }
-}
-
-const SKIP = Symbol("SKIP")
-
-function skip(): never {
-   throw SKIP
 }

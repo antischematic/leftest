@@ -13,7 +13,7 @@ function getSvgTitleText(tagName: string, children: HTMLCollection) {
 
 export function byTitle(pattern: TextPattern) {
    return predicate(
-      `with title text matching pattern: ${pattern}`,
+      `match title text\n\twith options:\n\t\tpattern: ${pattern}\n`,
       async function byTestId(harness: ComponentHarness) {
          const host = harness.host()
          const [title, children, tagName] = await parallel(() => [host.getAttribute('title'), host.getProperty<HTMLCollection>('children'), host.getProperty<string>('tagName')])

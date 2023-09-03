@@ -51,7 +51,7 @@ async function getElement(element: TestElement): Promise<Element | null> {
 export function byAria(options: AriaFilters = {}): AsyncPredicate<ComponentHarness> {
    const { visible, hidden = false, name, description } = options
    return predicate(
-      `matching accessible element${Object.keys(options).length ? `\n\twith options:\n${prettyOptions(options)}` : ''}`,
+      `match accessible element${Object.keys(options).length ? `\n\twith options:\n${prettyOptions(options)}` : ''}`,
       async function byAria(harness: ComponentHarness, cache: WeakMap<any, any>) {
          const host = harness.host()
          const element = await getElement(host)

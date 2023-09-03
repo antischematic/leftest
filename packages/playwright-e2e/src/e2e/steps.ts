@@ -19,7 +19,7 @@ const steps = {
 
    "I click the get started link": async ({ page }: TestFixtures) => {
       const harness = await getHarnessForPage(page, RootHarness.query({}))
-      const button = await harness.getStartedButton()
+      const button = await harness.getStartedButton({ count: 100 })
       await expect(getLocator(button)).toBeInViewport()
       await harness.getStarted()
    },

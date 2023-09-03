@@ -16,19 +16,19 @@ export function getHarness<T extends ComponentHarness>(
 
 export function getHarnessOrNull<T extends ComponentHarness>(
    harnessType: HarnessQuery<T>,
-   options: ExtraOptions<true>
+   options: ExtraOptions
 ): Promise<T>
 export function getHarnessOrNull<T extends ComponentHarness>(
    harnessType: HarnessQuery<T>,
-   options: ExtraOptions<null>
+   options: ExtraOptions
 ): Promise<null>
 export function getHarnessOrNull<T extends ComponentHarness>(
    harnessType: HarnessQuery<T>,
-   options?: ExtraOptions<boolean | null>
+   options?: ExtraOptions
 ): Promise<T | null>
 export function getHarnessOrNull<T extends ComponentHarness>(
    harnessType: HarnessQuery<T>,
-   options?: ExtraOptions<boolean | null>
+   options?: ExtraOptions
 ): Promise<T | null> {
    return VitestHarnessEnvironment.getHarnessOrNull(harnessType, options)
 }

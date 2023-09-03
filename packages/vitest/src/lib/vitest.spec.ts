@@ -2,7 +2,6 @@ import {
    ContentContainerComponentHarness,
    createTestSuite,
    feature,
-   queryByText,
    scenario,
 } from "@antischematic/leftest"
 import { getHarness, getHarnessOrNull, getNativeElement } from "@antischematic/leftest-vitest"
@@ -18,7 +17,7 @@ const steps = {
       }, 1000)
    },
    'it should find the app harness': async () => {
-      const app = await getHarness(AppHarness, { wait: true })
+      const app = await getHarness(AppHarness, { wait: 1000, count: 1 })
       expect(getNativeElement(app)).toBeInstanceOf(HTMLElement)
    },
    'it unloads the page': () => {
@@ -27,7 +26,7 @@ const steps = {
       }, 1000)
    },
    'it should not find the message': async () => {
-      const app = await getHarnessOrNull(AppHarness, { wait: null })
+      const app = await getHarnessOrNull(AppHarness, { wait: true, count: 0 })
 
       expect(app).toBeNull()
    },

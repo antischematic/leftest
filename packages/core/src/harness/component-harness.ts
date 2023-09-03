@@ -109,7 +109,7 @@ export interface HarnessLoader {
     */
    getHarnessOrNull<T extends ComponentHarness>(
       query: HarnessQuery<T>,
-      options?: ExtraOptions<boolean | null>
+      options?: ExtraOptions
    ): Promise<T | null>
 
    /**
@@ -284,7 +284,7 @@ export interface LocatorFactory {
     * returns the first non-skipped result without comparing values
     * @return The first stable truthy result
     */
-   waitForStable<T>(expr: (skip: () => never) => T): StableResult<T>
+   waitForStable<T>(expr: () => T): StableResult<T>
 }
 type ThisConstructor<
    T extends { prototype: unknown } = { prototype: unknown },
@@ -481,8 +481,8 @@ export abstract class ComponentHarness {
     * @param expr The expression to be evaluated
     * @return The first stable truthy result
     */
-   protected async waitForStable<T>(expr: (harness: this, skip: Function) => T): StableResult<T> {
-      return this.locatorFactory.waitForStable((skip) => expr(this, skip))
+   protected async waitForStable<T>(expr: (harness: this) => T): StableResult<T> {
+      return this.locatorFactory.waitForStable(() => expr(this))
    }
 }
 
@@ -513,11 +513,11 @@ export abstract class ContentContainerComponentHarness<
 
    async getHarnessOrNull<T extends ComponentHarness>(
       query: HarnessQuery<T>,
-      options: ExtraOptions<true>
+      options: ExtraOptions
    ): Promise<T>
    async getHarnessOrNull<T extends ComponentHarness>(
       query: HarnessQuery<T>,
-      options: ExtraOptions<null>
+      options: ExtraOptions
    ): Promise<null>
    async getHarnessOrNull<T extends ComponentHarness>(
       query: HarnessQuery<T>,
@@ -525,7 +525,7 @@ export abstract class ContentContainerComponentHarness<
    ): Promise<T | null>
    async getHarnessOrNull<T extends ComponentHarness>(
       query: HarnessQuery<T>,
-      options?: ExtraOptions<boolean | null>
+      options?: ExtraOptions
    ): Promise<T | null> {
       return (await this.getRootHarnessLoader()).getHarnessOrNull(query, options)
    }
@@ -732,6 +732,7 @@ export class Query<T extends ComponentHarness> extends HarnessPredicate<T> {
 
 export type StableResult<T> = Promise<Exclude<Awaited<T>, null | undefined | 0 | ''>>
 
-export interface ExtraOptions<TWait extends boolean | null = boolean> {
-   wait?: TWait
+export interface ExtraOptions {
+   wait?: number | boolean
+   count?: number
 }

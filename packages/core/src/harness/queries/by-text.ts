@@ -1,15 +1,18 @@
 import { ComponentHarness } from "../component-harness"
-import { HarnessPredicate } from "../harness-predicate"
+import { HarnessPredicate, predicate } from "../harness-predicate"
 
 export type TextPredicate = (text: string) => boolean | Promise<boolean>
 
 export type TextPattern = string | RegExp | TextPredicate
 
 export function byText(pattern: TextPattern) {
-   return async function byText(harness: ComponentHarness) {
-      const textContent = await harness.host().text()
-      return matchText(textContent, pattern)
-   }
+   return predicate(
+      `match text\n\twith options:\n\t\tpattern: ${pattern}\n`,
+      async function byText(harness: ComponentHarness) {
+         const textContent = await harness.host().text()
+         return matchText(textContent, pattern)
+      }
+   )
 }
 
 export async function matchText(value: string | null | Promise<string | null>, pattern: string | null | RegExp | TextPredicate) {
