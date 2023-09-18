@@ -96,8 +96,7 @@ export interface TestSuite<T> {
 }
 
 export interface TestSuiteOptions {
-   // @deprecated Alternative method for stringifying placeholder arguments. Don't use this for new tests.
-   stringifyPlaceholderArguments?: boolean
+   typeCheck?: boolean
 }
 
 export interface TestSuiteAdapterMetadata {

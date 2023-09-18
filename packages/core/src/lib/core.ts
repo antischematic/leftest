@@ -54,7 +54,6 @@ enum Type {
 }
 
 class Scenario {
-   data: { [key: string]: unknown } = {}
    failed = false
    steps: any[] = []
    examples: Map<string, { data: any[], tags: Set<string>, flag: Flag }> = new Map()
@@ -64,7 +63,7 @@ class Scenario {
       return [...(this.parent?.path ?? []), this.name]
    }
 
-   addStep(factory: (context: any) => void): void {
+   addStep(factory: (scenario: Scenario, context: any) => void): void {
       this.steps.push(factory)
    }
 
@@ -79,7 +78,7 @@ class Scenario {
    }
 
    addScenario(scenario: Scenario, factory: () => void, flag: Flag) {
-      if (this.examples.has(scenario.name)) {
+      if (this.scenarios.has(scenario.name)) {
          throw new Error(`Multiple scenarios detected: "${scenario.name}". Each "scenario()" in a feature must have a unique description`)
       }
       this.scenarios.set(scenario.name, { scenario, factory })
@@ -87,11 +86,6 @@ class Scenario {
 
    markAsFailed() {
       this.failed = true
-   }
-
-   getFullName() {
-      const parentName: string = this.parent?.getFullName() ?? ""
-      return parentName + this.name
    }
 
    hasOwnTag(tag: Tag) {
@@ -103,7 +97,7 @@ class Scenario {
    }
 
    getEffectiveTags() {
-      const tags = [this.feature?.tags ?? [], this.parent?.tags ?? [], this.tags, [...this.examples.values()].flatMap(e => Array.from(e.tags))].flatMap(tags => Array.from(tags))
+      const tags = [this.feature.tags, this.parent!.tags, this.tags, [...this.examples.values()].flatMap(e => Array.from(e.tags))].flatMap(tags => Array.from(tags))
       return new Set(tags)
    }
 
@@ -113,6 +107,7 @@ class Scenario {
       readonly tags: Set<string>,
       readonly feature: Scenario,
       readonly parent?: Scenario,
+      readonly data: { [key: string]: unknown } = {}
    ) {
       scenarios.add(this)
    }
@@ -144,11 +139,13 @@ rootScenario.addStep = function () {
    )
 }
 
-let context: Context = {
+const rootContext = {
    scenario: rootScenario,
    feature: rootScenario,
    examples: Object.freeze([]),
 }
+
+let context: Context = rootContext
 
 function setContext(nextContext: Context) {
    const previousContext = context
@@ -159,72 +156,46 @@ function setContext(nextContext: Context) {
 function runScenario(
    adapter: TestSuiteAdapter,
    combinedSteps: any[],
-   feature: Scenario,
    scenario: Scenario,
-   examples: readonly any[],
-   data?: any,
    context?: any
 ) {
    const metadata = { steps: combinedSteps.map((step) => step(GET_IMPL)), ...getAllEffectiveHooks(scenario.getEffectiveTags()) }
-   const previousExample = setContext({
-      feature,
-      scenario,
-      examples,
-      data,
-   })
+   runHooks(metadata.beforeScenario, scenario, context, (impl) => adapter.beforeScenario(impl, metadata))
    try {
-      runHooks(metadata.beforeScenario, scenario, context, (impl) => adapter.beforeScenario(impl, metadata))
-      try {
-         for (const step of combinedSteps) {
-            runHooks(metadata.beforeStep, scenario, context, (impl) => adapter.beforeStep(impl, metadata))
-            step(context)
-            runHooks(metadata.afterStep, scenario, context, (impl) => adapter.afterStep(impl, metadata))
-         }
-      } finally {
-         runHooks(metadata.afterScenario, scenario, context, (impl) => adapter.afterScenario(impl, metadata))
+      for (const step of combinedSteps) {
+         runHooks(metadata.beforeStep, scenario, context, (impl) => adapter.beforeStep(impl, metadata))
+         step(context, scenario)
+         runHooks(metadata.afterStep, scenario, context, (impl) => adapter.afterStep(impl, metadata))
       }
-      clearTestContext()
    } finally {
-      setContext(previousExample)
+      runHooks(metadata.afterScenario, scenario, context, (impl) => adapter.afterScenario(impl, metadata))
+      clearTestContext()
    }
 }
 
 async function runScenarioAsync(
    adapter: TestSuiteAdapter,
    combinedSteps: any[],
-   feature: Scenario,
    scenario: Scenario,
-   examples: readonly any[],
-   data?: any,
-   context?: any
+   thisContext?: any
 ) {
-   const previousExample = setContext({
-      feature,
-      scenario,
-      examples,
-      data,
-   })
    const metadata = { steps: combinedSteps.map((step) => step(GET_IMPL)), ...getAllEffectiveHooks(scenario.getEffectiveTags()) }
+   await runHooksAsync(metadata.beforeScenario, scenario, thisContext,(impl) => adapter.beforeScenario(impl, metadata))
    try {
-      await runHooksAsync(metadata.beforeScenario, scenario, context,(impl) => adapter.beforeScenario(impl, metadata))
-      try {
-         for (const step of combinedSteps) {
-            await runHooksAsync(metadata.beforeStep, scenario, context,(impl) => adapter.beforeStep(impl, metadata))
-            await step(context)
-            await runHooksAsync(metadata.afterStep, scenario, context,(impl) => adapter.afterStep(impl, metadata))
-         }
-      } finally {
-         await runHooksAsync(metadata.afterScenario, scenario, context, (impl) => adapter.afterScenario(impl, metadata))
+      for (const step of combinedSteps) {
+         await runHooksAsync(metadata.beforeStep, scenario, thisContext,(impl) => adapter.beforeStep(impl, metadata))
+         await step(thisContext, scenario)
+         await runHooksAsync(metadata.afterStep, scenario, thisContext,(impl) => adapter.afterStep(impl, metadata))
       }
-      clearTestContext()
    } finally {
-      setContext(previousExample)
+      await runHooksAsync(metadata.afterScenario, scenario, thisContext, (impl) => adapter.afterScenario(impl, metadata))
    }
+   clearTestContext()
 }
 
 function getFlag(tags: Set<string>, noDefaultExclude = false): Flag {
    let flag =
-      globalThis.LEFTEST_INCLUDED_TAGS.size && !noDefaultExclude
+      (globalThis.LEFTEST_INCLUDED_TAGS.size) && !noDefaultExclude
          ? Flag.EXCLUDE
          : Flag.DEFAULT
    if ([...tags].some((tag) => globalThis.LEFTEST_INCLUDED_TAGS.has(tag))) {
@@ -312,11 +283,11 @@ function runHooks(hooks: any[], scenario: Scenario, context: any, cb: (impl: () 
    })
 }
 
-async function runHooksAsync(hooks: any[], scenario: Scenario, context: any, cb: (impl: () => void) => void) {
+async function runHooksAsync(hooks: any[], scenario: Scenario, thisContext: any, cb: (impl: () => void) => void) {
    if (!hooks.length) return
    return cb(async () => {
       for (const hook of hooks) {
-         await hook.call(context, scenario)
+         await hook.call(thisContext, scenario)
       }
    })
 }
@@ -332,7 +303,6 @@ function getAllEffectiveHooks(tags: Set<string>) {
 function runExamples(examples: any[], exampleTags: Set<any>, scenario: Scenario, adapter: TestSuiteAdapter, steps: any[], flag: Flag) {
    let count = 0
    const total = examples.length
-   const feature = scenario.feature
    for (const data of examples) {
       count++
       const exampleScenario = new Scenario(
@@ -340,9 +310,9 @@ function runExamples(examples: any[], exampleTags: Set<any>, scenario: Scenario,
          `Example ${count} of ${total}`,
          exampleTags,
          scenario.feature,
-         scenario
+         scenario,
+         data
       )
-      console.log('data', data)
       const metadata = { flag, steps: steps.map((step) => step(GET_IMPL)), ...getAllEffectiveHooks(exampleScenario.getEffectiveTags()) }
       adapter.test(
          exampleScenario.name,
@@ -350,10 +320,7 @@ function runExamples(examples: any[], exampleTags: Set<any>, scenario: Scenario,
             return (adapter.isAsync ? runScenarioAsync : runScenario)(
                adapter,
                steps,
-               feature,
                exampleScenario,
-               [],
-               data,
                ctx
             )
          },
@@ -403,7 +370,7 @@ export function scenario(name: string, fn: () => void) {
             adapter.test(
                name,
                function (ctx) {
-                  return (adapter.isAsync ? runScenarioAsync : runScenario)(adapter, combinedSteps, feature, scenario, context.examples, undefined, ctx)
+                  return (adapter.isAsync ? runScenarioAsync : runScenario)(adapter, combinedSteps, scenario, ctx)
                },
                metadata,
             )
@@ -463,8 +430,8 @@ export function feature(name: string, fn: () => void) {
 }
 
 export function background(fn: () => void) {
-   assertContextType(Type.FEATURE, background.name)
    assertNoTags(background.name)
+   assertContextType(Type.FEATURE, background.name)
    context.scenario.addStep = Scenario.prototype.addStep
    try {
       fn()
@@ -475,9 +442,9 @@ export function background(fn: () => void) {
 function examples(name: string, data: any[]): void
 function examples(data: any[]): void
 function examples(...args: any[]): void {
+   assertContextType(Type.SCENARIO, Type.EXAMPLE)
    const name = args.length > 1 ? args[0] : ''
    const data = args[args.length - 1]
-   assertContextType(Type.SCENARIO, Type.EXAMPLE)
    const tags = flushTags()
    const flag = getFlag(tags, tags.size === 0)
    context.scenario.addExamples(name, data, tags, flag)
@@ -485,11 +452,11 @@ function examples(...args: any[]): void {
 
 const GET_IMPL = Symbol()
 
-function createStep(steps: Steps) {
-   return function step(name: string, step: string, ...args: readonly any[]) {
+function createStep(steps: Steps, name: string) {
+   function step(step: string, ...args: readonly any[]) {
       assertNoTags(name.toLowerCase())
       const adapter = getAdapter()
-      context.scenario.addStep((ctx: any) => {
+      context.scenario.addStep((ctx: any, scenario: Scenario) => {
          const impl = steps.getImplementation(step)
          if (ctx === GET_IMPL) {
             return impl as any
@@ -499,10 +466,9 @@ function createStep(steps: Steps) {
             parsedArgs = parseArguments(step)
          }
          if (!parsedArgs.length) {
-            parsedArgs = steps.getArgsFromObject(step, context.data)
+            parsedArgs = steps.getArgsFromObject(step, scenario.data)
          }
          let testName = steps.getTestName(step, parsedArgs)
-         const { scenario } = context
          const metadata = { steps: scenario.steps.map((step) => step(GET_IMPL)), ...getAllEffectiveHooks(scenario.getEffectiveTags()) }
 
          if (testName) {
@@ -538,10 +504,12 @@ function createStep(steps: Steps) {
          }
       })
    }
+   Object.defineProperty(step, 'name', { value: name.toLowerCase() })
+   return step
 }
 
 function splitVars(name: string) {
-   return (name.split(/(<[^\s]*?>)/g) ?? []).map((s) =>
+   return (name.split(/(<[^\s]*?>)/g)).map((s) =>
       s.startsWith("<") ? { var: stripDelimiters(s) } : s,
    )
 }
@@ -553,7 +521,7 @@ class EmptyVar {
 class Steps {
    normalNames: Record<
       string,
-      { name: string; vars: any[]; impl: (...args: any[]) => void }
+      { name: string; vars: any[]; impl: (...args: any[]) => void | Promise<void> }
    >
 
    getTestName(name: string, args: readonly any[]) {
@@ -561,9 +529,7 @@ class Steps {
       const step = this.getStep(name)
       const varLen = step.vars.filter((s) => typeof s !== "string").length
       if (copy.length < varLen) {
-         throw new Error(`Expected at least ${varLen} argument${
-            varLen > 1 ? "s" : ""
-         }, received ${copy.length}
+         throw new Error(`Expected at least ${varLen} arguments, received ${copy.length}
    ${name}
 `)
       }
@@ -573,15 +539,7 @@ class Steps {
                return s
             } else {
                const val = copy.shift()
-               if (this.options.stringifyPlaceholderArguments) {
-                  return JSON.stringify(val)
-               } else {
-                  return typeof val === "string"
-                     ? val
-                     : Array.isArray(val)
-                     ? val.join()
-                     : val
-               }
+               return JSON.stringify(val)
             }
          })
          .join("")
@@ -591,7 +549,7 @@ class Steps {
       return this.getStep(step).impl
    }
 
-   getArgsFromObject(step: string, data: Record<string, unknown>) {
+   getArgsFromObject(step: string, data: Record<string, unknown> = {}) {
       const args = splitVars(step)
          .filter((s) => typeof s !== "string")
          .map((s: any) => {
@@ -614,14 +572,10 @@ class Steps {
       return args
    }
 
-   hasArgs(step: string) {
-      return this.getStep(step).vars.length > 1
-   }
-
    getStep(name: string) {
       const step = this.normalNames[normalize(name)]
       if (!step) {
-         throw new Error(`No step matched: 
+         throw new Error(`No step matched:
    ${name}`)
       }
       return step
@@ -668,6 +622,8 @@ function flushTags(): Set<string> {
 function assertNoTags(method: string) {
    const tags = [...flushTags()].map((s) => `"${s}"`)
    if (tags.length > 0) {
+      flushTags()
+      setContext(rootContext)
       throw new Error(
          `Tag${tags.length > 1 ? "s" : ""} ${new Intl.ListFormat("en").format(
             tags,
@@ -678,6 +634,8 @@ function assertNoTags(method: string) {
 
 function assertContextType(expected: Type, name: string) {
    if (context.scenario.type !== expected) {
+      flushTags()
+      setContext(rootContext)
       throw new Error(`"${name}" can only be used in a ${expected} context`)
    }
 }
@@ -692,8 +650,8 @@ type TagProxy = { [key: string]: Tag }
  */
 // IntelliJ doesn't resolve references for index signatures, so leave this return type as `any` for now.
 export function getTags(): any {
-   assertContextType(Type.ROOT, getTags.name)
    assertNoTags(getTags.name)
+   assertContextType(Type.ROOT, getTags.name)
    return new Proxy(
       {},
       {
@@ -702,13 +660,10 @@ export function getTags(): any {
                return tagCache.get(p)
             }
             const tag = {
-               [Symbol.toPrimitive](hint: string) {
+               [Symbol.toPrimitive]() {
                   usedTags.add(p)
                   tags.push(p)
-                  if (hint === "string" || hint === "default") {
-                     return p
-                  }
-                  return 0
+                  return p
                },
                name: p,
             }
@@ -859,49 +814,43 @@ export const {
 } = getTags()
 
 /**
- * Creates an untyped  {@link TestSuite} for writing test stubs. Mark test stubs as {@link todo} so exclude them from test runs until they are implemented.
+ * Creates a typed {@link TestSuite} from a module import.
+ * @param stepDefs
+ * @param options
  */
-export function createTestSuite(): TestSuite<any>
+export function createTestSuite<T extends object>(
+   stepDefs: T ,
+   options: TestSuiteOptions & { typeCheck: false },
+): TestSuite<T & Record<string, any>>
+/**
 /**
  * Creates a typed {@link TestSuite} from a module import.
+ * @param stepDefs
  * @param options
  */
 export function createTestSuite<T extends object>(
-   options: { default: T } & TestSuiteOptions,
-): TestSuite<T>
-/**
- * Creates a typed {@link TestSuite} from the given steps.
- * @param steps
- * @param options
- */
-export function createTestSuite<T extends object>(
-   steps: T,
+   stepDefs: T ,
    options?: TestSuiteOptions,
 ): TestSuite<T>
+/**
+ * Creates a typed {@link TestSuite} from a module import.
+ * @param stepDefs
+ * @param options
+ */
 export function createTestSuite<T extends object>(
-   stepsOrOptions?: {
-      default?: T
-      steps?: T
-   } & TestSuiteOptions,
-   options: TestSuiteOptions = stepsOrOptions ?? {},
-): TestSuite<any> {
-   assertContextType(Type.ROOT, createTestSuite.name)
+   stepDefs: T = {} as T,
+   options: TestSuiteOptions = {},
+): TestSuite<T> {
    assertNoTags(createTestSuite.name)
-   options.stringifyPlaceholderArguments ??= true
-   const steps = new Steps(
-      (arguments.length > 1
-         ? stepsOrOptions
-         : stepsOrOptions?.default ?? stepsOrOptions) ?? {},
-      options,
-   )
-   const step = createStep(steps)
+   assertContextType(Type.ROOT, createTestSuite.name)
+   const steps = new Steps(stepDefs, options)
 
    return {
-      given: step.bind(null, "Given"),
-      when: step.bind(null, "When"),
-      then: step.bind(null, "Then"),
-      and: step.bind(null, "And"),
-      but: step.bind(null, "But"),
+      given: createStep(steps, "Given"),
+      when: createStep(steps, "When"),
+      then: createStep(steps, "Then"),
+      and: createStep(steps, "And"),
+      but: createStep(steps, "But"),
       examples,
    } as any
 }
