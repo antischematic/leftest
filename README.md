@@ -1,12 +1,6 @@
 # Leftest
 
-Shift-Left Testing for JavaScript.
-
-
-**Features**
-
-- BDD API
-- Component Harnesses
+Shift-Left Testing for JavaScript. [Read the docs](https://antischematic.github.io/leftest/)
 
 ## Packages
 
