@@ -1,0 +1,74 @@
+---
+sidebar_position: 4
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Comparison with Cucumber
+
+Leftest can be thought of as a lightweight TypeScript interpretation of Gherkin syntax and Cucumber. Instead of IDE plugins it relies on type checking to get a reasonable DX with autocompletion and type checking of parameterised steps.
+
+Gherkin feature files can be translated directly to Leftest syntax.
+
+<Tabs groupId="tabs">
+   <TabItem value="gherkin" label="Gherkin" default>
+
+```gherkin
+Feature: Guess the word
+   Scenario: Maker starts a game
+      When the Maker starts a game
+      Then the Maker waits for a Breaker to join
+```
+
+   </TabItem>
+   <TabItem value="leftest" label="Leftest">
+
+```ts
+feature('Guess the word', () => {
+   scenario('Maker starts a game', () => {
+      when('the Maker starts a game')
+      then('the Maker waits for a Breaker to join')
+   })
+})
+```
+
+   </TabItem>
+</Tabs>
+
+Here's another example using scenario outline
+
+<Tabs groupId="tabs">
+   <TabItem value="gherkin" label="Gherkin" default>
+
+```gherkin
+Scenario Outline: eating
+   Given there are <start> cucumbers
+   When I eat <eat> cucumbers
+   Then I should have <left> cucumbers
+
+   Examples:
+   | start | eat | left |
+   |    12 |   5 |    7 |
+   |    20 |   5 |   15 |
+```
+
+   </TabItem>
+   <TabItem value="leftest" label="Leftest">
+
+```ts
+scenario('eating', () => {
+   given('there are <start> cucumbers')
+   when('I eat <eat> cucumbers')
+   then('I should have <left> cucumbers')
+
+   examples([
+      { start: 12, eat: 5, left: 7 },
+      { start: 20, eat: 5, left: 15 },
+   ])
+})
+```
+
+   </TabItem>
+</Tabs>
+
