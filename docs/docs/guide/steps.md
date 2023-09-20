@@ -36,22 +36,28 @@ export default {
 
 Steps are parameterised using angle brackets `<>` to delimit the name of the variable. There are multiple ways to use a parameterised step.
 
-### Passing in arguments
+### Passing in parameters
 
 ```ts
 when('I eat <eat> cucumbers', 10) 
 ```
 
-### Using inline values
+### Using inline parameters
 
 ```ts
 when('I eat [10] cucumbers') // 10 is parsed as a number
 when('I eat "10" cucumbers') // 10 is parsed as a string
 ```
 
-Arguments are parsed as strings when delimited with single or double quotes `""` or `''`, and as literal values when delimited with square brackets `[]`.
+Parameters are parsed as strings when delimited with single or double quotes `""` or `''`, and as literal values when delimited with square brackets `[]`.
 
-### Passing in arguments through examples
+:::note
+
+Inline parameters make it harder to locate the step implementation.
+
+:::
+
+### Passing in parameters through examples
 
 ```ts
 when('I eat <eat> cucumbers')

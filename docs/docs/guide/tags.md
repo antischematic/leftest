@@ -68,8 +68,11 @@ feature('Cucumbers', () => {
 Complex expressions for tagged hooks are supported using the following tag matchers:
 
 `eq` Matches when the scenario is tagged with the given tag
+
 `not` Matches when the scenario is not tagged with the given tag
+
 `and` Matches when both sub-expressions are matched
+
 `or` Matches when either sub-expression is matched
 
 ```ts
