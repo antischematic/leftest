@@ -1,19 +1,20 @@
 {
    "name": "@antischematic/leftest-playwright",
    "description": "Shift-Left Testing for Playwright",
-   "version": "0.3.0",
+   "version": "0.4.0",
    "keywords": ["Leftest", "Playwright", "Test", "Testing", "BDD", "GWT", "Component", "TypeScript"],
    "license": "MIT",
    "repository": {
       "type": "git",
       "url": "https://github.com/antischematic/leftest.git"
    },
+   "homepage": "https://antischematic.github.io/leftest/",
    "author": {
       "name": "Michael Muscat"
    },
    "type": "module",
    "peerDependencies": {
       "mocha": "^10.0.0",
-      "@antischematic/leftest": "~0.3.0"
+      "@antischematic/leftest": "~0.4.0"
    }
 }

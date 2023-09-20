@@ -1,13 +1,14 @@
 {
    "name": "@antischematic/leftest",
    "description": "Shift-Left Testing for JavaScript",
-   "version": "0.3.0",
+   "version": "0.4.0",
    "keywords": ["Leftest", "Test", "Testing", "BDD", "GWT", "TypeScript"],
    "license": "MIT",
    "repository": {
       "type": "git",
       "url": "https://github.com/antischematic/leftest.git"
    },
+   "homepage": "https://antischematic.github.io/leftest/",
    "author": {
       "name": "Michael Muscat"
    },

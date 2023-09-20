@@ -1,19 +1,20 @@
 {
    "name": "@antischematic/leftest-vitest",
    "description": "Shift-Left Testing for Vitest",
-   "version": "0.3.0",
+   "version": "0.4.0",
    "keywords": ["Leftest", "Vitest", "Test", "Testing", "BDD", "GWT", "Component", "TypeScript"],
    "license": "MIT",
    "repository": {
       "type": "git",
       "url": "https://github.com/antischematic/leftest.git"
    },
+   "homepage": "https://antischematic.github.io/leftest/",
    "author": {
       "name": "Michael Muscat"
    },
    "type": "module",
    "peerDependencies": {
       "vitest": ">=0.25.8",
-      "@antischematic/leftest": "~0.3.0"
+      "@antischematic/leftest": "~0.4.0"
    }
 }
